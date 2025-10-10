@@ -224,32 +224,33 @@ function PrestigeUI:Create(title)
     self.Tabs = {}
     self.ActiveTab = nil
     self.Theme = Theme
+    self.Connections = {}
     
-    MinimizeBtn.MouseEnter:Connect(function()
+    self.Connections.MinimizeEnter = MinimizeBtn.MouseEnter:Connect(function()
         TweenService:Create(MinimizeBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
             BackgroundColor3 = Color3.fromRGB(20, 200, 255)
         }):Play()
     end)
     
-    MinimizeBtn.MouseLeave:Connect(function()
+    self.Connections.MinimizeLeave = MinimizeBtn.MouseLeave:Connect(function()
         TweenService:Create(MinimizeBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
             BackgroundColor3 = Theme.Primary
         }):Play()
     end)
     
-    CloseBtn.MouseEnter:Connect(function()
+    self.Connections.CloseEnter = CloseBtn.MouseEnter:Connect(function()
         TweenService:Create(CloseBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
             BackgroundColor3 = Color3.fromRGB(255, 50, 50)
         }):Play()
     end)
     
-    CloseBtn.MouseLeave:Connect(function()
+    self.Connections.CloseLeave = CloseBtn.MouseLeave:Connect(function()
         TweenService:Create(CloseBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
             BackgroundColor3 = Theme.Primary
         }):Play()
     end)
     
-    task.spawn(function()
+    self.Connections.LoadingTask = task.spawn(function()
         for i = 0, 100 do
             task.wait(0.015)
             LoadingBar:TweenSize(UDim2.new(i/100, 0, 1, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.015, true)
@@ -281,7 +282,7 @@ function PrestigeUI:Create(title)
     
     local dragging = false
     local dragInput, mousePos, framePos
-    TopBar.InputBegan:Connect(function(input)
+    self.Connections.TopBarInputBegan = TopBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             mousePos = input.Position
@@ -293,12 +294,12 @@ function PrestigeUI:Create(title)
             end)
         end
     end)
-    TopBar.InputChanged:Connect(function(input)
+    self.Connections.TopBarInputChanged = TopBar.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement then
             dragInput = input
         end
     end)
-    UserInputService.InputChanged:Connect(function(input)
+    self.Connections.UserInputChanged = UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - mousePos
             MainFrame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
@@ -306,7 +307,7 @@ function PrestigeUI:Create(title)
     end)
     
     local minimized = false
-    MinimizeBtn.MouseButton1Click:Connect(function()
+    self.Connections.MinimizeClick = MinimizeBtn.MouseButton1Click:Connect(function()
         minimized = not minimized
         if minimized then
             TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {Size = UDim2.new(0, 700, 0, 45)}):Play()
@@ -322,14 +323,24 @@ function PrestigeUI:Create(title)
     end)
     
     local isOpen = true
-    CloseBtn.MouseButton1Click:Connect(function()
+    self.Connections.CloseClick = CloseBtn.MouseButton1Click:Connect(function()
         -- PANIC BUTTON - DESTROY EVERYTHING
+        -- Disconnect all connections first
+        for name, connection in pairs(self.Connections) do
+            if connection and typeof(connection) == "RBXScriptConnection" then
+                connection:Disconnect()
+            end
+        end
+        self.Connections = {}
+        
+        -- Destroy the GUI
         if ScreenGui then
             ScreenGui:Destroy()
         end
         if self.ScreenGui then
             self.ScreenGui:Destroy()
         end
+        
         -- Clear all references
         self.ScreenGui = nil
         self.MainFrame = nil
@@ -341,16 +352,19 @@ function PrestigeUI:Create(title)
         self.ContentArea = nil
         self.Tabs = {}
         self.ActiveTab = nil
+        
         -- Clear global reference
         _G.PrestigeUI = nil
+        
         -- Force garbage collection
         if gcinfo then
             collectgarbage("collect")
         end
+        
         print("⚠️ PrestigeUI DESTROYED - All features disabled!")
     end)
     
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    self.Connections.RightShiftToggle = UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if gameProcessed then return end
         if input.KeyCode == Enum.KeyCode.RightShift then
             isOpen = not isOpen
