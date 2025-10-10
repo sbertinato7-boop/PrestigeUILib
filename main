@@ -664,6 +664,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     Container.Size = UDim2.new(1, 0, 0, 35)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
+    Container.ClipsDescendants = false
     Container.Parent = parent
 
     local Corner = Instance.new("UICorner")
@@ -689,13 +690,14 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     local DropdownList = Instance.new("ScrollingFrame")
     DropdownList.Name = "DropdownList"
     DropdownList.Size = UDim2.new(1, 0, 0, 0)
-    DropdownList.Position = UDim2.new(0, 0, 0, 35)
+    DropdownList.Position = UDim2.new(0, 0, 0, 40)
     DropdownList.BackgroundColor3 = self.Theme.Secondary
     DropdownList.BorderSizePixel = 0
     DropdownList.ScrollBarThickness = 6
     DropdownList.Visible = false
     DropdownList.AutomaticCanvasSize = Enum.AutomaticSize.Y
     DropdownList.ClipsDescendants = true
+    DropdownList.ZIndex = 10
     DropdownList.Parent = Container
 
     local ListCorner = Instance.new("UICorner")
@@ -745,6 +747,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
             if callback then callback(option) end
             isOpen = false
             TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,0)}):Play()
+            TweenService:Create(Container, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,35)}):Play()
             task.delay(0.2, function() DropdownList.Visible = false end)
         end)
     end
@@ -755,9 +758,12 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
             DropdownList.Visible = true
             task.wait()
             local contentHeight = ListLayout.AbsoluteContentSize.Y + ListPadding.PaddingTop.Offset + ListPadding.PaddingBottom.Offset
-            DropdownList.Size = UDim2.new(1, 0, 0, math.min(contentHeight, maxHeight))
+            local finalHeight = math.min(contentHeight, maxHeight)
+            TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, finalHeight)}):Play()
+            TweenService:Create(Container, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 35 + finalHeight + 5)}):Play()
         else
             TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,0)}):Play()
+            TweenService:Create(Container, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,35)}):Play()
             task.delay(0.2, function()
                 DropdownList.Visible = false
             end)
