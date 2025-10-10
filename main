@@ -1,8 +1,6 @@
 -- ========================================
 -- PRESTIGE UI LIBRARY (Loadstring Version)
 -- ========================================
--- Copy everything below and use: loadstring(game:HttpGet("your_url"))()
--- This creates a global PrestigeUI table you can use
 
 local PrestigeUI = {}
 PrestigeUI.__index = PrestigeUI
@@ -395,6 +393,8 @@ function PrestigeUI:AddTab(tabName)
     Content.ScrollBarThickness = 6
     Content.ScrollBarImageColor3 = self.Theme.Primary
     Content.Visible = false
+    Content.CanvasSize = UDim2.new(0, 0, 0, 0)
+    Content.AutomaticCanvasSize = Enum.AutomaticSize.Y
     Content.Parent = self.ContentArea
     
     local ContentList = Instance.new("UIListLayout")
@@ -408,7 +408,6 @@ function PrestigeUI:AddTab(tabName)
     ContentPadding.PaddingBottom = UDim.new(0, 15)
     ContentPadding.Parent = Content
 
-    -- If no tab is active, set this as active
     if self.ActiveTab == nil then
         self.ActiveTab = tabName
         TabBtn.BackgroundColor3 = self.Theme.Primary
@@ -463,10 +462,9 @@ function PrestigeUI:AddButton(parent, text, callback)
     BtnCorner.CornerRadius = UDim.new(0, 8)
     BtnCorner.Parent = Btn
     
-    -- Hover effect
     Btn.MouseEnter:Connect(function()
         TweenService:Create(Btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+            BackgroundColor3 = Color3.fromRGB(20, 200, 255)
         }):Play()
     end)
     
@@ -666,7 +664,6 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     Container.Size = UDim2.new(1, 0, 0, 35)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
-    Container.AutomaticSize = Enum.AutomaticSize.Y
     Container.Parent = parent
 
     local Corner = Instance.new("UICorner")
@@ -750,7 +747,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
             TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,0)}):Play()
             task.delay(0.2, function() DropdownList.Visible = false end)
         end)
-    end  -- ← FIXED: This was "end)" before
+    end
 
     DropdownBtn.MouseButton1Click:Connect(function()
         isOpen = not isOpen
@@ -869,10 +866,10 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
     return Container
 end
 
--- Make PrestigeUI global so it can be accessed after loadstring
 _G.PrestigeUI = PrestigeUI
 
 print("✓ Prestige UI Library Loaded!")
 print("Usage: local myUI = PrestigeUI:Create('My App')")
 print("Press Right Shift to toggle UI")
-return PrestigeUI -- <<< ADD THIS
+
+return PrestigeUI
