@@ -664,11 +664,11 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
     Container.Parent = parent
-    
+
     local Corner = Instance.new("UICorner")
     Corner.CornerRadius = UDim.new(0, 8)
     Corner.Parent = Container
-    
+
     local DropdownBtn = Instance.new("TextButton")
     DropdownBtn.Name = "DropdownBtn"
     DropdownBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -679,12 +679,12 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     DropdownBtn.Font = Enum.Font.Gotham
     DropdownBtn.TextSize = 14
     DropdownBtn.Parent = Container
-    
+
     local Padding = Instance.new("UIPadding")
     Padding.PaddingLeft = UDim.new(0, 10)
     Padding.PaddingRight = UDim.new(0, 10)
     Padding.Parent = DropdownBtn
-    
+
     local DropdownList = Instance.new("ScrollingFrame")
     DropdownList.Name = "DropdownList"
     DropdownList.Size = UDim2.new(1, 0, 0, 0)
@@ -693,65 +693,41 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     DropdownList.BorderSizePixel = 0
     DropdownList.ScrollBarThickness = 4
     DropdownList.Visible = false
+    DropdownList.ClipsDescendants = true
+    DropdownList.AutomaticCanvasSize = Enum.AutomaticSize.Y
     DropdownList.Parent = Container
-    
+
     local ListCorner = Instance.new("UICorner")
     ListCorner.CornerRadius = UDim.new(0, 8)
     ListCorner.Parent = DropdownList
-    
+
     local ListLayout = Instance.new("UIListLayout")
     ListLayout.Padding = UDim.new(0, 5)
     ListLayout.Parent = DropdownList
-    
+
     local ListPadding = Instance.new("UIPadding")
     ListPadding.PaddingTop = UDim.new(0, 5)
     ListPadding.PaddingBottom = UDim.new(0, 5)
     ListPadding.PaddingLeft = UDim.new(0, 5)
     ListPadding.PaddingRight = UDim.new(0, 5)
     ListPadding.Parent = DropdownList
-    
+
     local isOpen = false
-    local siblings = {}
-    for _, child in pairs(parent:GetChildren()) do
-        if (child:IsA("Frame") or child:IsA("TextLabel")) and child ~= Container then
-            if child.Position.Y.Offset > Container.Position.Y.Offset then
-                table.insert(siblings, child)
-            end
-        end
-    end
-    
+
     DropdownBtn.MouseButton1Click:Connect(function()
         isOpen = not isOpen
         if isOpen then
-            local newHeight = math.min(#options * 30, 150)
-            TweenService:Create(DropdownList, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-                Size = UDim2.new(1, 0, 0, newHeight)
-            }):Play()
             DropdownList.Visible = true
-            
-            -- Push siblings down
-            for _, sib in pairs(siblings) do
-                TweenService:Create(sib, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-                    Position = sib.Position + UDim2.new(0, 0, 0, newHeight)
-                }):Play()
-            end
+            local newHeight = math.min(#options * 30, 150)
+            TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, newHeight)}):Play()
         else
-            local oldHeight = DropdownList.Size.Y.Offset
-            TweenService:Create(DropdownList, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-                Size = UDim2.new(1, 0, 0, 0)
-            }):Play()
-            task.wait(0.2)
-            DropdownList.Visible = false
-            
-            -- Move siblings back
-            for _, sib in pairs(siblings) do
-                TweenService:Create(sib, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-                    Position = sib.Position - UDim2.new(0, 0, 0, oldHeight)
-                }):Play()
-            end
+            TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 0)}):Play()
+            task.delay(0.2, function()
+                DropdownList.Visible = false
+            end)
         end
     end)
-    
+
     for _, option in pairs(options) do
         local OptionBtn = Instance.new("TextButton")
         OptionBtn.Name = option
@@ -763,37 +739,28 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         OptionBtn.TextSize = 13
         OptionBtn.AutoButtonColor = false
         OptionBtn.Parent = DropdownList
-        
+
         local OptionCorner = Instance.new("UICorner")
         OptionCorner.CornerRadius = UDim.new(0, 6)
         OptionCorner.Parent = OptionBtn
-        
+
         OptionBtn.MouseEnter:Connect(function()
-            TweenService:Create(OptionBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-                BackgroundColor3 = self.Theme.Primary
-            }):Play()
+            TweenService:Create(OptionBtn, TweenInfo.new(0.2), {BackgroundColor3 = self.Theme.Primary}):Play()
         end)
         OptionBtn.MouseLeave:Connect(function()
-            TweenService:Create(OptionBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-                BackgroundColor3 = self.Theme.Tertiary
-            }):Play()
+            TweenService:Create(OptionBtn, TweenInfo.new(0.2), {BackgroundColor3 = self.Theme.Tertiary}):Play()
         end)
-        
+
         OptionBtn.MouseButton1Click:Connect(function()
             DropdownBtn.Text = option
             DropdownBtn.TextColor3 = self.Theme.Text
             isOpen = false
-            TweenService:Create(DropdownList, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-                Size = UDim2.new(1, 0, 0, 0)
-            }):Play()
-            task.wait(0.2)
-            DropdownList.Visible = false
-            if callback then
-                callback(option)
-            end
+            TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 0)}):Play()
+            task.delay(0.2, function() DropdownList.Visible = false end)
+            if callback then callback(option) end
         end)
     end
-    
+
     return DropdownBtn
 end
 
