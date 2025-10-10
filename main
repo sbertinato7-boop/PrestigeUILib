@@ -663,6 +663,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     Container.Size = UDim2.new(1, 0, 0, 35)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
+    Container.AutomaticSize = Enum.AutomaticSize.Y -- key change
     Container.Parent = parent
 
     local Corner = Instance.new("UICorner")
@@ -671,7 +672,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
 
     local DropdownBtn = Instance.new("TextButton")
     DropdownBtn.Name = "DropdownBtn"
-    DropdownBtn.Size = UDim2.new(1, 0, 1, 0)
+    DropdownBtn.Size = UDim2.new(1, 0, 0, 35)
     DropdownBtn.BackgroundTransparency = 1
     DropdownBtn.BorderSizePixel = 0
     DropdownBtn.Text = placeholder or "Select..."
@@ -685,49 +686,23 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     Padding.PaddingRight = UDim.new(0, 10)
     Padding.Parent = DropdownBtn
 
-    local DropdownList = Instance.new("ScrollingFrame")
+    local DropdownList = Instance.new("Frame")
     DropdownList.Name = "DropdownList"
     DropdownList.Size = UDim2.new(1, 0, 0, 0)
-    DropdownList.Position = UDim2.new(0, 0, 1, 5)
-    DropdownList.BackgroundColor3 = self.Theme.Secondary
+    DropdownList.BackgroundTransparency = 1
     DropdownList.BorderSizePixel = 0
-    DropdownList.ScrollBarThickness = 4
+    DropdownList.LayoutOrder = 1
     DropdownList.Visible = false
-    DropdownList.ClipsDescendants = true
-    DropdownList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    DropdownList.AutomaticSize = Enum.AutomaticSize.Y
     DropdownList.Parent = Container
-
-    local ListCorner = Instance.new("UICorner")
-    ListCorner.CornerRadius = UDim.new(0, 8)
-    ListCorner.Parent = DropdownList
 
     local ListLayout = Instance.new("UIListLayout")
     ListLayout.Padding = UDim.new(0, 5)
     ListLayout.Parent = DropdownList
 
-    local ListPadding = Instance.new("UIPadding")
-    ListPadding.PaddingTop = UDim.new(0, 5)
-    ListPadding.PaddingBottom = UDim.new(0, 5)
-    ListPadding.PaddingLeft = UDim.new(0, 5)
-    ListPadding.PaddingRight = UDim.new(0, 5)
-    ListPadding.Parent = DropdownList
-
     local isOpen = false
 
-    DropdownBtn.MouseButton1Click:Connect(function()
-        isOpen = not isOpen
-        if isOpen then
-            DropdownList.Visible = true
-            local newHeight = math.min(#options * 30, 150)
-            TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, newHeight)}):Play()
-        else
-            TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 0)}):Play()
-            task.delay(0.2, function()
-                DropdownList.Visible = false
-            end)
-        end
-    end)
-
+    -- create option buttons
     for _, option in pairs(options) do
         local OptionBtn = Instance.new("TextButton")
         OptionBtn.Name = option
@@ -738,6 +713,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         OptionBtn.Font = Enum.Font.Gotham
         OptionBtn.TextSize = 13
         OptionBtn.AutoButtonColor = false
+        OptionBtn.Visible = false -- hidden until dropdown opens
         OptionBtn.Parent = DropdownList
 
         local OptionCorner = Instance.new("UICorner")
@@ -754,12 +730,30 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         OptionBtn.MouseButton1Click:Connect(function()
             DropdownBtn.Text = option
             DropdownBtn.TextColor3 = self.Theme.Text
-            isOpen = false
-            TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 0)}):Play()
-            task.delay(0.2, function() DropdownList.Visible = false end)
             if callback then callback(option) end
+            -- close dropdown
+            isOpen = false
+            for _, btn in pairs(DropdownList:GetChildren()) do
+                if btn:IsA("TextButton") then
+                    TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+                    btn.Visible = false
+                end
+            end
         end)
     end
+
+    DropdownBtn.MouseButton1Click:Connect(function()
+        isOpen = not isOpen
+        for _, btn in pairs(DropdownList:GetChildren()) do
+            if btn:IsA("TextButton") then
+                btn.Visible = isOpen
+                if isOpen then
+                    btn.BackgroundTransparency = 1
+                    TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
+                end
+            end
+        end
+    end)
 
     return DropdownBtn
 end
