@@ -325,65 +325,72 @@ function PrestigeUI:Create(title)
             ContentArea.Visible = true
         end
     end)
-    
-    local closing = false
 
     self.Connections.CloseClick = CloseBtn.MouseButton1Click:Connect(function()
-        if closing then return end
-        closing = true
-
-        print("🚨 PrestigeUI: Close button pressed. Beginning shutdown sequence...")
-
-        -- Animate close button feedback
-        TweenService:Create(CloseBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+        if self.Closing then return end
+        self.Closing = true
+    
+        print("[PrestigeUI] Close requested...")
+    
+        -- Disable interactivity instantly
+        CloseBtn.Active = false
+        MinimizeBtn.Active = false
+        TopBar.Active = false
+    
+        -- Animate red pulse on the button
+        TweenService:Create(CloseBtn, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundColor3 = Color3.fromRGB(255, 70, 70)
         }):Play()
-        task.wait(0.15)
-
-        -- Fade out UI
-        if self.MainFrame and self.MainFrame.Parent then
-            local tween = TweenService:Create(self.MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                BackgroundTransparency = 1,
-                Size = UDim2.new(0, 700, 0, 0),
-                Position = UDim2.new(0.5, -350, 0.5, 0)
-            })
-            tween:Play()
-            task.wait(0.45)
-        end
-
-        -- Disconnect all connections safely
-        if self.Connections then
-            for name, conn in pairs(self.Connections) do
-                if typeof(conn) == "RBXScriptConnection" then
-                    pcall(function()
-                        conn:Disconnect()
-                    end)
-                end
+    
+        task.wait(0.1)
+    
+        TweenService:Create(CloseBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+            BackgroundColor3 = Theme.Primary
+        }):Play()
+    
+        -- Fade out entire UI with smooth scaling shrink
+        local closeTween = TweenService:Create(self.MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(0, 400, 0, 250),
+            Position = UDim2.new(0.5, -200, 0.5, -125)
+        })
+        closeTween:Play()
+    
+        -- Fade sidebar + content separately
+        for _, gui in ipairs({self.Sidebar, self.ContentArea, self.TopBar}) do
+            if gui then
+                TweenService:Create(gui, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+                    BackgroundTransparency = 1
+                }):Play()
             end
         end
-        self.Connections = nil
-
-        -- Destroy the ScreenGui cleanly
-        if self.ScreenGui and self.ScreenGui.Parent then
+    
+        task.wait(0.45)
+    
+        -- Disconnect events
+        for name, conn in pairs(self.Connections or {}) do
+            if typeof(conn) == "RBXScriptConnection" then
+                pcall(function()
+                    conn:Disconnect()
+                end)
+            end
+        end
+        self.Connections = {}
+    
+        -- Destroy GUI safely
+        if self.ScreenGui then
             pcall(function()
                 self.ScreenGui:Destroy()
             end)
         end
-
-        -- Clear object references
-        for k, _ in pairs(self) do
-            self[k] = nil
-        end
-
-        -- Remove global pointer if it exists
+    
+        -- Cleanup references
+        table.clear(self)
+    
         _G.PrestigeUI = nil
-
-        -- Collect garbage safely
-        pcall(function()
-            collectgarbage("collect")
-        end)
-
-        warn("✅ PrestigeUI: Shutdown complete and cleaned up successfully.")
+        pcall(function() collectgarbage("collect") end)
+    
+        print("[PrestigeUI] Closed and cleaned successfully.")
     end)
 end
 
