@@ -393,7 +393,7 @@ function PrestigeUI:Create(title)
         print("[PrestigeUI] Closed and cleaned successfully.")
     end)
 
-return self
+    return self
 end
 
 function PrestigeUI:AddTab(tabName)
