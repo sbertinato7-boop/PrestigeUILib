@@ -754,17 +754,15 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         isOpen = not isOpen
         if isOpen then
             DropdownList.Visible = true
+            task.wait() -- wait a frame for AbsoluteContentSize to update
             local contentHeight = ListLayout.AbsoluteContentSize.Y + ListPadding.PaddingTop.Offset + ListPadding.PaddingBottom.Offset
-            local finalHeight = math.min(contentHeight, maxHeight) -- don't exceed maxHeight
+            local finalHeight = math.min(contentHeight, maxHeight)
             TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, finalHeight)}):Play()
         else
             TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,0)}):Play()
             task.delay(0.2, function() DropdownList.Visible = false end)
         end
     end)
-
-    return Container
-end
 
 function PrestigeUI:AddSlider(parent, min, max, default, callback)
     local Container = Instance.new("Frame")
