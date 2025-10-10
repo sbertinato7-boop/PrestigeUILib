@@ -465,14 +465,19 @@ function PrestigeUI:AddButton(parent, text, callback)
     BtnCorner.Parent = Btn
     
     Btn.MouseEnter:Connect(function()
-        TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = Color3.fromRGB(20, 200, 255)
-        }):Play()
+        if self.ActiveTab ~= tabName then
+            TweenService:Create(Btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
+                BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+            }):Play()
+        end
     end)
+    
     Btn.MouseLeave:Connect(function()
-        TweenService:Create(Btn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = self.Theme.Primary
-        }):Play()
+        if self.ActiveTab ~= tabName then
+            TweenService:Create(Btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
+                BackgroundColor3 = self.Theme.Tertiary
+            }):Play()
+        end
     end)
     Btn.MouseButton1Click:Connect(function()
         if callback then callback() end
