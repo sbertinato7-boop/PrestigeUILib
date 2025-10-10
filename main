@@ -329,83 +329,47 @@ function PrestigeUI:Create(title)
     print("✓ About to connect CLOSE BUTTON (X) - PANIC BUTTON")
     local isOpen = true
     CloseBtn.MouseButton1Click:Connect(function()
-        print("🚨🚨🚨 CLOSE BUTTON (X) CLICKED - PANIC MODE ACTIVATED 🚨🚨🚨")
-        
-        -- Disconnect all connections first
-        for name, connection in pairs(self.Connections) do
+    print("🚨 Close Button Clicked 🚨")
+    
+    -- Safely disconnect all stored connections
+    for name, connection in pairs(self.Connections) do
+        if connection and connection.Disconnect then
             pcall(function()
-                if connection and connection.Connected then
-                    connection:Disconnect()
-                    print("✓ Disconnected:", name)
-                end
+                connection:Disconnect()
             end)
         end
-        self.Connections = {}
-        
-        -- Destroy the GUI
+    end
+    self.Connections = {}
+    
+    -- Destroy the main GUI
+    if self.ScreenGui and self.ScreenGui.Parent then
         pcall(function()
-            if ScreenGui and ScreenGui.Parent then
-                ScreenGui:Destroy()
-                print("✓ ScreenGui destroyed")
-            end
+            self.ScreenGui:Destroy()
         end)
-        
-        pcall(function()
-            if self.ScreenGui and self.ScreenGui.Parent then
-                self.ScreenGui:Destroy()
-                print("✓ self.ScreenGui destroyed")
-            end
-        end)
-        
-        -- Clear all references
-        self.ScreenGui = nil
-        self.MainFrame = nil
-        self.TopBar = nil
-        self.Title = nil
-        self.MinimizeBtn = nil
-        self.CloseBtn = nil
-        self.Sidebar = nil
-        self.ContentArea = nil
-        self.Tabs = {}
-        self.ActiveTab = nil
-        
-        -- Clear global reference
-        _G.PrestigeUI = nil
-        
-        -- Force garbage collection
+    end
+
+    -- Clear all references
+    self.ScreenGui = nil
+    self.MainFrame = nil
+    self.TopBar = nil
+    self.Title = nil
+    self.MinimizeBtn = nil
+    self.CloseBtn = nil
+    self.Sidebar = nil
+    self.ContentArea = nil
+    self.Tabs = {}
+    self.ActiveTab = nil
+    
+    -- Remove global reference
+    _G.PrestigeUI = nil
+
+    -- Run garbage collection safely
+    pcall(function()
         collectgarbage("collect")
-        
-        warn("⚠️⚠️⚠️ PrestigeUI COMPLETELY DESTROYED - All features disabled! ⚠️⚠️⚠️")
-        warn("⚠️⚠️⚠️ Right Shift will NOT work anymore! ⚠️⚠️⚠️")
     end)
     
-    self.Connections.RightShiftToggle = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed then return end
-        if input.KeyCode == Enum.KeyCode.RightShift then
-            -- Check if UI still exists
-            if not self.MainFrame or not self.MainFrame.Parent then
-                return
-            end
-            isOpen = not isOpen
-            if isOpen then
-                MainFrame.Visible = true
-                TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                    Size = UDim2.new(0, 700, 0, 450),
-                    Position = UDim2.new(0.5, -350, 0.5, -225)
-                }):Play()
-            else
-                TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-                    Size = UDim2.new(0, 0, 0, 0),
-                    Position = UDim2.new(0.5, 0, 0.5, 0)
-                }):Play()
-                task.wait(0.4)
-                MainFrame.Visible = false
-            end
-        end
-    end)
-    
-    return self
-end
+    warn("⚠️ PrestigeUI destroyed. All references cleared.")
+end)
 
 function PrestigeUI:AddTab(tabName)
     local TabBtn = Instance.new("TextButton")
