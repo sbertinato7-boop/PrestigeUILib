@@ -767,6 +767,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
             task.delay(0.2, function() DropdownList.Visible = false end)
         end
     end)
+end
 
 function PrestigeUI:AddSlider(parent, min, max, default, callback)
     local Container = Instance.new("Frame")
