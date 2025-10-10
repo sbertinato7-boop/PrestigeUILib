@@ -752,6 +752,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
             task.delay(0.2, function() DropdownList.Visible = false end)
         end)
     end
+end)
 
     DropdownBtn.MouseButton1Click:Connect(function()
         isOpen = not isOpen
@@ -767,6 +768,8 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
             end)
         end
     end)
+
+end -- <<-- THIS CLOSES AddDropdown
 
 function PrestigeUI:AddSlider(parent, min, max, default, callback)
     local Container = Instance.new("Frame")
