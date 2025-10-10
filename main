@@ -168,6 +168,8 @@ function PrestigeUI:Create(title)
     CloseCorner.CornerRadius = UDim.new(0, 8)
     CloseCorner.Parent = CloseBtn
     
+    print("✓ Close button created with X text")
+    
     local Sidebar = Instance.new("Frame")
     Sidebar.Name = "Sidebar"
     Sidebar.Size = UDim2.new(0, 180, 0, 387)
@@ -250,6 +252,8 @@ function PrestigeUI:Create(title)
         }):Play()
     end)
     
+    print("✓ Close button hover effects connected")
+    
     self.Connections.LoadingTask = task.spawn(function()
         for i = 0, 100 do
             task.wait(0.015)
@@ -322,9 +326,10 @@ function PrestigeUI:Create(title)
         end
     end)
     
+    print("✓ About to connect CLOSE BUTTON (X) - PANIC BUTTON")
     local isOpen = true
-    self.Connections.CloseClick = CloseBtn.MouseButton1Click:Connect(function()
-        print("🚨 PANIC BUTTON PRESSED - DESTROYING EVERYTHING...")
+    CloseBtn.MouseButton1Click:Connect(function()
+        print("🚨🚨🚨 CLOSE BUTTON (X) CLICKED - PANIC MODE ACTIVATED 🚨🚨🚨")
         
         -- Disconnect all connections first
         for name, connection in pairs(self.Connections) do
@@ -370,8 +375,8 @@ function PrestigeUI:Create(title)
         -- Force garbage collection
         collectgarbage("collect")
         
-        print("⚠️ PrestigeUI COMPLETELY DESTROYED - All features disabled!")
-        print("⚠️ Right Shift will NOT work anymore!")
+        warn("⚠️⚠️⚠️ PrestigeUI COMPLETELY DESTROYED - All features disabled! ⚠️⚠️⚠️")
+        warn("⚠️⚠️⚠️ Right Shift will NOT work anymore! ⚠️⚠️⚠️")
     end)
     
     self.Connections.RightShiftToggle = UserInputService.InputBegan:Connect(function(input, gameProcessed)
