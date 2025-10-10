@@ -327,10 +327,11 @@ function PrestigeUI:Create(title)
     end)
     
     print("✓ About to connect CLOSE BUTTON (X) - PANIC BUTTON")
-    local isOpen = true
-    CloseBtn.MouseButton1Click:Connect(function()
+local minimized = false -- tracks minimize state
+
+self.Connections.CloseClick = CloseBtn.MouseButton1Click:Connect(function()
     print("🚨 Close Button Clicked 🚨")
-    
+
     -- Safely disconnect all stored connections
     for name, connection in pairs(self.Connections) do
         if connection and connection.Disconnect then
@@ -340,8 +341,19 @@ function PrestigeUI:Create(title)
         end
     end
     self.Connections = {}
-    
-    -- Destroy the main GUI
+
+    -- Fade out main frame if visible
+    if self.MainFrame and self.MainFrame.Parent then
+        pcall(function()
+            TweenService:Create(self.MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+                BackgroundTransparency = 1,
+                Size = UDim2.new(0, 0, 0, 0)
+            }):Play()
+            task.wait(0.35)
+        end)
+    end
+
+    -- Destroy the GUI safely
     if self.ScreenGui and self.ScreenGui.Parent then
         pcall(function()
             self.ScreenGui:Destroy()
@@ -359,7 +371,7 @@ function PrestigeUI:Create(title)
     self.ContentArea = nil
     self.Tabs = {}
     self.ActiveTab = nil
-    
+
     -- Remove global reference
     _G.PrestigeUI = nil
 
@@ -367,7 +379,7 @@ function PrestigeUI:Create(title)
     pcall(function()
         collectgarbage("collect")
     end)
-    
+
     warn("⚠️ PrestigeUI destroyed. All references cleared.")
 end)
 
