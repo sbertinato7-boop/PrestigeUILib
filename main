@@ -464,24 +464,23 @@ function PrestigeUI:AddButton(parent, text, callback)
     BtnCorner.CornerRadius = UDim.new(0, 8)
     BtnCorner.Parent = Btn
     
+    -- Hover effect
     Btn.MouseEnter:Connect(function()
-        if self.ActiveTab ~= tabName then
-            TweenService:Create(Btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
-                BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-            }):Play()
-        end
+        TweenService:Create(Btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
+            BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+        }):Play()
     end)
     
     Btn.MouseLeave:Connect(function()
-        if self.ActiveTab ~= tabName then
-            TweenService:Create(Btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
-                BackgroundColor3 = self.Theme.Tertiary
-            }):Play()
-        end
+        TweenService:Create(Btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
+            BackgroundColor3 = self.Theme.Primary
+        }):Play()
     end)
+    
     Btn.MouseButton1Click:Connect(function()
         if callback then callback() end
     end)
+    
     return Btn
 end
 
