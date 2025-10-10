@@ -327,61 +327,65 @@ function PrestigeUI:Create(title)
     end)
     
     print("✓ About to connect CLOSE BUTTON (X) - PANIC BUTTON")
-local minimized = false -- tracks minimize state
-
-self.Connections.CloseClick = CloseBtn.MouseButton1Click:Connect(function()
-    print("🚨 Close Button Clicked 🚨")
-
-    -- Safely disconnect all stored connections
-    for name, connection in pairs(self.Connections) do
-        if connection and connection.Disconnect then
+    local closed = false -- prevent double-execution
+    
+    CloseBtn.MouseButton1Click:Connect(function()
+        if closed then return end
+        closed = true
+        print("🚨 Close Button Clicked 🚨")
+    
+        -- Safely disconnect all stored connections
+        if self.Connections then
+            for name, connection in pairs(self.Connections) do
+                if connection and connection.Disconnect then
+                    pcall(function()
+                        connection:Disconnect()
+                    end)
+                end
+            end
+            self.Connections = nil
+        end
+    
+        -- Fade out main frame if visible
+        if self.MainFrame and self.MainFrame.Parent then
             pcall(function()
-                connection:Disconnect()
+                TweenService:Create(self.MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+                    BackgroundTransparency = 1,
+                    Size = UDim2.new(0, 0, 0, 0)
+                }):Play()
+                task.wait(0.35)
             end)
         end
-    end
-    self.Connections = {}
-
-    -- Fade out main frame if visible
-    if self.MainFrame and self.MainFrame.Parent then
+    
+        -- Destroy the GUI safely
+        if self.ScreenGui and self.ScreenGui.Parent then
+            pcall(function()
+                self.ScreenGui:Destroy()
+            end)
+        end
+    
+        -- Clear all references
+        self.ScreenGui = nil
+        self.MainFrame = nil
+        self.TopBar = nil
+        self.Title = nil
+        self.MinimizeBtn = nil
+        self.CloseBtn = nil
+        self.Sidebar = nil
+        self.ContentArea = nil
+        self.Tabs = {}
+        self.ActiveTab = nil
+    
+        -- Remove global reference
+        _G.PrestigeUI = nil
+    
+        -- Safe garbage collection
         pcall(function()
-            TweenService:Create(self.MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
-                BackgroundTransparency = 1,
-                Size = UDim2.new(0, 0, 0, 0)
-            }):Play()
-            task.wait(0.35)
+            collectgarbage("collect")
         end)
-    end
-
-    -- Destroy the GUI safely
-    if self.ScreenGui and self.ScreenGui.Parent then
-        pcall(function()
-            self.ScreenGui:Destroy()
-        end)
-    end
-
-    -- Clear all references
-    self.ScreenGui = nil
-    self.MainFrame = nil
-    self.TopBar = nil
-    self.Title = nil
-    self.MinimizeBtn = nil
-    self.CloseBtn = nil
-    self.Sidebar = nil
-    self.ContentArea = nil
-    self.Tabs = {}
-    self.ActiveTab = nil
-
-    -- Remove global reference
-    _G.PrestigeUI = nil
-
-    -- Run garbage collection safely
-    pcall(function()
-        collectgarbage("collect")
+    
+        warn("⚠️ PrestigeUI destroyed. All references cleared.")
     end)
-
-    warn("⚠️ PrestigeUI destroyed. All references cleared.")
-end)
 
 function PrestigeUI:AddTab(tabName)
     local TabBtn = Instance.new("TextButton")
