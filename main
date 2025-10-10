@@ -211,7 +211,7 @@ function PrestigeUI:Create(title)
     ContentGradient.Rotation = 90
     ContentGradient.Parent = ContentArea
     
-    ScreenGui.Parent = game:GetService("CoreGui")
+    ScreenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
     
     self.ScreenGui = ScreenGui
     self.MainFrame = MainFrame
