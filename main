@@ -372,21 +372,6 @@ function PrestigeUI:AddTab(tabName)
     TabCorner.CornerRadius = UDim.new(0, 10)
     TabCorner.Parent = TabBtn
     
-    TabBtn.MouseEnter:Connect(function()
-        if self.ActiveTab ~= tabName then
-            TweenService:Create(TabBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-                BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-            }):Play()
-        end
-    end)
-    TabBtn.MouseLeave:Connect(function()
-        if self.ActiveTab ~= tabName then
-            TweenService:Create(TabBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-                BackgroundColor3 = self.Theme.Tertiary
-            }):Play()
-        end
-    end)
-    
     local Content = Instance.new("ScrollingFrame")
     Content.Name = tabName .. "Content"
     Content.Size = UDim2.new(1, 0, 1, 0)
@@ -416,14 +401,30 @@ function PrestigeUI:AddTab(tabName)
         Content.Visible = true
     end
     
+    TabBtn.MouseEnter:Connect(function()
+        if self.ActiveTab ~= tabName then
+            TweenService:Create(TabBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+                BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+            }):Play()
+        end
+    end)
+    
+    TabBtn.MouseLeave:Connect(function()
+        if self.ActiveTab ~= tabName then
+            TweenService:Create(TabBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+                BackgroundColor3 = self.Theme.Tertiary
+            }):Play()
+        end
+    end)
+    
     TabBtn.MouseButton1Click:Connect(function()
         for name, tab in pairs(self.Tabs) do
             tab.Button.BackgroundColor3 = self.Theme.Tertiary
             tab.Content.Visible = false
         end
+        self.ActiveTab = tabName
         TabBtn.BackgroundColor3 = self.Theme.Primary
         Content.Visible = true
-        self.ActiveTab = tabName
     end)
     
     self.Tabs[tabName] = {Button = TabBtn, Content = Content, Name = tabName}
