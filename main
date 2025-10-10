@@ -323,13 +323,31 @@ function PrestigeUI:Create(title)
     
     local isOpen = true
     CloseBtn.MouseButton1Click:Connect(function()
-        isOpen = false
-        TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            Size = UDim2.new(0, 0, 0, 0),
-            Position = UDim2.new(0.5, 0, 0.5, 0)
-        }):Play()
-        task.wait(0.4)
-        MainFrame.Visible = false
+        -- PANIC BUTTON - DESTROY EVERYTHING
+        if ScreenGui then
+            ScreenGui:Destroy()
+        end
+        if self.ScreenGui then
+            self.ScreenGui:Destroy()
+        end
+        -- Clear all references
+        self.ScreenGui = nil
+        self.MainFrame = nil
+        self.TopBar = nil
+        self.Title = nil
+        self.MinimizeBtn = nil
+        self.CloseBtn = nil
+        self.Sidebar = nil
+        self.ContentArea = nil
+        self.Tabs = {}
+        self.ActiveTab = nil
+        -- Clear global reference
+        _G.PrestigeUI = nil
+        -- Force garbage collection
+        if gcinfo then
+            collectgarbage("collect")
+        end
+        print("⚠️ PrestigeUI DESTROYED - All features disabled!")
     end)
     
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
