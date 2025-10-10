@@ -711,19 +711,44 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     ListPadding.Parent = DropdownList
     
     local isOpen = false
+    local siblings = {}
+    for _, child in pairs(parent:GetChildren()) do
+        if (child:IsA("Frame") or child:IsA("TextLabel")) and child ~= Container then
+            if child.Position.Y.Offset > Container.Position.Y.Offset then
+                table.insert(siblings, child)
+            end
+        end
+    end
+    
     DropdownBtn.MouseButton1Click:Connect(function()
         isOpen = not isOpen
         if isOpen then
+            local newHeight = math.min(#options * 30, 150)
             TweenService:Create(DropdownList, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-                Size = UDim2.new(1, 0, 0, math.min(#options * 30, 150))
+                Size = UDim2.new(1, 0, 0, newHeight)
             }):Play()
             DropdownList.Visible = true
+            
+            -- Push siblings down
+            for _, sib in pairs(siblings) do
+                TweenService:Create(sib, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+                    Position = sib.Position + UDim2.new(0, 0, 0, newHeight)
+                }):Play()
+            end
         else
+            local oldHeight = DropdownList.Size.Y.Offset
             TweenService:Create(DropdownList, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
                 Size = UDim2.new(1, 0, 0, 0)
             }):Play()
             task.wait(0.2)
             DropdownList.Visible = false
+            
+            -- Move siblings back
+            for _, sib in pairs(siblings) do
+                TweenService:Create(sib, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+                    Position = sib.Position - UDim2.new(0, 0, 0, oldHeight)
+                }):Play()
+            end
         end
     end)
     
