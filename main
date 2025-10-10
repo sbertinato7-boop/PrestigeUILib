@@ -20,6 +20,8 @@ local Theme = {
 
 function PrestigeUI:Create(title)
     local self = setmetatable({}, PrestigeUI)
+    self.Connections = {}
+    self.Theme = Theme
     title = title or "Prestige Hub"
     
     local ScreenGui = Instance.new("ScreenGui")
