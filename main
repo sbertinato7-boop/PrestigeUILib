@@ -403,28 +403,31 @@ function PrestigeUI:AddTab(tabName)
     
     TabBtn.MouseEnter:Connect(function()
         if self.ActiveTab ~= tabName then
-            TweenService:Create(TabBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-                BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-            }):Play()
+            TabBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+        else
+            TabBtn.BackgroundColor3 = self.Theme.Primary
         end
     end)
     
     TabBtn.MouseLeave:Connect(function()
         if self.ActiveTab ~= tabName then
-            TweenService:Create(TabBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-                BackgroundColor3 = self.Theme.Tertiary
-            }):Play()
+            TabBtn.BackgroundColor3 = self.Theme.Tertiary
+        else
+            TabBtn.BackgroundColor3 = self.Theme.Primary
         end
     end)
     
     TabBtn.MouseButton1Click:Connect(function()
-        for name, tab in pairs(self.Tabs) do
-            tab.Button.BackgroundColor3 = self.Theme.Tertiary
-            tab.Content.Visible = false
-        end
         self.ActiveTab = tabName
-        TabBtn.BackgroundColor3 = self.Theme.Primary
-        Content.Visible = true
+        for name, tab in pairs(self.Tabs) do
+            if name == tabName then
+                tab.Button.BackgroundColor3 = self.Theme.Primary
+                tab.Content.Visible = true
+            else
+                tab.Button.BackgroundColor3 = self.Theme.Tertiary
+                tab.Content.Visible = false
+            end
+        end
     end)
     
     self.Tabs[tabName] = {Button = TabBtn, Content = Content, Name = tabName}
