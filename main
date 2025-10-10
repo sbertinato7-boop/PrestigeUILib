@@ -687,15 +687,13 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     Padding.PaddingRight = UDim.new(0, 10)
     Padding.Parent = DropdownBtn
 
-    local DropdownList = Instance.new("ScrollingFrame")
+    local DropdownList = Instance.new("Frame")
     DropdownList.Name = "DropdownList"
     DropdownList.Size = UDim2.new(1, 0, 0, 0)
     DropdownList.Position = UDim2.new(0, 0, 0, 40)
     DropdownList.BackgroundColor3 = self.Theme.Secondary
     DropdownList.BorderSizePixel = 0
-    DropdownList.ScrollBarThickness = 6
     DropdownList.Visible = false
-    DropdownList.AutomaticCanvasSize = Enum.AutomaticSize.Y
     DropdownList.ClipsDescendants = true
     DropdownList.ZIndex = 10
     DropdownList.Parent = Container
@@ -704,16 +702,26 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     ListCorner.CornerRadius = UDim.new(0, 8)
     ListCorner.Parent = DropdownList
 
+    local ListHolder = Instance.new("ScrollingFrame")
+    ListHolder.Name = "ListHolder"
+    ListHolder.Size = UDim2.new(1, 0, 1, 0)
+    ListHolder.BackgroundTransparency = 1
+    ListHolder.BorderSizePixel = 0
+    ListHolder.ScrollBarThickness = 6
+    ListHolder.ScrollBarImageColor3 = self.Theme.Primary
+    ListHolder.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    ListHolder.Parent = DropdownList
+
     local ListLayout = Instance.new("UIListLayout")
     ListLayout.Padding = UDim.new(0, 5)
-    ListLayout.Parent = DropdownList
+    ListLayout.Parent = ListHolder
 
     local ListPadding = Instance.new("UIPadding")
     ListPadding.PaddingTop = UDim.new(0, 5)
     ListPadding.PaddingBottom = UDim.new(0, 5)
     ListPadding.PaddingLeft = UDim.new(0, 5)
     ListPadding.PaddingRight = UDim.new(0, 5)
-    ListPadding.Parent = DropdownList
+    ListPadding.Parent = ListHolder
 
     local isOpen = false
     local maxHeight = 150
@@ -728,7 +736,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         OptionBtn.Font = Enum.Font.Gotham
         OptionBtn.TextSize = 13
         OptionBtn.AutoButtonColor = false
-        OptionBtn.Parent = DropdownList
+        OptionBtn.Parent = ListHolder
 
         local OptionCorner = Instance.new("UICorner")
         OptionCorner.CornerRadius = UDim.new(0, 6)
@@ -746,9 +754,15 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
             DropdownBtn.TextColor3 = self.Theme.Text
             if callback then callback(option) end
             isOpen = false
-            TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,0)}):Play()
-            TweenService:Create(Container, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,35)}):Play()
-            task.delay(0.2, function() DropdownList.Visible = false end)
+            
+            local closeTween1 = TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,0)})
+            local closeTween2 = TweenService:Create(Container, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,35)})
+            closeTween1:Play()
+            closeTween2:Play()
+            
+            task.delay(0.2, function() 
+                DropdownList.Visible = false 
+            end)
         end)
     end
 
@@ -756,14 +770,20 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         isOpen = not isOpen
         if isOpen then
             DropdownList.Visible = true
-            task.wait()
+            task.wait(0.05)
             local contentHeight = ListLayout.AbsoluteContentSize.Y + ListPadding.PaddingTop.Offset + ListPadding.PaddingBottom.Offset
             local finalHeight = math.min(contentHeight, maxHeight)
-            TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, finalHeight)}):Play()
-            TweenService:Create(Container, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 35 + finalHeight + 5)}):Play()
+            
+            local openTween1 = TweenService:Create(DropdownList, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, finalHeight)})
+            local openTween2 = TweenService:Create(Container, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 40 + finalHeight)})
+            openTween1:Play()
+            openTween2:Play()
         else
-            TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,0)}):Play()
-            TweenService:Create(Container, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,35)}):Play()
+            local closeTween1 = TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,0)})
+            local closeTween2 = TweenService:Create(Container, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,35)})
+            closeTween1:Play()
+            closeTween2:Play()
+            
             task.delay(0.2, function()
                 DropdownList.Visible = false
             end)
