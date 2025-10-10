@@ -26,6 +26,8 @@ function PrestigeUI:Create(title)
     ScreenGui.Name = "PrestigeUI"
     ScreenGui.ResetOnSpawn = false
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ScreenGui.DisplayOrder = 999999
+    ScreenGui.IgnoreGuiInset = true
     
     local LoadingFrame = Instance.new("Frame")
     LoadingFrame.Name = "LoadingFrame"
