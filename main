@@ -324,22 +324,33 @@ function PrestigeUI:Create(title)
     
     local isOpen = true
     self.Connections.CloseClick = CloseBtn.MouseButton1Click:Connect(function()
-        -- PANIC BUTTON - DESTROY EVERYTHING
+        print("🚨 PANIC BUTTON PRESSED - DESTROYING EVERYTHING...")
+        
         -- Disconnect all connections first
         for name, connection in pairs(self.Connections) do
-            if connection and typeof(connection) == "RBXScriptConnection" then
-                connection:Disconnect()
-            end
+            pcall(function()
+                if connection and connection.Connected then
+                    connection:Disconnect()
+                    print("✓ Disconnected:", name)
+                end
+            end)
         end
         self.Connections = {}
         
         -- Destroy the GUI
-        if ScreenGui then
-            ScreenGui:Destroy()
-        end
-        if self.ScreenGui then
-            self.ScreenGui:Destroy()
-        end
+        pcall(function()
+            if ScreenGui and ScreenGui.Parent then
+                ScreenGui:Destroy()
+                print("✓ ScreenGui destroyed")
+            end
+        end)
+        
+        pcall(function()
+            if self.ScreenGui and self.ScreenGui.Parent then
+                self.ScreenGui:Destroy()
+                print("✓ self.ScreenGui destroyed")
+            end
+        end)
         
         -- Clear all references
         self.ScreenGui = nil
@@ -357,16 +368,19 @@ function PrestigeUI:Create(title)
         _G.PrestigeUI = nil
         
         -- Force garbage collection
-        if gcinfo then
-            collectgarbage("collect")
-        end
+        collectgarbage("collect")
         
-        print("⚠️ PrestigeUI DESTROYED - All features disabled!")
+        print("⚠️ PrestigeUI COMPLETELY DESTROYED - All features disabled!")
+        print("⚠️ Right Shift will NOT work anymore!")
     end)
     
     self.Connections.RightShiftToggle = UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if gameProcessed then return end
         if input.KeyCode == Enum.KeyCode.RightShift then
+            -- Check if UI still exists
+            if not self.MainFrame or not self.MainFrame.Parent then
+                return
+            end
             isOpen = not isOpen
             if isOpen then
                 MainFrame.Visible = true
