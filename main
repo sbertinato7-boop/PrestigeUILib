@@ -661,7 +661,7 @@ end
 function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     local Container = Instance.new("Frame")
     Container.Name = "DropdownContainer"
-    Container.Size = UDim2.new(1, 0, 0, 35)
+    Container.Size = UDim2.new(1, 0, 0, 0)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
     Container.AutomaticSize = Enum.AutomaticSize.Y
@@ -694,7 +694,9 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     DropdownList.BackgroundColor3 = self.Theme.Secondary
     DropdownList.BorderSizePixel = 0
     DropdownList.ScrollBarThickness = 6
+    DropdownList.ScrollBarImageColor3 = self.Theme.Primary
     DropdownList.Visible = false
+    DropdownList.CanvasSize = UDim2.new(0, 0, 0, 0)
     DropdownList.AutomaticCanvasSize = Enum.AutomaticSize.Y
     DropdownList.ClipsDescendants = true
     DropdownList.Parent = Container
