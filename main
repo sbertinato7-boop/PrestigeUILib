@@ -689,7 +689,6 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     Padding.PaddingRight = UDim.new(0, 10)
     Padding.Parent = DropdownBtn
 
-    -- Dropdown List
     local DropdownList = Instance.new("ScrollingFrame")
     DropdownList.Name = "DropdownList"
     DropdownList.Size = UDim2.new(1, 0, 0, 0)
@@ -718,7 +717,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     ListPadding.Parent = DropdownList
 
     local isOpen = false
-    local maxHeight = 150 -- max dropdown height before scrolling
+    local maxHeight = 150
 
     for _, option in pairs(options) do
         local OptionBtn = Instance.new("TextButton")
@@ -751,14 +750,13 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
             TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,0)}):Play()
             task.delay(0.2, function() DropdownList.Visible = false end)
         end)
-    end
-end)
+    end  -- ← FIXED: This was "end)" before
 
     DropdownBtn.MouseButton1Click:Connect(function()
         isOpen = not isOpen
         if isOpen then
             DropdownList.Visible = true
-            task.wait() -- wait for AbsoluteContentSize to update
+            task.wait()
             local contentHeight = ListLayout.AbsoluteContentSize.Y + ListPadding.PaddingTop.Offset + ListPadding.PaddingBottom.Offset
             DropdownList.Size = UDim2.new(1, 0, 0, math.min(contentHeight, maxHeight))
         else
@@ -769,7 +767,8 @@ end)
         end
     end)
 
-end -- <<-- THIS CLOSES AddDropdown
+    return Container
+end
 
 function PrestigeUI:AddSlider(parent, min, max, default, callback)
     local Container = Instance.new("Frame")
