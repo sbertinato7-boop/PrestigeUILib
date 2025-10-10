@@ -754,10 +754,9 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         isOpen = not isOpen
         if isOpen then
             DropdownList.Visible = true
-            -- Tween height up to maxHeight if needed
-            local contentHeight = ListLayout.AbsoluteContentSize.Y + 10
-            local finalHeight = math.min(contentHeight, maxHeight)
-            TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,finalHeight)}):Play()
+            local contentHeight = ListLayout.AbsoluteContentSize.Y + ListPadding.PaddingTop.Offset + ListPadding.PaddingBottom.Offset
+            local finalHeight = math.min(contentHeight, maxHeight) -- don't exceed maxHeight
+            TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, finalHeight)}):Play()
         else
             TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,0)}):Play()
             task.delay(0.2, function() DropdownList.Visible = false end)
