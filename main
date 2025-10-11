@@ -499,28 +499,30 @@ function PrestigeUI:AddButton(parent, text, callback)
     BtnCorner.CornerRadius = UDim.new(0, 8)
     BtnCorner.Parent = Btn
 
-    -- ✅ Add UIScale for smooth hover
+    -- Create UIScale for hover effect
     local UIScaleObj = Instance.new("UIScale")
-    UIScaleObj.Scale = Vector3.new(1,1,1)
+    UIScaleObj.Scale = 1
     UIScaleObj.Parent = Btn
 
-    -- Only leave MouseLeave if you want it to scale back
+    -- Function to tween scale safely
+    local function TweenScale(targetScale)
+        TweenService:Create(UIScaleObj, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Scale = targetScale
+        }):Play()
+    end
+
     Btn.MouseEnter:Connect(function()
-        TweenService:Create(UIScaleObj, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Scale = Vector3.new(1.05, 1.05, 1)
-        }):Play()
+        TweenScale(1.05) -- slightly bigger
     end)
-
+    
     Btn.MouseLeave:Connect(function()
-        TweenService:Create(UIScaleObj, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Scale = Vector3.new(1,1,1)
-        }):Play()
+        TweenScale(1) -- back to normal
     end)
-
+    
     Btn.MouseButton1Click:Connect(function()
         if callback then callback() end
     end)
-
+    
     return Btn
 end
 
