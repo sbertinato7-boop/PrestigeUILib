@@ -89,6 +89,8 @@ function PrestigeUI:Create(title)
     self.MinimizedIcon = nil
     self.AllElements = {} -- Track all elements for theme updates
     title = title or "Prestige Hub"
+    self.Tabs = {}
+    self.TabOrder = {} -- Add this line to track order
     
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "PrestigeUI"
@@ -504,6 +506,7 @@ function PrestigeUI:AddTab(tabName)
     end)
     
     self.Tabs[tabName] = {Button = TabBtn, Content = Content, Name = tabName, Container = Container}
+    table.insert(self.TabOrder, tabName)
     table.insert(self.AllElements, {Type = "Tab", Btn = TabBtn, Text = TabText})
     return Content
 end
