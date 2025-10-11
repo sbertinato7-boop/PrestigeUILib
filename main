@@ -1950,5 +1950,15 @@ end
 -- local sec = Window:AddSection(tab, "My Section")
 -- Window:AddButton(sec, "Press Me", function() ... end)
 
+function PrestigeUI:SetTheme(themeName)
+    if ThemePresets and ThemePresets[themeName] then
+        self.Theme = table.clone(ThemePresets[themeName])
+        self:ApplyTheme()
+    end
+end
+
+_G.PrestigeUI = PrestigeUI
+return PrestigeUI
+
 _G.PrestigeUI = PrestigeUI
 return PrestigeUI
