@@ -492,8 +492,9 @@ function PrestigeUI:AddTab(tabName)
     TabBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             self.ActiveTab = tabName
-            for name, tab in pairs(self.Tabs) do
-                if name == tabName then
+            -- FIX: Use ipairs to maintain order
+            for i, tab in ipairs(self.Tabs) do
+                if tab.Name == tabName then
                     tween(tab.Button, {BackgroundColor3 = self.Theme.Primary}, 0.3)
                     tab.Content.Visible = true
                 else
@@ -504,10 +505,10 @@ function PrestigeUI:AddTab(tabName)
         end
     end)
 
+    -- FIX: Only use array, no dictionary
     local tabData = {Button = TabBtn, Content = Content, Name = tabName, Container = Container}
     table.insert(self.Tabs, tabData)
     
-    self.Tabs[tabName] = {Button = TabBtn, Content = Content, Name = tabName, Container = Container}
     table.insert(self.AllElements, {Type = "Tab", Btn = TabBtn, Text = TabText})
     return Content
 end
@@ -1136,8 +1137,8 @@ function PrestigeUI:ApplyTheme()
     self.MinimizeBtn.BackgroundColor3 = t.Primary
     self.CloseBtn.BackgroundColor3 = t.Primary
     
-    for name, tab in pairs(self.Tabs) do
-        if self.ActiveTab == name then
+    for i, tab in ipairs(self.Tabs) do
+        if self.ActiveTab == tab.Name then
             tab.Button.BackgroundColor3 = t.Primary
         else
             tab.Button.BackgroundColor3 = t.Tertiary
@@ -1234,7 +1235,8 @@ function PrestigeUI:AddSearchBar(parent)
     SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
         local query = SearchBox.Text:lower()
         
-        for name, tab in pairs(self.Tabs) do
+        for i, tab in ipairs(self.Tabs) do
+            local name = tab.Name
             local shouldShow = false
             
             if query == "" then
