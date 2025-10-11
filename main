@@ -1432,6 +1432,13 @@ end
 function PrestigeUI:MinimizeToCorner()
     if self.MinimizedIcon then return end
     
+    -- Animate main frame before hiding
+    tween(self.MainFrame, {
+        Size = UDim2.new(0, 600, 0, 400),
+        BackgroundTransparency = 1
+    }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+    
+    task.wait(0.3)
     self.MainFrame.Visible = false
     
     local Icon = Instance.new("Frame")
@@ -1499,21 +1506,36 @@ function PrestigeUI:MinimizeToCorner()
     end)
     
     self.MinimizedIcon = Icon
+    
+    -- Animate icon appearing
+    Icon.Size = UDim2.new(0, 0, 0, 0)
+    Icon.BackgroundTransparency = 1
+    IconText.TextTransparency = 1
+    
+    tween(Icon, {Size = UDim2.new(0, 60, 0, 60), BackgroundTransparency = 0}, 0.4, Enum.EasingStyle.Back)
+    tween(IconText, {TextTransparency = 0}, 0.4)
 end
 
 function PrestigeUI:RestoreFromCorner()
     if self.MinimizedIcon then
-        local fadeOut = tween(self.MinimizedIcon, {BackgroundTransparency = 1}, 0.2)
+        -- Shrink icon before destroying
+        tween(self.MinimizedIcon, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
         local textLabel = self.MinimizedIcon:FindFirstChildOfClass("TextLabel")
         if textLabel then
-            tween(textLabel, {TextTransparency = 1}, 0.2)
+            tween(textLabel, {TextTransparency = 1}, 0.3)
         end
-        if fadeOut then fadeOut.Completed:Wait() end
+        
+        task.wait(0.3)
         self.MinimizedIcon:Destroy()
         self.MinimizedIcon = nil
     end
     
+    -- Animate main frame appearing
     self.MainFrame.Visible = true
+    self.MainFrame.Size = UDim2.new(0, 600, 0, 400)
+    self.MainFrame.BackgroundTransparency = 1
+    
+    tween(self.MainFrame, {BackgroundTransparency = 0}, 0.3)
     tween(self.MainFrame, {Size = UDim2.new(0, 700, 0, 450)}, 0.4, Enum.EasingStyle.Back)
 end
 
