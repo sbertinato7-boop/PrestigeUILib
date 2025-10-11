@@ -1512,13 +1512,15 @@ end
 function PrestigeUI:AddDivider(parent, text)
     local Container = Instance.new("Frame")
     Container.Name = "Divider"
-    Container.Size = UDim2.new(1, 0, 0, 30)
+    Container.Size = UDim2.new(1, 0, 0, text and 35 or 15)
     Container.BackgroundTransparency = 1
     Container.Parent = parent
     
     if text and text ~= "" then
+        -- Text label at the top
         local Label = Instance.new("TextLabel")
-        Label.Size = UDim2.new(0.3, 0, 1, 0)
+        Label.Size = UDim2.new(1, 0, 0, 20)
+        Label.Position = UDim2.new(0, 0, 0, 0)
         Label.BackgroundTransparency = 1
         Label.Text = text
         Label.TextColor3 = self.Theme.TextSecondary
@@ -1527,13 +1529,15 @@ function PrestigeUI:AddDivider(parent, text)
         Label.TextXAlignment = Enum.TextXAlignment.Left
         Label.Parent = Container
         
+        -- Line BELOW the text
         local Line = Instance.new("Frame")
-        Line.Size = UDim2.new(0.65, 0, 0, 2)
-        Line.Position = UDim2.new(0.35, 0, 0.5, -1)
+        Line.Size = UDim2.new(1, 0, 0, 2)
+        Line.Position = UDim2.new(0, 0, 0, 25)
         Line.BackgroundColor3 = self.Theme.Tertiary
         Line.BorderSizePixel = 0
         Line.Parent = Container
     else
+        -- Just a line, centered
         local Line = Instance.new("Frame")
         Line.Size = UDim2.new(1, 0, 0, 2)
         Line.Position = UDim2.new(0, 0, 0.5, -1)
@@ -1545,8 +1549,13 @@ function PrestigeUI:AddDivider(parent, text)
     return Container
 end
 
--- Keybind Selector
+-- Keybind Selector - FIXED: Better error handling
 function PrestigeUI:AddKeybind(parent, text, default, callback)
+    if not parent or not self.Theme then 
+        warn("AddKeybind: Invalid parent or theme not initialized")
+        return nil
+    end
+    
     local Container = Instance.new("Frame")
     Container.Name = "KeybindContainer"
     Container.Size = UDim2.new(1, 0, 0, 40)
@@ -1556,8 +1565,8 @@ function PrestigeUI:AddKeybind(parent, text, default, callback)
     local Label = Instance.new("TextLabel")
     Label.Size = UDim2.new(1, -120, 1, 0)
     Label.BackgroundTransparency = 1
-    Label.Text = text
-    Label.TextColor3 = self.Theme.Text
+    Label.Text = text or "Keybind"
+    Label.TextColor3 = self.Theme.Text or Color3.fromRGB(255, 255, 255)
     Label.Font = Enum.Font.GothamBold
     Label.TextSize = 14
     Label.TextXAlignment = Enum.TextXAlignment.Left
@@ -1566,7 +1575,7 @@ function PrestigeUI:AddKeybind(parent, text, default, callback)
     local KeybindBtn = Instance.new("Frame")
     KeybindBtn.Size = UDim2.new(0, 110, 0, 30)
     KeybindBtn.Position = UDim2.new(1, -110, 0.5, -15)
-    KeybindBtn.BackgroundColor3 = self.Theme.Tertiary
+    KeybindBtn.BackgroundColor3 = self.Theme.Tertiary or Color3.fromRGB(28, 28, 32)
     KeybindBtn.BorderSizePixel = 0
     KeybindBtn.Parent = Container
     
@@ -1579,7 +1588,7 @@ function PrestigeUI:AddKeybind(parent, text, default, callback)
     KeyText.Size = UDim2.new(1, 0, 1, 0)
     KeyText.BackgroundTransparency = 1
     KeyText.Text = currentKey.Name
-    KeyText.TextColor3 = self.Theme.Text
+    KeyText.TextColor3 = self.Theme.Text or Color3.fromRGB(255, 255, 255)
     KeyText.Font = Enum.Font.Gotham
     KeyText.TextSize = 13
     KeyText.Parent = KeybindBtn
@@ -1591,7 +1600,7 @@ function PrestigeUI:AddKeybind(parent, text, default, callback)
     end)
     KeybindBtn.MouseLeave:Connect(function()
         if not listening then
-            tween(KeybindBtn, {BackgroundColor3 = self.Theme.Tertiary}, 0.2)
+            tween(KeybindBtn, {BackgroundColor3 = self.Theme.Tertiary or Color3.fromRGB(28, 28, 32)}, 0.2)
         end
     end)
     
@@ -1599,7 +1608,7 @@ function PrestigeUI:AddKeybind(parent, text, default, callback)
         if input.UserInputType == Enum.UserInputType.MouseButton1 and not listening then
             listening = true
             KeyText.Text = "..."
-            tween(KeybindBtn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
+            tween(KeybindBtn, {BackgroundColor3 = self.Theme.Primary or Color3.fromRGB(0, 180, 255)}, 0.2)
         end
     end)
     
@@ -1609,8 +1618,10 @@ function PrestigeUI:AddKeybind(parent, text, default, callback)
             currentKey = input.KeyCode
             KeyText.Text = currentKey.Name
             listening = false
-            tween(KeybindBtn, {BackgroundColor3 = self.Theme.Tertiary}, 0.2)
-            if callback then callback(currentKey) end
+            tween(KeybindBtn, {BackgroundColor3 = self.Theme.Tertiary or Color3.fromRGB(28, 28, 32)}, 0.2)
+            if callback then 
+                pcall(function() callback(currentKey) end)
+            end
         end
     end)
     
@@ -1618,8 +1629,13 @@ function PrestigeUI:AddKeybind(parent, text, default, callback)
     return {Container = Container, GetKey = function() return currentKey end}
 end
 
--- Color Picker for Themes
+-- Color Picker - FIXED: Better error handling
 function PrestigeUI:AddColorPicker(parent, text, default, callback)
+    if not parent or not self.Theme then 
+        warn("AddColorPicker: Invalid parent or theme not initialized")
+        return nil
+    end
+    
     local Container = Instance.new("Frame")
     Container.Name = "ColorPickerContainer"
     Container.Size = UDim2.new(1, 0, 0, 40)
@@ -1629,14 +1645,14 @@ function PrestigeUI:AddColorPicker(parent, text, default, callback)
     local Label = Instance.new("TextLabel")
     Label.Size = UDim2.new(1, -50, 1, 0)
     Label.BackgroundTransparency = 1
-    Label.Text = text
-    Label.TextColor3 = self.Theme.Text
+    Label.Text = text or "Color"
+    Label.TextColor3 = self.Theme.Text or Color3.fromRGB(255, 255, 255)
     Label.Font = Enum.Font.GothamBold
     Label.TextSize = 14
     Label.TextXAlignment = Enum.TextXAlignment.Left
     Label.Parent = Container
     
-    local currentColor = default or Color3.fromRGB(255, 255, 255)
+    local currentColor = default or Color3.fromRGB(0, 180, 255)
     
     local ColorDisplay = Instance.new("Frame")
     ColorDisplay.Size = UDim2.new(0, 40, 0, 30)
@@ -1651,10 +1667,14 @@ function PrestigeUI:AddColorPicker(parent, text, default, callback)
     
     ColorDisplay.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            self:OpenColorPicker(currentColor, function(newColor)
-                currentColor = newColor
-                ColorDisplay.BackgroundColor3 = newColor
-                if callback then callback(newColor) end
+            pcall(function()
+                self:OpenColorPicker(currentColor, function(newColor)
+                    currentColor = newColor
+                    ColorDisplay.BackgroundColor3 = newColor
+                    if callback then 
+                        pcall(function() callback(newColor) end)
+                    end
+                end)
             end)
         end
     end)
@@ -1669,13 +1689,18 @@ function PrestigeUI:AddColorPicker(parent, text, default, callback)
     return {Container = Container, GetColor = function() return currentColor end}
 end
 
--- Color Picker Window
+-- Color Picker Window - FIXED: Better error handling and cleanup
 function PrestigeUI:OpenColorPicker(defaultColor, callback)
+    if not self.ScreenGui or not self.Theme then 
+        warn("OpenColorPicker: ScreenGui or Theme not initialized")
+        return
+    end
+    
     local PickerFrame = Instance.new("Frame")
     PickerFrame.Name = "ColorPickerFrame"
     PickerFrame.Size = UDim2.new(0, 300, 0, 350)
     PickerFrame.Position = UDim2.new(0.5, -150, 0.5, -175)
-    PickerFrame.BackgroundColor3 = self.Theme.Secondary
+    PickerFrame.BackgroundColor3 = self.Theme.Secondary or Color3.fromRGB(22, 22, 25)
     PickerFrame.BorderSizePixel = 0
     PickerFrame.ZIndex = 1000
     PickerFrame.Parent = self.ScreenGui
@@ -1688,7 +1713,7 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
     Title.Size = UDim2.new(1, 0, 0, 40)
     Title.BackgroundTransparency = 1
     Title.Text = "Color Picker"
-    Title.TextColor3 = self.Theme.Text
+    Title.TextColor3 = self.Theme.Text or Color3.fromRGB(255, 255, 255)
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 16
     Title.Parent = PickerFrame
@@ -1702,7 +1727,7 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
         SliderLabel.Position = UDim2.new(0, 20, 0, yPos)
         SliderLabel.BackgroundTransparency = 1
         SliderLabel.Text = name .. ":"
-        SliderLabel.TextColor3 = self.Theme.Text
+        SliderLabel.TextColor3 = self.Theme.Text or Color3.fromRGB(255, 255, 255)
         SliderLabel.Font = Enum.Font.Gotham
         SliderLabel.TextSize = 14
         SliderLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -1711,13 +1736,13 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
         local SliderBg = Instance.new("Frame")
         SliderBg.Size = UDim2.new(0, 180, 0, 6)
         SliderBg.Position = UDim2.new(0, 60, 0, yPos + 7)
-        SliderBg.BackgroundColor3 = self.Theme.Tertiary
+        SliderBg.BackgroundColor3 = self.Theme.Tertiary or Color3.fromRGB(28, 28, 32)
         SliderBg.BorderSizePixel = 0
         SliderBg.Parent = PickerFrame
         
         local SliderFill = Instance.new("Frame")
         SliderFill.Size = UDim2.new(defaultValue / 255, 0, 1, 0)
-        SliderFill.BackgroundColor3 = self.Theme.Primary
+        SliderFill.BackgroundColor3 = self.Theme.Primary or Color3.fromRGB(0, 180, 255)
         SliderFill.BorderSizePixel = 0
         SliderFill.Parent = SliderBg
         
@@ -1726,7 +1751,7 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
         ValueLabel.Position = UDim2.new(0, 250, 0, yPos)
         ValueLabel.BackgroundTransparency = 1
         ValueLabel.Text = tostring(defaultValue)
-        ValueLabel.TextColor3 = self.Theme.Text
+        ValueLabel.TextColor3 = self.Theme.Text or Color3.fromRGB(255, 255, 255)
         ValueLabel.Font = Enum.Font.Gotham
         ValueLabel.TextSize = 14
         ValueLabel.Parent = PickerFrame
@@ -1782,9 +1807,11 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
     PreviewCorner.Parent = Preview
     
     -- Update preview
-    task.spawn(function()
+    local updateTask = task.spawn(function()
         while PickerFrame.Parent do
-            Preview.BackgroundColor3 = Color3.fromRGB(getRed(), getGreen(), getBlue())
+            pcall(function()
+                Preview.BackgroundColor3 = Color3.fromRGB(getRed(), getGreen(), getBlue())
+            end)
             task.wait(0.05)
         end
     end)
@@ -1793,7 +1820,7 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
     local ApplyBtn = Instance.new("Frame")
     ApplyBtn.Size = UDim2.new(0, 120, 0, 35)
     ApplyBtn.Position = UDim2.new(0, 20, 0, 280)
-    ApplyBtn.BackgroundColor3 = self.Theme.Primary
+    ApplyBtn.BackgroundColor3 = self.Theme.Primary or Color3.fromRGB(0, 180, 255)
     ApplyBtn.BorderSizePixel = 0
     ApplyBtn.Parent = PickerFrame
     
@@ -1805,15 +1832,18 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
     ApplyText.Size = UDim2.new(1, 0, 1, 0)
     ApplyText.BackgroundTransparency = 1
     ApplyText.Text = "Apply"
-    ApplyText.TextColor3 = self.Theme.Text
+    ApplyText.TextColor3 = self.Theme.Text or Color3.fromRGB(255, 255, 255)
     ApplyText.Font = Enum.Font.GothamBold
     ApplyText.TextSize = 14
     ApplyText.Parent = ApplyBtn
     
     ApplyBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            local finalColor = Color3.fromRGB(getRed(), getGreen(), getBlue())
-            if callback then callback(finalColor) end
+            pcall(function()
+                local finalColor = Color3.fromRGB(getRed(), getGreen(), getBlue())
+                if callback then callback(finalColor) end
+            end)
+            task.cancel(updateTask)
             PickerFrame:Destroy()
         end
     end)
@@ -1821,7 +1851,7 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
     local CancelBtn = Instance.new("Frame")
     CancelBtn.Size = UDim2.new(0, 120, 0, 35)
     CancelBtn.Position = UDim2.new(0, 160, 0, 280)
-    CancelBtn.BackgroundColor3 = self.Theme.Tertiary
+    CancelBtn.BackgroundColor3 = self.Theme.Tertiary or Color3.fromRGB(28, 28, 32)
     CancelBtn.BorderSizePixel = 0
     CancelBtn.Parent = PickerFrame
     
@@ -1833,20 +1863,26 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
     CancelText.Size = UDim2.new(1, 0, 1, 0)
     CancelText.BackgroundTransparency = 1
     CancelText.Text = "Cancel"
-    CancelText.TextColor3 = self.Theme.Text
+    CancelText.TextColor3 = self.Theme.Text or Color3.fromRGB(255, 255, 255)
     CancelText.Font = Enum.Font.GothamBold
     CancelText.TextSize = 14
     CancelText.Parent = CancelBtn
     
     CancelBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            task.cancel(updateTask)
             PickerFrame:Destroy()
         end
     end)
 end
 
--- Modal Dialog
+-- Modal Dialog - FIXED: Better error handling
 function PrestigeUI:ShowDialog(options)
+    if not self.ScreenGui or not self.Theme then 
+        warn("ShowDialog: ScreenGui or Theme not initialized")
+        return
+    end
+    
     options = options or {}
     local title = options.Title or "Dialog"
     local message = options.Message or ""
@@ -1864,7 +1900,7 @@ function PrestigeUI:ShowDialog(options)
     local Dialog = Instance.new("Frame")
     Dialog.Size = UDim2.new(0, 400, 0, 200)
     Dialog.Position = UDim2.new(0.5, -200, 0.5, -100)
-    Dialog.BackgroundColor3 = self.Theme.Secondary
+    Dialog.BackgroundColor3 = self.Theme.Secondary or Color3.fromRGB(22, 22, 25)
     Dialog.BorderSizePixel = 0
     Dialog.ZIndex = 1000
     Dialog.Parent = Overlay
@@ -1878,7 +1914,7 @@ function PrestigeUI:ShowDialog(options)
     Title.Position = UDim2.new(0, 20, 0, 15)
     Title.BackgroundTransparency = 1
     Title.Text = title
-    Title.TextColor3 = self.Theme.Primary
+    Title.TextColor3 = self.Theme.Primary or Color3.fromRGB(0, 180, 255)
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 18
     Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -1889,7 +1925,7 @@ function PrestigeUI:ShowDialog(options)
     Message.Position = UDim2.new(0, 20, 0, 60)
     Message.BackgroundTransparency = 1
     Message.Text = message
-    Message.TextColor3 = self.Theme.Text
+    Message.TextColor3 = self.Theme.Text or Color3.fromRGB(255, 255, 255)
     Message.Font = Enum.Font.Gotham
     Message.TextSize = 14
     Message.TextXAlignment = Enum.TextXAlignment.Left
@@ -1905,7 +1941,7 @@ function PrestigeUI:ShowDialog(options)
         local Btn = Instance.new("Frame")
         Btn.Size = UDim2.new(0, buttonWidth, 0, 35)
         Btn.Position = UDim2.new(0, 20 + (i - 1) * (buttonWidth + 10), 0, 150)
-        Btn.BackgroundColor3 = i == 1 and self.Theme.Primary or self.Theme.Tertiary
+        Btn.BackgroundColor3 = i == 1 and (self.Theme.Primary or Color3.fromRGB(0, 180, 255)) or (self.Theme.Tertiary or Color3.fromRGB(28, 28, 32))
         Btn.BorderSizePixel = 0
         Btn.Parent = Dialog
         
@@ -1917,23 +1953,26 @@ function PrestigeUI:ShowDialog(options)
         BtnLabel.Size = UDim2.new(1, 0, 1, 0)
         BtnLabel.BackgroundTransparency = 1
         BtnLabel.Text = btnText
-        BtnLabel.TextColor3 = self.Theme.Text
+        BtnLabel.TextColor3 = self.Theme.Text or Color3.fromRGB(255, 255, 255)
         BtnLabel.Font = Enum.Font.GothamBold
         BtnLabel.TextSize = 14
         BtnLabel.Parent = Btn
         
         Btn.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                if btnCallback then btnCallback() end
+                if btnCallback then 
+                    pcall(function() btnCallback() end)
+                end
                 Overlay:Destroy()
             end
         end)
         
         Btn.MouseEnter:Connect(function()
-            tween(Btn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
+            tween(Btn, {BackgroundColor3 = self.Theme.Primary or Color3.fromRGB(0, 180, 255)}, 0.2)
         end)
         Btn.MouseLeave:Connect(function()
-            tween(Btn, {BackgroundColor3 = i == 1 and self.Theme.Primary or self.Theme.Tertiary}, 0.2)
+            local defaultColor = i == 1 and (self.Theme.Primary or Color3.fromRGB(0, 180, 255)) or (self.Theme.Tertiary or Color3.fromRGB(28, 28, 32))
+            tween(Btn, {BackgroundColor3 = defaultColor}, 0.2)
         end)
     end
     
@@ -1944,14 +1983,17 @@ function PrestigeUI:ShowDialog(options)
     tween(Dialog, {Size = UDim2.new(0, 400, 0, 200)}, 0.3, Enum.EasingStyle.Back)
 end
 
--- Tooltip System
+-- Tooltip System - FIXED: Better error handling
 function PrestigeUI:AddTooltip(element, text)
-    if not element then return end
+    if not element or not self.ScreenGui or not self.Theme then 
+        warn("AddTooltip: Invalid element, ScreenGui, or Theme")
+        return
+    end
     
     local Tooltip = Instance.new("Frame")
     Tooltip.Name = "Tooltip"
     Tooltip.Size = UDim2.new(0, 200, 0, 40)
-    Tooltip.BackgroundColor3 = self.Theme.Dark
+    Tooltip.BackgroundColor3 = self.Theme.Dark or Color3.fromRGB(18, 18, 20)
     Tooltip.BorderSizePixel = 0
     Tooltip.Visible = false
     Tooltip.ZIndex = 10000
@@ -1965,8 +2007,8 @@ function PrestigeUI:AddTooltip(element, text)
     TooltipText.Size = UDim2.new(1, -20, 1, 0)
     TooltipText.Position = UDim2.new(0, 10, 0, 0)
     TooltipText.BackgroundTransparency = 1
-    TooltipText.Text = text
-    TooltipText.TextColor3 = self.Theme.Text
+    TooltipText.Text = text or ""
+    TooltipText.TextColor3 = self.Theme.Text or Color3.fromRGB(255, 255, 255)
     TooltipText.Font = Enum.Font.Gotham
     TooltipText.TextSize = 12
     TooltipText.TextWrapped = true
