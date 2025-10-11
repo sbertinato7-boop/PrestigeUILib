@@ -494,37 +494,6 @@ function PrestigeUI:AddButton(parent, text, callback)
     BtnCorner.CornerRadius = UDim.new(0, 8)
     BtnCorner.Parent = Btn
 
-    -- Add a UIScale for scaling animation
-    local UIScaleObj = Instance.new("UIScale")
-    UIScaleObj.Scale = Vector3.new(1, 1, 1)
-    UIScaleObj.Parent = Btn
-
-    -- Hover animation
-    Btn.MouseEnter:Connect(function()
-        -- Cancel any conflicting tweens first
-        for _, tween in pairs(game:GetService("TweenService"):GetTweens(UIScaleObj)) do
-            tween:Cancel()
-        end
-        -- Play hover tween
-        game:GetService("TweenService"):Create(UIScaleObj, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Scale = Vector3.new(1.05, 1.05, 1)
-        }):Play()
-    end)
-
-    Btn.MouseLeave:Connect(function()
-        for _, tween in pairs(game:GetService("TweenService"):GetTweens(UIScaleObj)) do
-            tween:Cancel()
-        end
-        game:GetService("TweenService"):Create(UIScaleObj, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Scale = Vector3.new(1, 1, 1)
-        }):Play()
-    end)
-
-    Btn.MouseButton1Click:Connect(function()
-        if callback then callback() end
-    end)
-
-    return Btn
 end
 
 function PrestigeUI:AddLabel(parent, text, textSize)
