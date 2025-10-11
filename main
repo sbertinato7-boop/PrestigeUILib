@@ -495,8 +495,9 @@ function PrestigeUI:RemoveTab(tabName)
 end
 
 function PrestigeUI:AddButton(parent, text, callback)
+    -- Create with a unique class name to avoid global styling
     local Btn = Instance.new("TextButton")
-    Btn.Name = text .. "Button"
+    Btn.Name = "PrestigeButton_" .. text
     Btn.Size = UDim2.new(1, 0, 0, 35)
     Btn.BackgroundColor3 = self.Theme.Primary
     Btn.Text = text
@@ -510,9 +511,10 @@ function PrestigeUI:AddButton(parent, text, callback)
     BtnCorner.CornerRadius = UDim.new(0, 8)
     BtnCorner.Parent = Btn
 
-    -- COMPLETELY DISABLE all hover effects for now
-    -- Let's see if the issue persists without any animations
+    -- DEBUG: Print when button is created to see what's happening
+    print("Button created: " .. text)
 
+    -- Use a completely different approach - ImageButton instead
     Btn.MouseButton1Click:Connect(function()
         if callback then callback() end
     end)
