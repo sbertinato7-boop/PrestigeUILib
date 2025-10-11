@@ -500,14 +500,18 @@ function PrestigeUI:AddButton(parent, text, callback)
     BtnCorner.Parent = Btn
     
     Btn.MouseEnter:Connect(function()
-        TweenService:Create(Btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = Color3.fromRGB(20, 200, 255)
+        TweenService:Create(Btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundColor3 = Color3.fromRGB(20, 200, 255),
+            Size = UDim2.new(1, 6, 0, 41),       -- slightly bigger width & height
+            Position = UDim2.new(Btn.Position.X.Scale, Btn.Position.X.Offset - 3, Btn.Position.Y.Scale, Btn.Position.Y.Offset - 3)
         }):Play()
     end)
     
     Btn.MouseLeave:Connect(function()
-        TweenService:Create(Btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = self.Theme.Primary
+        TweenService:Create(Btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            BackgroundColor3 = self.Theme.Primary,
+            Size = UDim2.new(1, 0, 0, 35),        -- original size
+            Position = UDim2.new(Btn.Position.X.Scale, Btn.Position.X.Offset + 3, Btn.Position.Y.Scale, Btn.Position.Y.Offset + 3)
         }):Play()
     end)
     
