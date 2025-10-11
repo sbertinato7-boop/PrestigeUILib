@@ -1371,13 +1371,38 @@ end
 function PrestigeUI:MinimizeToCorner()
     if self.MinimizedIcon then return end
     
+    -- Smooth fade out and shrink animation
+    local shrinkTween = tween(self.MainFrame, {
+        Size = UDim2.new(0, 600, 0, 400),
+        Position = UDim2.new(0.5, -300, 0.5, -200)
+    }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+    
+    local fadeTween = tween(self.MainFrame, {BackgroundTransparency = 1}, 0.3)
+    
+    -- Fade out all children
+    for _, child in ipairs(self.MainFrame:GetDescendants()) do
+        if child:IsA("GuiObject") and child ~= self.MainFrame then
+            pcall(function()
+                if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
+                    tween(child, {TextTransparency = 1}, 0.3)
+                end
+                if child.BackgroundTransparency < 1 then
+                    tween(child, {BackgroundTransparency = 1}, 0.3)
+                end
+            end)
+        end
+    end
+    
+    if shrinkTween then shrinkTween.Completed:Wait() end
     self.MainFrame.Visible = false
     
+    -- Create minimized icon with spawn animation
     local Icon = Instance.new("Frame")
     Icon.Name = "MinimizedIcon"
-    Icon.Size = UDim2.new(0, 60, 0, 60)
+    Icon.Size = UDim2.new(0, 0, 0, 0)
     Icon.Position = UDim2.new(1, -80, 1, -80)
     Icon.BackgroundColor3 = self.Theme.Primary
+    Icon.BackgroundTransparency = 1
     Icon.BorderSizePixel = 0
     Icon.Parent = self.ScreenGui
     
@@ -1390,9 +1415,15 @@ function PrestigeUI:MinimizeToCorner()
     IconText.BackgroundTransparency = 1
     IconText.Text = "P"
     IconText.TextColor3 = self.Theme.Text
+    IconText.TextTransparency = 1
     IconText.Font = Enum.Font.GothamBold
     IconText.TextSize = 28
     IconText.Parent = Icon
+    
+    -- Animate icon appearance
+    tween(Icon, {BackgroundTransparency = 0}, 0.3)
+    tween(Icon, {Size = UDim2.new(0, 60, 0, 60)}, 0.4, Enum.EasingStyle.Back)
+    tween(IconText, {TextTransparency = 0}, 0.3)
     
     local dragging = false
     local dragInput, mousePos, framePos
@@ -1442,6 +1473,8 @@ end
 
 function PrestigeUI:RestoreFromCorner()
     if self.MinimizedIcon then
+        -- Shrink and fade out icon
+        tween(self.MinimizedIcon, {Size = UDim2.new(0, 0, 0, 0)}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
         local fadeOut = tween(self.MinimizedIcon, {BackgroundTransparency = 1}, 0.2)
         local textLabel = self.MinimizedIcon:FindFirstChildOfClass("TextLabel")
         if textLabel then
@@ -1452,8 +1485,51 @@ function PrestigeUI:RestoreFromCorner()
         self.MinimizedIcon = nil
     end
     
+    -- Reset all transparencies before showing
+    self.MainFrame.BackgroundTransparency = 1
+    for _, child in ipairs(self.MainFrame:GetDescendants()) do
+        if child:IsA("GuiObject") and child ~= self.MainFrame then
+            pcall(function()
+                if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
+                    child.TextTransparency = 1
+                end
+                if child.Name ~= "UICorner" and child.Name ~= "UIPadding" and child.Name ~= "UIListLayout" then
+                    child.BackgroundTransparency = 1
+                end
+            end)
+        end
+    end
+    
     self.MainFrame.Visible = true
-    tween(self.MainFrame, {Size = UDim2.new(0, 700, 0, 450)}, 0.4, Enum.EasingStyle.Back)
+    self.MainFrame.Size = UDim2.new(0, 600, 0, 400)
+    self.MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+    
+    -- Animate main frame expansion
+    local expandTween = tween(self.MainFrame, {
+        Size = UDim2.new(0, 700, 0, 450),
+        Position = UDim2.new(0.5, -350, 0.5, -225)
+    }, 0.4, Enum.EasingStyle.Back)
+    
+    tween(self.MainFrame, {BackgroundTransparency = 0}, 0.3)
+    
+    -- Fade in all children
+    task.wait(0.1)
+    for _, child in ipairs(self.MainFrame:GetDescendants()) do
+        if child:IsA("GuiObject") and child ~= self.MainFrame then
+            pcall(function()
+                if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
+                    tween(child, {TextTransparency = 0}, 0.3)
+                end
+                if child.Name ~= "UICorner" and child.Name ~= "UIPadding" and child.Name ~= "UIListLayout" then
+                    local originalTransparency = 0
+                    if child.Name:find("Container") or child.Name:find("Bg") or child.Name:find("Button") then
+                        originalTransparency = 0
+                    end
+                    tween(child, {BackgroundTransparency = originalTransparency}, 0.3)
+                end
+            end)
+        end
+    end
 end
 
 function PrestigeUI:SetKeybind(keyCode)
