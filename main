@@ -488,8 +488,15 @@ function PrestigeUI:AddTab(tabName)
         end
     end)
     
+    local dragging = false
+    local dragStart = nil
+    local dragOffset = nil
+    
     TabBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            dragOffset = 0
             self.ActiveTab = tabName
             for name, tab in pairs(self.Tabs) do
                 if name == tabName then
@@ -500,6 +507,78 @@ function PrestigeUI:AddTab(tabName)
                     tab.Content.Visible = false
                 end
             end
+        end
+    end)
+    
+    TabBtn.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement and dragging and dragStart then
+            dragOffset = input.Position.Y - dragStart.Y
+            if math.abs(dragOffset) > 30 then
+                tween(Container, {BackgroundColor3 = Color3.fromRGB(50, 100, 150)}, 0.2)
+            end
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and dragging then
+            dragging = false
+            tween(Container, {BackgroundColor3 = Color3.fromRGB(0, 0, 0, 0)}, 0.2)
+            
+            if math.abs(dragOffset) > 30 then
+                local allTabs = {}
+                for name, tab in pairs(self.Tabs) do
+                    table.insert(allTabs, {Name = name, Order = tab.Container.Parent:FindFirstChild(tab.Container.Name) and 
+                        (tab.Container.Parent:FindFirstChild(tab.Container.Name).LayoutOrder or 0) or 0})
+                end
+                
+                local currentIndex = nil
+                for i, tab in ipairs(allTabs) do
+                    if tab.Name == tabName then
+                        currentIndex = i
+                        break
+                    end
+                end
+                
+                if currentIndex then
+                    if dragOffset > 0 and currentIndex < #allTabs then
+                        Container:TweenPosition(
+                            UDim2.new(0, 0, 0, 40),
+                            Enum.EasingDirection.Out,
+                            Enum.EasingStyle.Quad,
+                            0.3,
+                            true
+                        )
+                        allTabs[currentIndex + 1].Container:TweenPosition(
+                            UDim2.new(0, 0, 0, 0),
+                            Enum.EasingDirection.Out,
+                            Enum.EasingStyle.Quad,
+                            0.3,
+                            true
+                        )
+                        Container.Parent:FindFirstChild(allTabs[currentIndex + 1].Container.Name).LayoutOrder, Container.LayoutOrder = 
+                            Container.LayoutOrder, self.Sidebar:FindFirstChild(allTabs[currentIndex + 1].Container.Name).LayoutOrder
+                    elseif dragOffset < 0 and currentIndex > 1 then
+                        Container:TweenPosition(
+                            UDim2.new(0, 0, 0, -40),
+                            Enum.EasingDirection.Out,
+                            Enum.EasingStyle.Quad,
+                            0.3,
+                            true
+                        )
+                        allTabs[currentIndex - 1].Container:TweenPosition(
+                            UDim2.new(0, 0, 0, 0),
+                            Enum.EasingDirection.Out,
+                            Enum.EasingStyle.Quad,
+                            0.3,
+                            true
+                        )
+                        Container.Parent:FindFirstChild(allTabs[currentIndex - 1].Container.Name).LayoutOrder, Container.LayoutOrder = 
+                            Container.LayoutOrder, self.Sidebar:FindFirstChild(allTabs[currentIndex - 1].Container.Name).LayoutOrder
+                    end
+                end
+            end
+            dragStart = nil
+            dragOffset = 0
         end
     end)
     
