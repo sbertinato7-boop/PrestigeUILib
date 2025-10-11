@@ -495,65 +495,47 @@ function PrestigeUI:RemoveTab(tabName)
 end
 
 function PrestigeUI:AddButton(parent, text, callback)
-    print("=== BUTTON CREATION DEBUG ===")
-    print("Creating button: " .. text)
-    print("Parent: " .. parent.Name)
-    print("Parent Size: " .. tostring(parent.AbsoluteSize))
+    local Container = Instance.new("Frame")
+    Container.Name = text .. "Container"
+    Container.Size = UDim2.new(1, 0, 0, 35)
+    Container.BackgroundTransparency = 1
+    Container.ClipsDescendants = true  -- CRITICAL: This prevents overflow
+    Container.Parent = parent
     
     local Btn = Instance.new("TextButton")
     Btn.Name = text .. "Button"
-    Btn.Size = UDim2.new(1, 0, 0, 35)
+    Btn.Size = UDim2.new(1, -20, 1, 0)  -- Reduced width with margins
+    Btn.Position = UDim2.new(0, 10, 0, 0)  -- Centered within container
     Btn.BackgroundColor3 = self.Theme.Primary
     Btn.Text = text
     Btn.TextColor3 = self.Theme.Text
     Btn.Font = Enum.Font.GothamBold
     Btn.TextSize = 14
     Btn.AutoButtonColor = false
-    Btn.Parent = parent
+    Btn.Parent = Container
     
     local BtnCorner = Instance.new("UICorner")
     BtnCorner.CornerRadius = UDim.new(0, 8)
     BtnCorner.Parent = Btn
 
-    -- Debug all events
+    -- Clean, constrained hover animation
     Btn.MouseEnter:Connect(function()
-        print("🚀 MOUSE ENTER: " .. text)
-        print("   Button Size: " .. tostring(Btn.AbsoluteSize))
-        print("   Button Position: " .. tostring(Btn.AbsolutePosition))
-        print("   Parent Size: " .. tostring(parent.AbsoluteSize))
-        print("   Parent Position: " .. tostring(parent.AbsolutePosition))
-        
-        -- Check if button is extending beyond parent
-        local buttonRight = Btn.AbsolutePosition.X + Btn.AbsoluteSize.X
-        local parentRight = parent.AbsolutePosition.X + parent.AbsoluteSize.X
-        print("   Button Right Edge: " .. buttonRight)
-        print("   Parent Right Edge: " .. parentRight)
-        print("   Overflow: " .. tostring(buttonRight > parentRight))
+        TweenService:Create(Btn, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(30, 200, 245)
+        }):Play()
     end)
     
     Btn.MouseLeave:Connect(function()
-        print("📤 MOUSE LEAVE: " .. text)
+        TweenService:Create(Btn, TweenInfo.new(0.2), {
+            BackgroundColor3 = self.Theme.Primary
+        }):Play()
     end)
     
-    Btn.MouseButton1Down:Connect(function()
-        print("🖱️ MOUSE DOWN: " .. text)
-    end)
-    
-    Btn.MouseButton1Up:Connect(function()
-        print("🖱️ MOUSE UP: " .. text)
-    end)
-
     Btn.MouseButton1Click:Connect(function()
-        print("✅ BUTTON CLICKED: " .. text)
         if callback then callback() end
     end)
-
-    -- Print initial state
-    print("Button created successfully")
-    print("Initial Size: " .. tostring(Btn.AbsoluteSize))
-    print("=======================")
     
-    return Btn
+    return Container
 end
 
 function PrestigeUI:AddParagraph(parent, title, content)
