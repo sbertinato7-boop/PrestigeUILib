@@ -486,7 +486,13 @@ function PrestigeUI:Close()
         Position = UDim2.new(0.5, -300, 0.5, -200),
         BackgroundTransparency = 1
     }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-    if mainTween then mainTween.Completed:Wait() end
+    
+    -- WAIT for animation to complete before destroying
+    if mainTween then 
+        mainTween.Completed:Wait() 
+    else
+        task.wait(0.3)
+    end
     
     for name, conn in pairs(self.Connections or {}) do
         if typeof(conn) == "RBXScriptConnection" then
@@ -1429,16 +1435,23 @@ function PrestigeUI:AddSearchBar(parent)
     return SearchBox
 end
 
-function PrestigeUI:MinimizeToCorner()
+Here's the fixed MinimizeToCorner function:
+luafunction PrestigeUI:MinimizeToCorner()
     if self.MinimizedIcon then return end
     
     -- Animate main frame before hiding
-    tween(self.MainFrame, {
+    local mainShrink = tween(self.MainFrame, {
         Size = UDim2.new(0, 600, 0, 400),
         BackgroundTransparency = 1
     }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
     
-    task.wait(0.3)
+    -- WAIT for the animation to complete
+    if mainShrink then
+        mainShrink.Completed:Wait()
+    else
+        task.wait(0.3)
+    end
+    
     self.MainFrame.Visible = false
     
     local Icon = Instance.new("Frame")
@@ -1519,13 +1532,19 @@ end
 function PrestigeUI:RestoreFromCorner()
     if self.MinimizedIcon then
         -- Shrink icon before destroying
-        tween(self.MinimizedIcon, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        local iconShrink = tween(self.MinimizedIcon, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
         local textLabel = self.MinimizedIcon:FindFirstChildOfClass("TextLabel")
         if textLabel then
             tween(textLabel, {TextTransparency = 1}, 0.3)
         end
         
-        task.wait(0.3)
+        -- WAIT for the animation to complete
+        if iconShrink then
+            iconShrink.Completed:Wait()
+        else
+            task.wait(0.3)
+        end
+        
         self.MinimizedIcon:Destroy()
         self.MinimizedIcon = nil
     end
