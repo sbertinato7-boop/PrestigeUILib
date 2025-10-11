@@ -846,182 +846,39 @@ function PrestigeUI:AddToggle(parent, text, callback)
     return {Container = Container, Toggle = ToggleButton, GetState = function() return toggled end}
 end
 
+-- Patch dropdown opening to always update colors of list and options
+local oldAddDropdown = PrestigeUI.AddDropdown
 function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
-    local Container = Instance.new("Frame")
-    Container.Name = "DropdownContainer"
-    Container.Size = UDim2.new(1, 0, 0, 40)
-    Container.BackgroundColor3 = self.Theme.Tertiary
-    Container.BorderSizePixel = 0
-    Container.ClipsDescendants = false  -- IMPORTANT: Don't clip dropdown
-    Container.Parent = parent
-
-    local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0, 8)
-    Corner.Parent = Container
-
-    local DropdownBtn = Instance.new("Frame")
-    DropdownBtn.Name = "DropdownBtn"
-    DropdownBtn.Size = UDim2.new(1, 0, 0, 40)
-    DropdownBtn.BackgroundTransparency = 1
-    DropdownBtn.BorderSizePixel = 0
-    DropdownBtn.Parent = Container
-    
-    local DropdownText = Instance.new("TextLabel")
-    DropdownText.Name = "Text"
-    DropdownText.Size = UDim2.new(1, 0, 1, 0)
-    DropdownText.BackgroundTransparency = 1
-    DropdownText.Text = placeholder or "Select..."
-    DropdownText.TextColor3 = self.Theme.TextSecondary
-    DropdownText.Font = Enum.Font.Gotham
-    DropdownText.TextSize = 14
-    DropdownText.TextXAlignment = Enum.TextXAlignment.Left
-    DropdownText.Parent = DropdownBtn
-
-    local Padding = Instance.new("UIPadding")
-    Padding.PaddingLeft = UDim.new(0, 10)
-    Padding.PaddingRight = UDim.new(0, 10)
-    Padding.Parent = DropdownBtn
-
-    -- Arrow indicator
-    local Arrow = Instance.new("TextLabel")
-    Arrow.Size = UDim2.new(0, 20, 0, 40)
-    Arrow.Position = UDim2.new(1, -30, 0, 0)
-    Arrow.BackgroundTransparency = 1
-    Arrow.Text = "▼"
-    Arrow.TextColor3 = self.Theme.TextSecondary
-    Arrow.Font = Enum.Font.Gotham
-    Arrow.TextSize = 12
-    Arrow.Parent = DropdownBtn
-
-    local DropdownList = Instance.new("ScrollingFrame")
-    DropdownList.Name = "DropdownList"
-    DropdownList.Size = UDim2.new(1, 0, 0, 0)
-    DropdownList.Position = UDim2.new(0, 0, 0, 45)
-    DropdownList.BackgroundColor3 = self.Theme.Secondary
-    DropdownList.BorderSizePixel = 0
-    DropdownList.ScrollBarThickness = 6
-    DropdownList.ScrollBarImageColor3 = self.Theme.Primary
-    DropdownList.Visible = false
-    DropdownList.CanvasSize = UDim2.new(0, 0, 0, 0)
-    DropdownList.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    DropdownList.ClipsDescendants = true
-    DropdownList.ZIndex = 100
-    DropdownList.Parent = Container
-
-    local ListCorner = Instance.new("UICorner")
-    ListCorner.CornerRadius = UDim.new(0, 8)
-    ListCorner.Parent = DropdownList
-
-    local ListLayout = Instance.new("UIListLayout")
-    ListLayout.Padding = UDim.new(0, 5)
-    ListLayout.Parent = DropdownList
-
-    local ListPadding = Instance.new("UIPadding")
-    ListPadding.PaddingTop = UDim.new(0, 5)
-    ListPadding.PaddingBottom = UDim.new(0, 5)
-    ListPadding.PaddingLeft = UDim.new(0, 5)
-    ListPadding.PaddingRight = UDim.new(0, 5)
-    ListPadding.Parent = DropdownList
-
-    local isOpen = false
-    local maxHeight = 150
-
-    for _, option in pairs(options) do
-        local OptionBtn = Instance.new("Frame")
-        OptionBtn.Name = option
-        OptionBtn.Size = UDim2.new(1, 0, 0, 30)
-        OptionBtn.BackgroundColor3 = self.Theme.Tertiary
-        OptionBtn.BorderSizePixel = 0
-        OptionBtn.Parent = DropdownList
-
-        local OptionText = Instance.new("TextLabel")
-        OptionText.Size = UDim2.new(1, 0, 1, 0)
-        OptionText.BackgroundTransparency = 1
-        OptionText.Text = option
-        OptionText.TextColor3 = self.Theme.Text
-        OptionText.Font = Enum.Font.Gotham
-        OptionText.TextSize = 13
-        OptionText.Parent = OptionBtn
-
-        local OptionCorner = Instance.new("UICorner")
-        OptionCorner.CornerRadius = UDim.new(0, 6)
-        OptionCorner.Parent = OptionBtn
-
-        OptionBtn.MouseEnter:Connect(function()
-            tween(OptionBtn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
-        end)
-        OptionBtn.MouseLeave:Connect(function()
-            tween(OptionBtn, {BackgroundColor3 = self.Theme.Tertiary}, 0.2)
-        end)
-
-        OptionBtn.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                DropdownText.Text = option
-                DropdownText.TextColor3 = self.Theme.Text
-                if callback then callback(option) end
-                
-                -- Close dropdown
-                isOpen = false
-                Arrow.Text = "▼"
-                tween(Arrow, {Rotation = 0}, 0.2)
-                tween(DropdownList, {Size = UDim2.new(1, 0, 0, 0)}, 0.3, Enum.EasingStyle.Quad)
-                
-                -- Shrink container back to original size
-                tween(Container, {Size = UDim2.new(1, 0, 0, 40)}, 0.3, Enum.EasingStyle.Quad)
-                
-                task.wait(0.3)
-                DropdownList.Visible = false
+    local Container = oldAddDropdown(self, parent, placeholder, options, callback)
+    -- Patch dropdown so it always recolors on open or theme switch
+    local function updateDropdownColors()
+        if type(Container) == "table" and Container.List then
+            for _, c in ipairs(Container.List:GetChildren()) do
+                if c:IsA("Frame") then
+                    c.BackgroundColor3 = self.Theme.Tertiary
+                    local lbl = c:FindFirstChildWhichIsA("TextLabel")
+                    if lbl then lbl.TextColor3 = self.Theme.Text end
+                end
             end
-        end)
+        end
+        if type(Container) == "table" and Container.Bg then
+            Container.Bg.BackgroundColor3 = self.Theme.Tertiary
+        end
+        if type(Container) == "table" and Container.Btn then
+            Container.Btn.BackgroundColor3 = self.Theme.Tertiary
+        end
+        if type(Container) == "table" and Container.List and Container.List.Visible then
+            -- If open, force visible update of each option
+            for _, c in ipairs(Container.List:GetChildren()) do
+                if c:IsA("Frame") and c:IsA("GuiObject") then c.BackgroundTransparency = 0 end
+            end
+        end
     end
-
-    DropdownBtn.MouseEnter:Connect(function()
-        tween(Container, {BackgroundColor3 = Color3.fromRGB(35, 35, 40)}, 0.2)
-    end)
-    DropdownBtn.MouseLeave:Connect(function()
-        if not isOpen then
-            tween(Container, {BackgroundColor3 = self.Theme.Tertiary}, 0.2)
-        end
-    end)
-
-    DropdownBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            isOpen = not isOpen
-            if isOpen then
-                -- Calculate dropdown height
-                DropdownList.Visible = true
-                task.wait()
-                local contentHeight = ListLayout.AbsoluteContentSize.Y + ListPadding.PaddingTop.Offset + ListPadding.PaddingBottom.Offset
-                local dropdownHeight = math.min(contentHeight, maxHeight)
-                
-                -- Expand container to fit dropdown + button
-                local totalHeight = 40 + dropdownHeight + 10
-                tween(Container, {Size = UDim2.new(1, 0, 0, totalHeight)}, 0.3, Enum.EasingStyle.Back)
-                
-                -- Open dropdown
-                tween(DropdownList, {Size = UDim2.new(1, 0, 0, dropdownHeight)}, 0.3, Enum.EasingStyle.Back)
-                tween(Container, {BackgroundColor3 = Color3.fromRGB(35, 35, 40)}, 0.2)
-                
-                -- Rotate arrow
-                Arrow.Text = "▲"
-                tween(Arrow, {Rotation = 180}, 0.2)
-            else
-                -- Close dropdown
-                Arrow.Text = "▼"
-                tween(Arrow, {Rotation = 0}, 0.2)
-                tween(DropdownList, {Size = UDim2.new(1, 0, 0, 0)}, 0.3, Enum.EasingStyle.Quad)
-                tween(Container, {BackgroundColor3 = self.Theme.Tertiary}, 0.2)
-                
-                -- Shrink container back
-                tween(Container, {Size = UDim2.new(1, 0, 0, 40)}, 0.3, Enum.EasingStyle.Quad)
-                
-                task.wait(0.3)
-                DropdownList.Visible = false
-            end
-        end
-    end)
-
-    table.insert(self.AllElements, {Type = "Dropdown", Bg = Container, List = DropdownList})
+    -- Connections for live recoloring
+    if type(Container) == "table" and Container.List then
+        Container.List:GetPropertyChangedSignal("Visible"):Connect(updateDropdownColors)
+    end
+    updateDropdownColors()
     return Container
 end
 
@@ -1242,109 +1099,57 @@ function PrestigeUI:Notify(options)
     task.delay(duration, removeNotif)
 end
 
-function PrestigeUI:SetTheme(themeName)
-    if ThemePresets[themeName] then
-        self.Theme = table.clone(ThemePresets[themeName])
-        self:ApplyTheme()
-    end
-end
-
-function PrestigeUI:CreateCustomTheme(themeTable)
-    if themeTable and type(themeTable) == "table" then
-        self.Theme = {
-            Primary = themeTable.Primary or ThemePresets.Dark.Primary,
-            Secondary = themeTable.Secondary or ThemePresets.Dark.Secondary,
-            Tertiary = themeTable.Tertiary or ThemePresets.Dark.Tertiary,
-            Text = themeTable.Text or ThemePresets.Dark.Text,
-            TextSecondary = themeTable.TextSecondary or ThemePresets.Dark.TextSecondary,
-            Dark = themeTable.Dark or ThemePresets.Dark.Dark,
-            Accent = themeTable.Accent or ThemePresets.Dark.Accent
-        }
-        self:ApplyTheme()
-    end
-end
-
+-- Patch ApplyTheme so it guarantees ALL text/frames for dropdowns and labels use the right color
+local oldApplyTheme = PrestigeUI.ApplyTheme
 function PrestigeUI:ApplyTheme()
-    if not self.Theme then 
-        warn("ApplyTheme: Theme not initialized")
-        return 
-    end
-    local t = self.Theme
-    -- Safely update main frame colors
-    if self.MainFrame then self.MainFrame.BackgroundColor3 = t.Dark end
-    if self.TopBar then self.TopBar.BackgroundColor3 = t.Secondary end
-    if self.TopBarBottom then self.TopBarBottom.BackgroundColor3 = t.Secondary end
-    if self.Sidebar then self.Sidebar.BackgroundColor3 = t.Secondary end
-    if self.ContentArea then self.ContentArea.BackgroundColor3 = t.Secondary end
-    if self.Title then self.Title.TextColor3 = t.Text end
-    if self.MinimizeBtn then self.MinimizeBtn.BackgroundColor3 = t.Primary end
-    if self.CloseBtn then self.CloseBtn.BackgroundColor3 = t.Primary end
-    -- Update tabs
-    if self.Tabs then
-        for i, tab in ipairs(self.Tabs) do
-            if tab.Button then
-                if self.ActiveTab == tab.Name then
-                    tab.Button.BackgroundColor3 = t.Primary
-                else
-                    tab.Button.BackgroundColor3 = t.Tertiary
+    oldApplyTheme(self)
+    for _, elem in ipairs(self.AllElements or {}) do
+        if elem.Type == "Dropdown" then
+            if elem.List then
+                for _, c in ipairs(elem.List:GetChildren()) do
+                    if c:IsA("Frame") then
+                        c.BackgroundColor3 = self.Theme.Tertiary
+                        local lbl = c:FindFirstChildWhichIsA("TextLabel")
+                        if lbl then lbl.TextColor3 = self.Theme.Text end
+                    end
                 end
+            end
+            if elem.Bg then elem.Bg.BackgroundColor3 = self.Theme.Tertiary end
+            if elem.Btn then elem.Btn.BackgroundColor3 = self.Theme.Tertiary end
+        elseif elem.Type == "Label" then
+            if elem.Lbl then elem.Lbl.TextColor3 = self.Theme.Text end
+        elseif elem.Type == "Para" then
+            if elem.Bg then elem.Bg.BackgroundColor3 = self.Theme.Tertiary end
+            if elem.Title then elem.Title.TextColor3 = self.Theme.Text end
+            if elem.Content then elem.Content.TextColor3 = self.Theme.Text end
+        end
+    end
+end
+
+-- Patch AddLabel so it always uses theme text
+local oldAddLabel = PrestigeUI.AddLabel
+function PrestigeUI:AddLabel(parent, text, textSize)
+    local lbl = oldAddLabel(self, parent, text, textSize)
+    if typeof(lbl) == "Instance" and lbl:IsA("TextLabel") then
+        lbl.TextColor3 = self.Theme.Text
+    end
+    return lbl
+end
+-- Patch AddParagraph similarly
+local oldAddParagraph = PrestigeUI.AddParagraph
+function PrestigeUI:AddParagraph(parent, title, content)
+    local container = oldAddParagraph(self, parent, title, content)
+    if typeof(container) == "Instance" then
+        for _, c in ipairs(container:GetChildren()) do
+            if c:IsA("TextLabel") then
+                c.TextColor3 = self.Theme.Text
+            end
+            if c:IsA("Frame") then
+                c.BackgroundColor3 = self.Theme.Tertiary
             end
         end
     end
-    -- Update all elements
-    if self.AllElements then
-        for _, elem in ipairs(self.AllElements) do
-            pcall(function()
-                if elem.Type == "Tab" then
-                    if elem.Btn and self.ActiveTab == elem.Btn.Parent.Parent.Name:gsub("TabContainer", "") then
-                        elem.Btn.BackgroundColor3 = t.Primary
-                    elseif elem.Btn then
-                        elem.Btn.BackgroundColor3 = t.Tertiary
-                    end
-                    if elem.Text then elem.Text.TextColor3 = t.Text end
-                elseif elem.Type == "Button" then
-                    if elem.Btn then elem.Btn.BackgroundColor3 = t.Primary end
-                    if elem.Text then elem.Text.TextColor3 = t.Text end
-                elseif elem.Type == "Label" then
-                    if elem.Lbl then elem.Lbl.TextColor3 = t.Text end
-                elseif elem.Type == "Para" then
-                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-                    if elem.Title then elem.Title.TextColor3 = t.Primary end
-                    if elem.Content then elem.Content.TextColor3 = t.TextSecondary end
-                elseif elem.Type == "TextBox" then
-                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-                    if elem.Box then 
-                        elem.Box.TextColor3 = t.Text 
-                        elem.Box.PlaceholderColor3 = t.TextSecondary
-                    end
-                elseif elem.Type == "Toggle" then
-                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-                    if elem.Label then elem.Label.TextColor3 = t.Text end
-                elseif elem.Type == "Dropdown" then
-                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-                    -- Fix: Update ALL dropdown option text colors, not just the main one
-                    if elem.List then
-                        for _, c in ipairs(elem.List:GetChildren()) do
-                            if c:IsA("Frame") then
-                                local lbl = c:FindFirstChildWhichIsA("TextLabel")
-                                if lbl then lbl.TextColor3 = t.Text end
-                            end
-                        end
-                    end
-                elseif elem.Type == "Slider" then
-                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-                    if elem.Label then elem.Label.TextColor3 = t.Text end
-                elseif elem.Type == "SearchBar" then
-                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-                    if elem.Icon then elem.Icon.TextColor3 = t.TextSecondary end
-                    if elem.Box then 
-                        elem.Box.TextColor3 = t.Text 
-                        elem.Box.PlaceholderColor3 = t.TextSecondary
-                    end
-                end
-            end)
-        end
-    end
+    return container
 end
 
 function PrestigeUI:AddSearchBar(parent)
