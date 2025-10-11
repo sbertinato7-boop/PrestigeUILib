@@ -86,7 +86,7 @@ end
 function PrestigeUI:Create(title)
     local self = setmetatable({}, PrestigeUI)
     self.Connections = {}
-    self.Theme = Theme
+    self.Theme = ThemePresets.Dark  -- Use Dark preset as default
     self.Notifications = {}
     self.ConfigData = {}
     self.ToggleKeybind = Enum.KeyCode.RightShift
@@ -104,7 +104,7 @@ function PrestigeUI:Create(title)
     LoadingFrame.Name = "LoadingFrame"
     LoadingFrame.Size = UDim2.new(0, 400, 0, 200)
     LoadingFrame.Position = UDim2.new(0.5, -200, 0.5, -100)
-    LoadingFrame.BackgroundColor3 = Theme.Dark
+    LoadingFrame.BackgroundColor3 = self.Theme.Dark
     LoadingFrame.BorderSizePixel = 0
     LoadingFrame.Parent = ScreenGui
     
@@ -117,7 +117,7 @@ function PrestigeUI:Create(title)
     LoadingTitle.Position = UDim2.new(0, 0, 0, 40)
     LoadingTitle.BackgroundTransparency = 1
     LoadingTitle.Text = string.upper(title)
-    LoadingTitle.TextColor3 = Theme.Primary
+    LoadingTitle.TextColor3 = self.Theme.Primary
     LoadingTitle.Font = Enum.Font.GothamBold
     LoadingTitle.TextSize = 28
     LoadingTitle.Parent = LoadingFrame
@@ -137,7 +137,7 @@ function PrestigeUI:Create(title)
     local LoadingBar = Instance.new("Frame")
     LoadingBar.Name = "LoadingBar"
     LoadingBar.Size = UDim2.new(0, 0, 1, 0)
-    LoadingBar.BackgroundColor3 = Theme.Primary
+    LoadingBar.BackgroundColor3 = self.Theme.Primary
     LoadingBar.BorderSizePixel = 0
     LoadingBar.Parent = LoadingBarBg
     
@@ -147,9 +147,9 @@ function PrestigeUI:Create(title)
     
     local LoadingBarGlow = Instance.new("UIGradient")
     LoadingBarGlow.Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, Theme.Primary),
+        ColorSequenceKeypoint.new(0, self.Theme.Primary),
         ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 220, 255)),
-        ColorSequenceKeypoint.new(1, Theme.Primary)
+        ColorSequenceKeypoint.new(1, self.Theme.Primary)
     }
     LoadingBarGlow.Parent = LoadingBar
     
@@ -158,7 +158,7 @@ function PrestigeUI:Create(title)
     LoadingText.Position = UDim2.new(0, 0, 0, 145)
     LoadingText.BackgroundTransparency = 1
     LoadingText.Text = "Loading... 0%"
-    LoadingText.TextColor3 = Theme.TextSecondary
+    LoadingText.TextColor3 = self.Theme.TextSecondary
     LoadingText.Font = Enum.Font.Gotham
     LoadingText.TextSize = 14
     LoadingText.Parent = LoadingFrame
@@ -167,7 +167,7 @@ function PrestigeUI:Create(title)
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 700, 0, 450)
     MainFrame.Position = UDim2.new(0.5, -350, 0.5, -225)
-    MainFrame.BackgroundColor3 = Theme.Dark
+    MainFrame.BackgroundColor3 = self.Theme.Dark
     MainFrame.BorderSizePixel = 0
     MainFrame.Visible = false
     MainFrame.ClipsDescendants = true
@@ -180,7 +180,7 @@ function PrestigeUI:Create(title)
     local TopBar = Instance.new("Frame")
     TopBar.Name = "TopBar"
     TopBar.Size = UDim2.new(1, 0, 0, 45)
-    TopBar.BackgroundColor3 = Theme.Secondary
+    TopBar.BackgroundColor3 = self.Theme.Secondary
     TopBar.BorderSizePixel = 0
     TopBar.Parent = MainFrame
     
@@ -191,7 +191,7 @@ function PrestigeUI:Create(title)
     local TopBarBottom = Instance.new("Frame")
     TopBarBottom.Size = UDim2.new(1, 0, 0, 15)
     TopBarBottom.Position = UDim2.new(0, 0, 1, -15)
-    TopBarBottom.BackgroundColor3 = Theme.Secondary
+    TopBarBottom.BackgroundColor3 = self.Theme.Secondary
     TopBarBottom.BorderSizePixel = 0
     TopBarBottom.Parent = TopBar
     
@@ -201,7 +201,7 @@ function PrestigeUI:Create(title)
     TitleLabel.Position = UDim2.new(0, 15, 0, 0)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Text = title
-    TitleLabel.TextColor3 = Theme.Text
+    TitleLabel.TextColor3 = self.Theme.Text
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.TextSize = 16
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -211,7 +211,7 @@ function PrestigeUI:Create(title)
     MinimizeBtn.Name = "MinimizeBtn"
     MinimizeBtn.Size = UDim2.new(0, 35, 0, 35)
     MinimizeBtn.Position = UDim2.new(1, -80, 0.5, -17.5)
-    MinimizeBtn.BackgroundColor3 = Theme.Primary
+    MinimizeBtn.BackgroundColor3 = self.Theme.Primary
     MinimizeBtn.BorderSizePixel = 0
     MinimizeBtn.Parent = TopBar
 
@@ -219,7 +219,7 @@ function PrestigeUI:Create(title)
     MinimizeText.Size = UDim2.new(1, 0, 1, 0)
     MinimizeText.BackgroundTransparency = 1
     MinimizeText.Text = "_"
-    MinimizeText.TextColor3 = Theme.Text
+    MinimizeText.TextColor3 = self.Theme.Text
     MinimizeText.Font = Enum.Font.GothamBold
     MinimizeText.TextSize = 20
     MinimizeText.Parent = MinimizeBtn
@@ -232,7 +232,7 @@ function PrestigeUI:Create(title)
     CloseBtn.Name = "CloseBtn"
     CloseBtn.Size = UDim2.new(0, 35, 0, 35)
     CloseBtn.Position = UDim2.new(1, -40, 0.5, -17.5)
-    CloseBtn.BackgroundColor3 = Theme.Primary
+    CloseBtn.BackgroundColor3 = self.Theme.Primary
     CloseBtn.BorderSizePixel = 0
     CloseBtn.Parent = TopBar
 
@@ -240,7 +240,7 @@ function PrestigeUI:Create(title)
     CloseText.Size = UDim2.new(1, 0, 1, 0)
     CloseText.BackgroundTransparency = 1
     CloseText.Text = "X"
-    CloseText.TextColor3 = Theme.Text
+    CloseText.TextColor3 = self.Theme.Text
     CloseText.Font = Enum.Font.GothamBold
     CloseText.TextSize = 18
     CloseText.Parent = CloseBtn
@@ -253,7 +253,7 @@ function PrestigeUI:Create(title)
     Sidebar.Name = "Sidebar"
     Sidebar.Size = UDim2.new(0, 180, 0, 387)
     Sidebar.Position = UDim2.new(0, 8, 0, 53)
-    Sidebar.BackgroundColor3 = Theme.Secondary
+    Sidebar.BackgroundColor3 = self.Theme.Secondary
     Sidebar.BorderSizePixel = 0
     Sidebar.Parent = MainFrame
     
@@ -276,7 +276,7 @@ function PrestigeUI:Create(title)
     ContentArea.Name = "ContentArea"
     ContentArea.Size = UDim2.new(0, 496, 0, 387)
     ContentArea.Position = UDim2.new(0, 196, 0, 53)
-    ContentArea.BackgroundColor3 = Theme.Secondary
+    ContentArea.BackgroundColor3 = self.Theme.Secondary
     ContentArea.BorderSizePixel = 0
     ContentArea.Parent = MainFrame
     
@@ -286,7 +286,7 @@ function PrestigeUI:Create(title)
     
     local ContentGradient = Instance.new("UIGradient")
     ContentGradient.Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, Theme.Secondary),
+        ColorSequenceKeypoint.new(0, self.Theme.Secondary),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 25, 28))
     }
     ContentGradient.Rotation = 90
@@ -310,14 +310,14 @@ function PrestigeUI:Create(title)
         tween(MinimizeBtn, {BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2)
     end)
     MinimizeBtn.MouseLeave:Connect(function()
-        tween(MinimizeBtn, {BackgroundColor3 = Theme.Primary}, 0.2)
+        tween(MinimizeBtn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
     end)
     
     CloseBtn.MouseEnter:Connect(function()
-        tween(CloseBtn, {BackgroundColor3 = Theme.Accent}, 0.2)
+        tween(CloseBtn, {BackgroundColor3 = self.Theme.Accent}, 0.2)
     end)
     CloseBtn.MouseLeave:Connect(function()
-        tween(CloseBtn, {BackgroundColor3 = Theme.Primary}, 0.2)
+        tween(CloseBtn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
     end)
     
     -- Loading animation with proper sequencing
@@ -346,6 +346,7 @@ function PrestigeUI:Create(title)
         
         -- Show main frame with animation
         MainFrame.Visible = true
+        MainFrame.BackgroundTransparency = 1
         MainFrame.Size = UDim2.new(0, 600, 0, 400)
         MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
         
