@@ -2095,5 +2095,54 @@ function PrestigeUI:AddTooltip(element, text)
     end)
 end
 
+-- AddSection: Creates a true section within a tab to organize grouped features.
+function PrestigeUI:AddSection(parentTab, title)
+    -- parentTab is the content frame returned by AddTab
+    local Section = Instance.new("Frame")
+    Section.Name = (title or "Section") .. "Container"
+    Section.BackgroundTransparency = 1
+    Section.Size = UDim2.new(1, 0, 0, 0)
+    Section.AutomaticSize = Enum.AutomaticSize.Y
+    Section.Parent = parentTab
+
+    local Layout = Instance.new("UIListLayout")
+    Layout.Parent = Section
+    Layout.SortOrder = Enum.SortOrder.LayoutOrder
+    Layout.Padding = UDim.new(0, 7)
+
+    local Pad = Instance.new("UIPadding")
+    Pad.Parent = Section
+    Pad.PaddingLeft = UDim.new(0, 6)
+    Pad.PaddingRight = UDim.new(0, 6)
+    Pad.PaddingTop = UDim.new(0, 2)
+    Pad.PaddingBottom = UDim.new(0, 7)
+
+    if title and title ~= "" then
+        local TitleLabel = Instance.new("TextLabel")
+        TitleLabel.Size = UDim2.new(1, 0, 0, 20)
+        TitleLabel.BackgroundTransparency = 1
+        TitleLabel.Text = title
+        TitleLabel.TextColor3 = self.Theme.TextSecondary
+        TitleLabel.Font = Enum.Font.GothamBold
+        TitleLabel.TextSize = 13
+        TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        TitleLabel.Parent = Section
+        local Line = Instance.new("Frame")
+        Line.Size = UDim2.new(1, 0, 0, 2)
+        Line.BackgroundColor3 = self.Theme.Tertiary
+        Line.BorderSizePixel = 0
+        Line.Parent = Section
+    end
+    return Section
+end
+
+-- USAGE EXAMPLE:
+-- local MainTab = Window:AddTab("Main")
+-- local upgradesSection = Window:AddSection(MainTab, "Upgrade Automation")
+-- Window:AddToggle(upgradesSection, "Auto Upgrade Tier", function(state) ... end)
+-- local questsSection = Window:AddSection(MainTab, "Quests")
+-- Window:AddToggle(questsSection, "Auto Complete Quests", function(state) ... end)
+-- This will group toggles visually in MainTab in proper sections.
+
 _G.PrestigeUI = PrestigeUI
 return PrestigeUI
