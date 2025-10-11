@@ -171,7 +171,6 @@ function PrestigeUI:Create(title)
     MainFrame.BorderSizePixel = 0
     MainFrame.Visible = false
     MainFrame.ClipsDescendants = true
-    MainFrame.BackgroundTransparency = 1
     MainFrame.Parent = ScreenGui
     
     local MainCorner = Instance.new("UICorner")
