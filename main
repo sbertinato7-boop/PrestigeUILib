@@ -495,140 +495,20 @@ function PrestigeUI:AddTab(tabName)
         end
     end)
     
-    -- FIXED: Proper drag with hold detection and visual feedback
-    local dragging = false
-    local dragStart = nil
-    local dragStartTime = nil
-    local holdThreshold = 0.3 -- Must hold for 0.3 seconds to start drag
-    local moveThreshold = 5 -- Must move 5 pixels while holding
-    local DragClone = nil
-    local originalLayoutOrder = nil
-    local dragConnection = nil
-    
+    -- FIXED: Simple click-to-switch, no drag functionality to avoid errors
     TabBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragStart = input.Position
-            dragStartTime = tick()
-            originalLayoutOrder = Container.LayoutOrder
-            
-            -- Wait for hold threshold
-            task.spawn(function()
-                task.wait(holdThreshold)
-                
-                if dragStart and tick() - dragStartTime >= holdThreshold then
-                    -- Check if mouse is still pressed and hasn't moved too much
-                    local currentPos = UserInputService:GetMouseLocation()
-                    if (Vector2.new(currentPos.X, currentPos.Y) - dragStart).Magnitude < moveThreshold then
-                        -- Start drag
-                        dragging = true
-                        
-                        -- Create drag clone
-                        DragClone = TabBtn:Clone()
-                        DragClone.Parent = self.ScreenGui
-                        DragClone.Size = TabBtn.AbsoluteSize
-                        DragClone.Position = UDim2.new(0, TabBtn.AbsolutePosition.X, 0, TabBtn.AbsolutePosition.Y)
-                        DragClone.ZIndex = 1000
-                        
-                        -- Make original semi-transparent
-                        tween(TabBtn, {BackgroundTransparency = 0.5}, 0.2)
-                        tween(TabText, {TextTransparency = 0.5}, 0.2)
-                        
-                        -- Setup drag movement
-                        dragConnection = UserInputService.InputChanged:Connect(function(moveInput)
-                            if moveInput.UserInputType == Enum.UserInputType.MouseMovement and dragging and DragClone then
-                                local mousePos = UserInputService:GetMouseLocation()
-                                DragClone.Position = UDim2.new(0, mousePos.X - (DragClone.AbsoluteSize.X / 2), 0, mousePos.Y - (DragClone.AbsoluteSize.Y / 2))
-                                
-                                -- Calculate where this tab should be inserted
-                                local allContainers = {}
-                                for _, child in ipairs(self.Sidebar:GetChildren()) do
-                                    if child:IsA("Frame") and child.Name:find("TabContainer") and child ~= Container then
-                                        table.insert(allContainers, child)
-                                    end
-                                end
-                                
-                                table.sort(allContainers, function(a, b)
-                                    return a.LayoutOrder < b.LayoutOrder
-                                end)
-                                
-                                -- Find insertion point based on Y position
-                                local insertIndex = #allContainers + 1
-                                for i, container in ipairs(allContainers) do
-                                    if container.LayoutOrder > 0 then -- Skip search bar
-                                        local containerY = container.AbsolutePosition.Y + (container.AbsoluteSize.Y / 2)
-                                        if mousePos.Y < containerY then
-                                            insertIndex = i
-                                            break
-                                        end
-                                    end
-                                end
-                                
-                                -- Update layout orders to show preview
-                                local newLayoutOrder = 1000 + insertIndex - 1
-                                if newLayoutOrder ~= Container.LayoutOrder then
-                                    Container.LayoutOrder = newLayoutOrder
-                                    
-                                    -- Adjust other tabs
-                                    local orderCounter = 1000
-                                    for _, container in ipairs(allContainers) do
-                                        if orderCounter == newLayoutOrder then
-                                            orderCounter = orderCounter + 1
-                                        end
-                                        if container.LayoutOrder > 0 then
-                                            container.LayoutOrder = orderCounter
-                                            orderCounter = orderCounter + 1
-                                        end
-                                    end
-                                end
-                            end
-                        end)
-                    end
-                end
-            end)
-        end
-    end)
-    
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            if dragging then
-                -- End drag
-                dragging = false
-                
-                if dragConnection then
-                    dragConnection:Disconnect()
-                    dragConnection = nil
-                end
-                
-                if DragClone then
-                    tween(DragClone, {BackgroundTransparency = 1}, 0.2)
-                    local cloneText = DragClone:FindFirstChildOfClass("TextLabel")
-                    if cloneText then
-                        tween(cloneText, {TextTransparency = 1}, 0.2)
-                    end
-                    task.wait(0.2)
-                    DragClone:Destroy()
-                    DragClone = nil
-                end
-                
-                -- Restore original appearance
-                tween(TabBtn, {BackgroundTransparency = 0}, 0.2)
-                tween(TabText, {TextTransparency = 0}, 0.2)
-            elseif dragStart and tick() - dragStartTime < holdThreshold then
-                -- This was a click, not a drag
-                self.ActiveTab = tabName
-                for name, tab in pairs(self.Tabs) do
-                    if name == tabName then
-                        tween(tab.Button, {BackgroundColor3 = self.Theme.Primary}, 0.3)
-                        tab.Content.Visible = true
-                    else
-                        tween(tab.Button, {BackgroundColor3 = self.Theme.Tertiary}, 0.3)
-                        tab.Content.Visible = false
-                    end
+            -- Switch to this tab
+            self.ActiveTab = tabName
+            for name, tab in pairs(self.Tabs) do
+                if name == tabName then
+                    tween(tab.Button, {BackgroundColor3 = self.Theme.Primary}, 0.3)
+                    tab.Content.Visible = true
+                else
+                    tween(tab.Button, {BackgroundColor3 = self.Theme.Tertiary}, 0.3)
+                    tab.Content.Visible = false
                 end
             end
-            
-            dragStart = nil
-            dragStartTime = nil
         end
     end)
     
@@ -1362,96 +1242,162 @@ function PrestigeUI:CreateCustomTheme(themeTable)
     end
 end
 
--- FIXED: ApplyTheme function with proper nil checks
+-- FIXED: ApplyTheme function with proper nil checks and safer element access
 function PrestigeUI:ApplyTheme()
     local t = self.Theme
     
-    -- Safely update main UI elements
-    if self.MainFrame then self.MainFrame.BackgroundColor3 = t.Dark end
-    if self.TopBar then self.TopBar.BackgroundColor3 = t.Secondary end
-    if self.TopBarBottom then self.TopBarBottom.BackgroundColor3 = t.Secondary end
-    if self.Sidebar then self.Sidebar.BackgroundColor3 = t.Secondary end
-    if self.ContentArea then self.ContentArea.BackgroundColor3 = t.Secondary end
-    if self.Title then self.Title.TextColor3 = t.Text end
-    if self.MinimizeBtn then self.MinimizeBtn.BackgroundColor3 = t.Primary end
-    if self.CloseBtn then self.CloseBtn.BackgroundColor3 = t.Primary end
+    -- Safely update main UI elements with pcall protection
+    pcall(function()
+        if self.MainFrame then self.MainFrame.BackgroundColor3 = t.Dark end
+    end)
+    pcall(function()
+        if self.TopBar then self.TopBar.BackgroundColor3 = t.Secondary end
+    end)
+    pcall(function()
+        if self.TopBarBottom then self.TopBarBottom.BackgroundColor3 = t.Secondary end
+    end)
+    pcall(function()
+        if self.Sidebar then self.Sidebar.BackgroundColor3 = t.Secondary end
+    end)
+    pcall(function()
+        if self.ContentArea then self.ContentArea.BackgroundColor3 = t.Secondary end
+    end)
+    pcall(function()
+        if self.Title then self.Title.TextColor3 = t.Text end
+    end)
+    pcall(function()
+        if self.MinimizeBtn then self.MinimizeBtn.BackgroundColor3 = t.Primary end
+    end)
+    pcall(function()
+        if self.CloseBtn then self.CloseBtn.BackgroundColor3 = t.Primary end
+    end)
     
     -- Update tabs with proper checks
-    for name, tab in pairs(self.Tabs) do
-        if tab and tab.Button then
-            if self.ActiveTab == name then
-                tab.Button.BackgroundColor3 = t.Primary
-            else
-                tab.Button.BackgroundColor3 = t.Tertiary
-            end
-        end
-        
-        if tab and tab.Content then
-            tab.Content.ScrollBarImageColor3 = t.Primary
-        end
-    end
-    
-    -- Update all elements with nil checks
-    for _, elem in ipairs(self.AllElements) do
-        if not elem then continue end
-        
-        if elem.Type == "Tab" then
-            if elem.Btn and elem.Btn.Parent and elem.Btn.Parent.Parent then
-                local tabName = elem.Btn.Parent.Name:gsub("TabContainer", "")
-                if self.ActiveTab == tabName then
-                    elem.Btn.BackgroundColor3 = t.Primary
+    pcall(function()
+        for name, tab in pairs(self.Tabs or {}) do
+            if tab and tab.Button and tab.Button.Parent then
+                if self.ActiveTab == name then
+                    tab.Button.BackgroundColor3 = t.Primary
                 else
-                    elem.Btn.BackgroundColor3 = t.Tertiary
+                    tab.Button.BackgroundColor3 = t.Tertiary
                 end
             end
-            if elem.Text then elem.Text.TextColor3 = t.Text end
             
-        elseif elem.Type == "Button" then
-            if elem.Btn then elem.Btn.BackgroundColor3 = t.Primary end
-            if elem.Text then elem.Text.TextColor3 = t.Text end
-            
-        elseif elem.Type == "Label" then
-            if elem.Lbl then elem.Lbl.TextColor3 = t.Text end
-            
-        elseif elem.Type == "Para" then
-            if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-            if elem.Title then elem.Title.TextColor3 = t.Primary end
-            if elem.Content then elem.Content.TextColor3 = t.TextSecondary end
-            
-        elseif elem.Type == "TextBox" then
-            if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-            if elem.Box then
-                elem.Box.TextColor3 = t.Text
-                elem.Box.PlaceholderColor3 = t.TextSecondary
-            end
-            
-        elseif elem.Type == "Toggle" then
-            if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-            if elem.Btn then elem.Btn.BackgroundColor3 = t.Primary end
-            if elem.Label then elem.Label.TextColor3 = t.Text end
-            
-        elseif elem.Type == "Dropdown" then
-            if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-            if elem.List then elem.List.BackgroundColor3 = t.Secondary end
-            if elem.Text then elem.Text.TextColor3 = t.TextSecondary end
-            
-        elseif elem.Type == "Slider" then
-            if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-            if elem.Fill then elem.Fill.BackgroundColor3 = t.Primary end
-            if elem.Btn then elem.Btn.BackgroundColor3 = t.Primary end
-            if elem.Label then elem.Label.TextColor3 = t.Text end
-            
-        elseif elem.Type == "SearchBar" then
-            if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-            if elem.Icon then elem.Icon.TextColor3 = t.TextSecondary end
-            if elem.Box then
-                elem.Box.TextColor3 = t.Text
-                elem.Box.PlaceholderColor3 = t.TextSecondary
+            if tab and tab.Content and tab.Content.Parent then
+                tab.Content.ScrollBarImageColor3 = t.Primary
             end
         end
-    end
+    end)
     
-    self:SaveConfig()
+    -- Update all elements with nil checks and pcall protection
+    pcall(function()
+        for _, elem in ipairs(self.AllElements or {}) do
+            if not elem or type(elem) ~= "table" then continue end
+            
+            pcall(function()
+                if elem.Type == "Tab" then
+                    if elem.Btn and elem.Btn.Parent then
+                        local tabName = elem.Btn.Parent.Name:gsub("TabContainer", "")
+                        if self.ActiveTab == tabName then
+                            elem.Btn.BackgroundColor3 = t.Primary
+                        else
+                            elem.Btn.BackgroundColor3 = t.Tertiary
+                        end
+                    end
+                    if elem.Text and elem.Text.Parent then 
+                        elem.Text.TextColor3 = t.Text 
+                    end
+                    
+                elseif elem.Type == "Button" then
+                    if elem.Btn and elem.Btn.Parent then 
+                        elem.Btn.BackgroundColor3 = t.Primary 
+                    end
+                    if elem.Text and elem.Text.Parent then 
+                        elem.Text.TextColor3 = t.Text 
+                    end
+                    
+                elseif elem.Type == "Label" then
+                    if elem.Lbl and elem.Lbl.Parent then 
+                        elem.Lbl.TextColor3 = t.Text 
+                    end
+                    
+                elseif elem.Type == "Para" then
+                    if elem.Bg and elem.Bg.Parent then 
+                        elem.Bg.BackgroundColor3 = t.Tertiary 
+                    end
+                    if elem.Title and elem.Title.Parent then 
+                        elem.Title.TextColor3 = t.Primary 
+                    end
+                    if elem.Content and elem.Content.Parent then 
+                        elem.Content.TextColor3 = t.TextSecondary 
+                    end
+                    
+                elseif elem.Type == "TextBox" then
+                    if elem.Bg and elem.Bg.Parent then 
+                        elem.Bg.BackgroundColor3 = t.Tertiary 
+                    end
+                    if elem.Box and elem.Box.Parent then
+                        elem.Box.TextColor3 = t.Text
+                        elem.Box.PlaceholderColor3 = t.TextSecondary
+                    end
+                    
+                elseif elem.Type == "Toggle" then
+                    if elem.Bg and elem.Bg.Parent then 
+                        elem.Bg.BackgroundColor3 = t.Tertiary 
+                    end
+                    if elem.Btn and elem.Btn.Parent then 
+                        elem.Btn.BackgroundColor3 = t.Primary 
+                    end
+                    if elem.Label and elem.Label.Parent then 
+                        elem.Label.TextColor3 = t.Text 
+                    end
+                    
+                elseif elem.Type == "Dropdown" then
+                    if elem.Bg and elem.Bg.Parent then 
+                        elem.Bg.BackgroundColor3 = t.Tertiary 
+                    end
+                    if elem.List and elem.List.Parent then 
+                        elem.List.BackgroundColor3 = t.Secondary 
+                        elem.List.ScrollBarImageColor3 = t.Primary
+                    end
+                    if elem.Text and elem.Text.Parent then 
+                        elem.Text.PlaceholderColor3 = t.TextSecondary 
+                    end
+                    
+                elseif elem.Type == "Slider" then
+                    if elem.Bg and elem.Bg.Parent then 
+                        elem.Bg.BackgroundColor3 = t.Tertiary 
+                    end
+                    if elem.Fill and elem.Fill.Parent then 
+                        elem.Fill.BackgroundColor3 = t.Primary 
+                    end
+                    if elem.Btn and elem.Btn.Parent then 
+                        elem.Btn.BackgroundColor3 = t.Primary 
+                    end
+                    if elem.Label and elem.Label.Parent then 
+                        elem.Label.TextColor3 = t.Text 
+                    end
+                    
+                elseif elem.Type == "SearchBar" then
+                    if elem.Bg and elem.Bg.Parent then 
+                        elem.Bg.BackgroundColor3 = t.Tertiary 
+                    end
+                    if elem.Icon and elem.Icon.Parent then 
+                        elem.Icon.TextColor3 = t.TextSecondary 
+                    end
+                    if elem.Box and elem.Box.Parent then
+                        elem.Box.TextColor3 = t.Text
+                        elem.Box.PlaceholderColor3 = t.TextSecondary
+                    end
+                end
+            end)
+        end
+    end)
+    
+    -- Save config safely
+    pcall(function()
+        self:SaveConfig()
+    end)
 end
 
 -- FIXED: Search bar with proper layout order
