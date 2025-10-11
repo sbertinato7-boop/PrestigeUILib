@@ -495,46 +495,37 @@ function PrestigeUI:RemoveTab(tabName)
 end
 
 function PrestigeUI:AddButton(parent, text, callback)
-    -- Create with a unique class name to avoid global styling
-    local Btn = Instance.new("TextButton")
-    Btn.Name = "PrestigeButton_" .. text
-    Btn.Size = UDim2.new(1, 0, 0, 35)
+    local Container = Instance.new("Frame")
+    Container.Size = UDim2.new(1, 0, 0, 35)
+    Container.BackgroundTransparency = 1
+    Container.Parent = parent
+    
+    local Btn = Instance.new("ImageButton")  -- Use ImageButton instead
+    Btn.Name = text .. "Button"
+    Btn.Size = UDim2.new(1, 0, 1, 0)
     Btn.BackgroundColor3 = self.Theme.Primary
-    Btn.Text = text
-    Btn.TextColor3 = self.Theme.Text
-    Btn.Font = Enum.Font.GothamBold
-    Btn.TextSize = 14
-    Btn.AutoButtonColor = false
-    Btn.Parent = parent
+    Btn.Image = ""  -- No image
+    Btn.ScaleType = Enum.ScaleType.Stretch
+    Btn.Parent = Container
+    
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(1, 0, 1, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = text
+    Label.TextColor3 = self.Theme.Text
+    Label.Font = Enum.Font.GothamBold
+    Label.TextSize = 14
+    Label.Parent = Btn
     
     local BtnCorner = Instance.new("UICorner")
     BtnCorner.CornerRadius = UDim.new(0, 8)
     BtnCorner.Parent = Btn
 
-    -- DEBUG: Print when button is created to see what's happening
-    print("Button created: " .. text)
-
-    -- Use a completely different approach - ImageButton instead
     Btn.MouseButton1Click:Connect(function()
         if callback then callback() end
     end)
     
-    return Btn
-end
-
-function PrestigeUI:AddLabel(parent, text, textSize)
-    textSize = textSize or 16
-    local Label = Instance.new("TextLabel")
-    Label.Name = "Label"
-    Label.Size = UDim2.new(1, 0, 0, textSize + 8)
-    Label.BackgroundTransparency = 1
-    Label.Text = text
-    Label.TextColor3 = self.Theme.Text
-    Label.Font = Enum.Font.GothamBold
-    Label.TextSize = textSize
-    Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Parent = parent
-    return Label
+    return Container
 end
 
 function PrestigeUI:AddParagraph(parent, title, content)
