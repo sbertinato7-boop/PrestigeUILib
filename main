@@ -254,6 +254,7 @@ function PrestigeUI:Create(title)
     SidebarCorner.Parent = Sidebar
     
     local SidebarList = Instance.new("UIListLayout")
+    SidebarList.SortOrder = Enum.SortOrder.LayoutOrder  -- CRITICAL FIX: Sort by LayoutOrder!
     SidebarList.Padding = UDim.new(0, 8)
     SidebarList.Parent = Sidebar
     
