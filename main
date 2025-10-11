@@ -427,7 +427,6 @@ function PrestigeUI:AddTab(tabName)
     Container.Size = UDim2.new(1, 0, 0, 40)
     Container.BackgroundTransparency = 1
     Container.ClipsDescendants = true
-    Container.LayoutOrder = #self.Tabs
     Container.Parent = self.Sidebar
     
     local TabBtn = Instance.new("Frame")
@@ -506,9 +505,9 @@ function PrestigeUI:AddTab(tabName)
         end
     end)
 
-    -- FIX: Only use array, no dictionary
-    local tabData = {Button = TabBtn, Content = Content, Name = tabName, Container = Container}
-    table.insert(self.Tabs, tabData)
+        local tabData = {Button = TabBtn, Content = Content, Name = tabName, Container = Container}
+        table.insert(self.Tabs, tabData)
+        Container.LayoutOrder = #self.Tabs  -- Set AFTER adding to table
     
     table.insert(self.AllElements, {Type = "Tab", Btn = TabBtn, Text = TabText})
     return Content
