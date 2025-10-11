@@ -495,50 +495,47 @@ function PrestigeUI:RemoveTab(tabName)
 end
 
 function PrestigeUI:AddButton(parent, text, callback)
+    local Container = Instance.new("Frame")
+    Container.Name = text .. "Container"
+    Container.Size = UDim2.new(1, 0, 0, 35)
+    Container.BackgroundTransparency = 1
+    Container.ClipsDescendants = true  -- This prevents overflow!
+    Container.Parent = parent
+    
     local Btn = Instance.new("TextButton")
     Btn.Name = text .. "Button"
-    Btn.Size = UDim2.new(1, -10, 0, 35) -- Fixed: Added margins to prevent overflow
-    Btn.Position = UDim2.new(0, 5, 0, 0) -- Centered with margins
+    Btn.Size = UDim2.new(1, -20, 1, 0)  -- More margin for safety
+    Btn.Position = UDim2.new(0, 10, 0, 0)  -- Centered with proper margins
     Btn.BackgroundColor3 = self.Theme.Primary
     Btn.Text = text
     Btn.TextColor3 = self.Theme.Text
     Btn.Font = Enum.Font.GothamBold
     Btn.TextSize = 14
-    Btn.AutoButtonColor = false -- This is important!
-    Btn.Parent = parent
+    Btn.AutoButtonColor = false
+    Btn.Parent = Container
     
     local BtnCorner = Instance.new("UICorner")
     BtnCorner.CornerRadius = UDim.new(0, 8)
     BtnCorner.Parent = Btn
 
-    -- DISCONNECT any default Roblox hover effects
-    Btn.MouseEnter:Connect(function() end)
-    Btn.MouseLeave:Connect(function() end)
-
-    -- SINGLE clean hover animation
-    local hoverConnection
-    hoverConnection = Btn.MouseEnter:Connect(function()
-        -- Cancel any existing tweens
-        TweenService:Create(Btn, TweenInfo.new(0.15), {
-            BackgroundColor3 = Color3.fromRGB(25, 190, 235)
+    -- Simple, contained hover animation
+    Btn.MouseEnter:Connect(function()
+        TweenService:Create(Btn, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(30, 200, 245)
         }):Play()
     end)
-
-    local leaveConnection
-    leaveConnection = Btn.MouseLeave:Connect(function()
-        TweenService:Create(Btn, TweenInfo.new(0.15), {
+    
+    Btn.MouseLeave:Connect(function()
+        TweenService:Create(Btn, TweenInfo.new(0.2), {
             BackgroundColor3 = self.Theme.Primary
         }):Play()
     end)
-
+    
     Btn.MouseButton1Click:Connect(function()
         if callback then callback() end
     end)
-
-    -- Store connections to prevent memory leaks
-    self.Connections[Btn] = {hoverConnection, leaveConnection}
-
-    return Btn
+    
+    return Container
 end
 
 function PrestigeUI:AddLabel(parent, text, textSize)
