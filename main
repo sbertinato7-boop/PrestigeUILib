@@ -483,6 +483,7 @@ function PrestigeUI:AddTab(tabName)
             tween(TabBtn, {BackgroundColor3 = Color3.fromRGB(35, 35, 40)}, 0.2)
         end
     end)
+    
     TabBtn.MouseLeave:Connect(function()
         if self.ActiveTab ~= tabName then
             tween(TabBtn, {BackgroundColor3 = self.Theme.Tertiary}, 0.2)
@@ -492,7 +493,7 @@ function PrestigeUI:AddTab(tabName)
     TabBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             self.ActiveTab = tabName
-            -- FIX: Use ipairs to maintain order
+            -- FIXED: Use ipairs to maintain order
             for i, tab in ipairs(self.Tabs) do
                 if tab.Name == tabName then
                     tween(tab.Button, {BackgroundColor3 = self.Theme.Primary}, 0.3)
@@ -505,8 +506,13 @@ function PrestigeUI:AddTab(tabName)
         end
     end)
 
-    -- FIX: Only use array, no dictionary
-    local tabData = {Button = TabBtn, Content = Content, Name = tabName, Container = Container}
+    -- FIXED: Only use array structure
+    local tabData = {
+        Name = tabName,
+        Button = TabBtn, 
+        Content = Content, 
+        Container = Container
+    }
     table.insert(self.Tabs, tabData)
     
     table.insert(self.AllElements, {Type = "Tab", Btn = TabBtn, Text = TabText})
@@ -1273,10 +1279,9 @@ function PrestigeUI:AddSearchBar(parent)
                     end
                 end
             end
-            
-            tab.Container.Visible = shouldShow
-        end
-    end)
+    
+    tab.Container.Visible = shouldShow
+end
     
     table.insert(self.AllElements, {Type = "SearchBar", Bg = Container, Icon = SearchIcon, Box = SearchBox})
     return SearchBox
