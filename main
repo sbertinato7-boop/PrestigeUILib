@@ -495,21 +495,126 @@ function PrestigeUI:AddTab(tabName)
         end
     end)
     
-    -- FIXED: Improved drag-to-reorder functionality
+    -- FIXED: Proper drag with hold detection and visual feedback
     local dragging = false
     local dragStart = nil
-    local startLayoutOrder = nil
+    local dragStartTime = nil
+    local holdThreshold = 0.3 -- Must hold for 0.3 seconds to start drag
+    local moveThreshold = 5 -- Must move 5 pixels while holding
+    local DragClone = nil
+    local originalLayoutOrder = nil
+    local dragConnection = nil
     
     TabBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragStart = input.Position
-            startLayoutOrder = Container.LayoutOrder
+            dragStartTime = tick()
+            originalLayoutOrder = Container.LayoutOrder
             
-            -- Small delay to distinguish between click and drag
-            task.wait(0.15)
-            
-            if dragStart and (input.Position - dragStart).Magnitude < 5 then
-                -- This is a click, not a drag
+            -- Wait for hold threshold
+            task.spawn(function()
+                task.wait(holdThreshold)
+                
+                if dragStart and tick() - dragStartTime >= holdThreshold then
+                    -- Check if mouse is still pressed and hasn't moved too much
+                    local currentPos = UserInputService:GetMouseLocation()
+                    if (Vector2.new(currentPos.X, currentPos.Y) - dragStart).Magnitude < moveThreshold then
+                        -- Start drag
+                        dragging = true
+                        
+                        -- Create drag clone
+                        DragClone = TabBtn:Clone()
+                        DragClone.Parent = self.ScreenGui
+                        DragClone.Size = TabBtn.AbsoluteSize
+                        DragClone.Position = UDim2.new(0, TabBtn.AbsolutePosition.X, 0, TabBtn.AbsolutePosition.Y)
+                        DragClone.ZIndex = 1000
+                        
+                        -- Make original semi-transparent
+                        tween(TabBtn, {BackgroundTransparency = 0.5}, 0.2)
+                        tween(TabText, {TextTransparency = 0.5}, 0.2)
+                        
+                        -- Setup drag movement
+                        dragConnection = UserInputService.InputChanged:Connect(function(moveInput)
+                            if moveInput.UserInputType == Enum.UserInputType.MouseMovement and dragging and DragClone then
+                                local mousePos = UserInputService:GetMouseLocation()
+                                DragClone.Position = UDim2.new(0, mousePos.X - (DragClone.AbsoluteSize.X / 2), 0, mousePos.Y - (DragClone.AbsoluteSize.Y / 2))
+                                
+                                -- Calculate where this tab should be inserted
+                                local allContainers = {}
+                                for _, child in ipairs(self.Sidebar:GetChildren()) do
+                                    if child:IsA("Frame") and child.Name:find("TabContainer") and child ~= Container then
+                                        table.insert(allContainers, child)
+                                    end
+                                end
+                                
+                                table.sort(allContainers, function(a, b)
+                                    return a.LayoutOrder < b.LayoutOrder
+                                end)
+                                
+                                -- Find insertion point based on Y position
+                                local insertIndex = #allContainers + 1
+                                for i, container in ipairs(allContainers) do
+                                    if container.LayoutOrder > 0 then -- Skip search bar
+                                        local containerY = container.AbsolutePosition.Y + (container.AbsoluteSize.Y / 2)
+                                        if mousePos.Y < containerY then
+                                            insertIndex = i
+                                            break
+                                        end
+                                    end
+                                end
+                                
+                                -- Update layout orders to show preview
+                                local newLayoutOrder = 1000 + insertIndex - 1
+                                if newLayoutOrder ~= Container.LayoutOrder then
+                                    Container.LayoutOrder = newLayoutOrder
+                                    
+                                    -- Adjust other tabs
+                                    local orderCounter = 1000
+                                    for _, container in ipairs(allContainers) do
+                                        if orderCounter == newLayoutOrder then
+                                            orderCounter = orderCounter + 1
+                                        end
+                                        if container.LayoutOrder > 0 then
+                                            container.LayoutOrder = orderCounter
+                                            orderCounter = orderCounter + 1
+                                        end
+                                    end
+                                end
+                            end
+                        end)
+                    end
+                end
+            end)
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            if dragging then
+                -- End drag
+                dragging = false
+                
+                if dragConnection then
+                    dragConnection:Disconnect()
+                    dragConnection = nil
+                end
+                
+                if DragClone then
+                    tween(DragClone, {BackgroundTransparency = 1}, 0.2)
+                    local cloneText = DragClone:FindFirstChildOfClass("TextLabel")
+                    if cloneText then
+                        tween(cloneText, {TextTransparency = 1}, 0.2)
+                    end
+                    task.wait(0.2)
+                    DragClone:Destroy()
+                    DragClone = nil
+                end
+                
+                -- Restore original appearance
+                tween(TabBtn, {BackgroundTransparency = 0}, 0.2)
+                tween(TabText, {TextTransparency = 0}, 0.2)
+            elseif dragStart and tick() - dragStartTime < holdThreshold then
+                -- This was a click, not a drag
                 self.ActiveTab = tabName
                 for name, tab in pairs(self.Tabs) do
                     if name == tabName then
@@ -520,15 +625,17 @@ function PrestigeUI:AddTab(tabName)
                         tab.Content.Visible = false
                     end
                 end
-            else
-                dragging = true
-                tween(Container, {BackgroundTransparency = 0.5}, 0.2)
             end
+            
+            dragStart = nil
+            dragStartTime = nil
         end
     end)
     
-    TabBtn.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement and dragging and dragStart then
+    self.Tabs[tabName] = {Button = TabBtn, Content = Content, Name = tabName, Container = Container}
+    table.insert(self.AllElements, {Type = "Tab", Btn = TabBtn, Text = TabText})
+    return Content
+endement and dragging and dragStart then
             local dragOffset = input.Position.Y - dragStart.Y
             
             -- Visual feedback
@@ -841,6 +948,8 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     Container.Size = UDim2.new(1, 0, 0, 40)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
+    Container.ClipsDescendants = false
+    Container.ZIndex = 1
     Container.Parent = parent
 
     local Corner = Instance.new("UICorner")
@@ -873,7 +982,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     local DropdownList = Instance.new("ScrollingFrame")
     DropdownList.Name = "DropdownList"
     DropdownList.Size = UDim2.new(1, 0, 0, 0)
-    DropdownList.Position = UDim2.new(0, 0, 0, 40)
+    DropdownList.Position = UDim2.new(0, 0, 1, 5)
     DropdownList.BackgroundColor3 = self.Theme.Secondary
     DropdownList.BorderSizePixel = 0
     DropdownList.ScrollBarThickness = 6
@@ -882,7 +991,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     DropdownList.CanvasSize = UDim2.new(0, 0, 0, 0)
     DropdownList.AutomaticCanvasSize = Enum.AutomaticSize.Y
     DropdownList.ClipsDescendants = true
-    DropdownList.ZIndex = 100
+    DropdownList.ZIndex = 999
     DropdownList.Parent = Container
 
     local ListCorner = Instance.new("UICorner")
@@ -909,6 +1018,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         OptionBtn.Size = UDim2.new(1, 0, 0, 30)
         OptionBtn.BackgroundColor3 = self.Theme.Tertiary
         OptionBtn.BorderSizePixel = 0
+        OptionBtn.ZIndex = 999
         OptionBtn.Parent = DropdownList
 
         local OptionText = Instance.new("TextLabel")
@@ -918,6 +1028,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         OptionText.TextColor3 = self.Theme.Text
         OptionText.Font = Enum.Font.Gotham
         OptionText.TextSize = 13
+        OptionText.ZIndex = 999
         OptionText.Parent = OptionBtn
 
         local OptionCorner = Instance.new("UICorner")
@@ -937,6 +1048,17 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
                 DropdownText.TextColor3 = self.Theme.Text
                 if callback then callback(option) end
                 isOpen = false
+                Container.ZIndex = 1
+                
+                -- Restore size of elements below
+                if parent:IsA("ScrollingFrame") then
+                    for _, child in ipairs(parent:GetChildren()) do
+                        if child:IsA("Frame") and child ~= Container then
+                            child.ZIndex = 1
+                        end
+                    end
+                end
+                
                 tween(DropdownList, {Size = UDim2.new(1, 0, 0, 0)}, 0.3, Enum.EasingStyle.Quad)
                 task.wait(0.3)
                 DropdownList.Visible = false
@@ -957,12 +1079,38 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             isOpen = not isOpen
             if isOpen then
+                Container.ZIndex = 999
                 DropdownList.Visible = true
                 task.wait()
                 local contentHeight = ListLayout.AbsoluteContentSize.Y + ListPadding.PaddingTop.Offset + ListPadding.PaddingBottom.Offset
-                tween(DropdownList, {Size = UDim2.new(1, 0, 0, math.min(contentHeight, maxHeight))}, 0.3, Enum.EasingStyle.Back)
+                local dropHeight = math.min(contentHeight, maxHeight)
+                
+                -- Push elements below down
+                if parent:IsA("ScrollingFrame") then
+                    local foundDropdown = false
+                    for _, child in ipairs(parent:GetChildren()) do
+                        if child == Container then
+                            foundDropdown = true
+                        elseif foundDropdown and child:IsA("Frame") then
+                            child.ZIndex = 1
+                        end
+                    end
+                end
+                
+                tween(DropdownList, {Size = UDim2.new(1, 0, 0, dropHeight)}, 0.3, Enum.EasingStyle.Back)
                 tween(Container, {BackgroundColor3 = Color3.fromRGB(35, 35, 40)}, 0.2)
             else
+                Container.ZIndex = 1
+                
+                -- Restore elements below
+                if parent:IsA("ScrollingFrame") then
+                    for _, child in ipairs(parent:GetChildren()) do
+                        if child:IsA("Frame") and child ~= Container then
+                            child.ZIndex = 1
+                        end
+                    end
+                end
+                
                 tween(DropdownList, {Size = UDim2.new(1, 0, 0, 0)}, 0.3, Enum.EasingStyle.Quad)
                 tween(Container, {BackgroundColor3 = self.Theme.Tertiary}, 0.2)
                 task.wait(0.3)
@@ -1308,6 +1456,7 @@ end
 
 -- FIXED: Search bar with proper layout order
 function PrestigeUI:AddSearchBar(parent)
+    -- Force search bar to always be first by setting it to the parent directly first
     local Container = Instance.new("Frame")
     Container.Name = "SearchContainer"
     Container.Size = UDim2.new(1, 0, 0, 40)
@@ -1409,6 +1558,158 @@ function PrestigeUI:AddSearchBar(parent)
     table.insert(self.AllElements, {Type = "SearchBar", Bg = Container, Icon = SearchIcon, Box = SearchBox})
     return SearchBox
 end
+
+function PrestigeUI:MinimizeToCorner()
+    if self.MinimizedIcon then return end
+    
+    self.MainFrame.Visible = false
+    
+    local Icon = Instance.new("Frame")
+    Icon.Name = "MinimizedIcon"
+    Icon.Size = UDim2.new(0, 60, 0, 60)
+    Icon.Position = UDim2.new(1, -80, 1, -80)
+    Icon.BackgroundColor3 = self.Theme.Primary
+    Icon.BorderSizePixel = 0
+    Icon.Parent = self.ScreenGui
+    
+    local IconCorner = Instance.new("UICorner")
+    IconCorner.CornerRadius = UDim.new(0, 15)
+    IconCorner.Parent = Icon
+    
+    local IconText = Instance.new("TextLabel")
+    IconText.Size = UDim2.new(1, 0, 1, 0)
+    IconText.BackgroundTransparency = 1
+    IconText.Text = "P"
+    IconText.TextColor3 = self.Theme.Text
+    IconText.Font = Enum.Font.GothamBold
+    IconText.TextSize = 28
+    IconText.Parent = Icon
+    
+    local dragging = false
+    local dragInput, mousePos, framePos
+    
+    Icon.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local clickTime = tick()
+            dragging = true
+            mousePos = input.Position
+            framePos = Icon.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    local clickDuration = tick() - clickTime
+                    dragging = false
+                    
+                    -- If it was a quick click (not a drag), restore the window
+                    if clickDuration < 0.2 then
+                        self:RestoreFromCorner()
+                    end
+                end
+            end)
+        end
+    end)
+    
+    Icon.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - mousePos
+            Icon.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    Icon.MouseEnter:Connect(function()
+        tween(Icon, {Size = UDim2.new(0, 70, 0, 70), BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2, Enum.EasingStyle.Back)
+    end)
+    
+    Icon.MouseLeave:Connect(function()
+        tween(Icon, {Size = UDim2.new(0, 60, 0, 60), BackgroundColor3 = self.Theme.Primary}, 0.2)
+    end)
+    
+    self.MinimizedIcon = Icon
+end
+
+function PrestigeUI:RestoreFromCorner()
+    if self.MinimizedIcon then
+        local fadeOut = tween(self.MinimizedIcon, {BackgroundTransparency = 1}, 0.2)
+        local textLabel = self.MinimizedIcon:FindFirstChildOfClass("TextLabel")
+        if textLabel then
+            tween(textLabel, {TextTransparency = 1}, 0.2)
+        end
+        if fadeOut then fadeOut.Completed:Wait() end
+        self.MinimizedIcon:Destroy()
+        self.MinimizedIcon = nil
+    end
+    
+    self.MainFrame.Visible = true
+    tween(self.MainFrame, {Size = UDim2.new(0, 700, 0, 450)}, 0.4, Enum.EasingStyle.Back)
+end
+
+function PrestigeUI:SetKeybind(keyCode)
+    self.ToggleKeybind = keyCode
+end
+
+function PrestigeUI:SaveConfig()
+    local success, err = pcall(function()
+        local config = {
+            Theme = {},
+            ActiveTab = self.ActiveTab,
+            Elements = {}
+        }
+        
+        for key, value in pairs(self.Theme) do
+            config.Theme[key] = {value.R, value.G, value.B}
+        end
+        
+        config.Elements = self.ConfigData
+        
+        local encoded = HttpService:JSONEncode(config)
+        local key = "PrestigeUI_" .. game.Players.LocalPlayer.UserId
+        _G[key] = encoded
+    end)
+    
+    if not success then
+        warn("PrestigeUI: Failed to save config - " .. tostring(err))
+    end
+end
+
+function PrestigeUI:LoadConfig()
+    local success, err = pcall(function()
+        local key = "PrestigeUI_" .. game.Players.LocalPlayer.UserId
+        local encoded = _G[key]
+        
+        if encoded then
+            local success, config = pcall(function()
+                return HttpService:JSONDecode(encoded)
+            end)
+            
+            if success and config then
+                if config.Theme then
+                    local customTheme = {}
+                    for k, rgb in pairs(config.Theme) do
+                        customTheme[k] = Color3.fromRGB(rgb[1], rgb[2], rgb[3])
+                    end
+                    self:CreateCustomTheme(customTheme)
+                end
+                
+                if config.Elements then
+                    self.ConfigData = config.Elements
+                end
+            end
+        end
+    end)
+    
+    if not success then
+        warn("PrestigeUI: Failed to load config - " .. tostring(err))
+    end
+end
+
+_G.PrestigeUI = PrestigeUI
+return PrestigeUI
 
 function PrestigeUI:MinimizeToCorner()
     if self.MinimizedIcon then return end
