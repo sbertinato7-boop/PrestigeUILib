@@ -254,9 +254,9 @@ function PrestigeUI:Create(title)
     SidebarCorner.CornerRadius = UDim.new(0, 12)
     SidebarCorner.Parent = Sidebar
     
-    local SidebarList = Instance.new("UIListLayout")
+   local SidebarList = Instance.new("UIListLayout")
     SidebarList.Padding = UDim.new(0, 8)
-    SidebarList.SortOrder = Enum.SortOrder.LayoutOrder -- ADD THIS LINE
+    SidebarList.SortOrder = Enum.SortOrder.LayoutOrder
     SidebarList.Parent = Sidebar
     
     local SidebarPadding = Instance.new("UIPadding")
@@ -1197,7 +1197,6 @@ function PrestigeUI:AddSearchBar(parent)
     Container.Size = UDim2.new(1, 0, 0, 40)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
-    Container.LayoutOrder = 0  -- FIX: Set to 0 to ensure it's always first
     Container.Parent = parent
     
     local Corner = Instance.new("UICorner")
