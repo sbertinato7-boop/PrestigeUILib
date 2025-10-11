@@ -138,33 +138,47 @@ function PrestigeUI:Create(title)
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     TitleLabel.Parent = TopBar
     
-    local MinimizeBtn = Instance.new("TextButton")
+    local MinimizeBtn = Instance.new("ImageButton")
     MinimizeBtn.Name = "MinimizeBtn"
     MinimizeBtn.Size = UDim2.new(0, 35, 0, 35)
     MinimizeBtn.Position = UDim2.new(1, -80, 0.5, -17.5)
     MinimizeBtn.BackgroundColor3 = Theme.Primary
-    MinimizeBtn.Text = "_"
-    MinimizeBtn.TextColor3 = Theme.Text
-    MinimizeBtn.Font = Enum.Font.GothamBold
-    MinimizeBtn.TextSize = 20
+    MinimizeBtn.Image = ""
+    MinimizeBtn.ScaleType = Enum.ScaleType.Stretch
     MinimizeBtn.AutoButtonColor = false
     MinimizeBtn.Parent = TopBar
-    
+
+    local MinimizeText = Instance.new("TextLabel")
+    MinimizeText.Size = UDim2.new(1, 0, 1, 0)
+    MinimizeText.BackgroundTransparency = 1
+    MinimizeText.Text = "_"
+    MinimizeText.TextColor3 = Theme.Text
+    MinimizeText.Font = Enum.Font.GothamBold
+    MinimizeText.TextSize = 20
+    MinimizeText.Parent = MinimizeBtn
+            
     local MinimizeCorner = Instance.new("UICorner")
     MinimizeCorner.CornerRadius = UDim.new(0, 8)
     MinimizeCorner.Parent = MinimizeBtn
     
-    local CloseBtn = Instance.new("TextButton")
+   local CloseBtn = Instance.new("ImageButton")
     CloseBtn.Name = "CloseBtn"
     CloseBtn.Size = UDim2.new(0, 35, 0, 35)
     CloseBtn.Position = UDim2.new(1, -40, 0.5, -17.5)
     CloseBtn.BackgroundColor3 = Theme.Primary
-    CloseBtn.Text = "X"
-    CloseBtn.TextColor3 = Theme.Text
-    CloseBtn.Font = Enum.Font.GothamBold
-    CloseBtn.TextSize = 18
+    CloseBtn.Image = ""
+    CloseBtn.ScaleType = Enum.ScaleType.Stretch
     CloseBtn.AutoButtonColor = false
     CloseBtn.Parent = TopBar
+
+    local CloseText = Instance.new("TextLabel")
+    CloseText.Size = UDim2.new(1, 0, 1, 0)
+    CloseText.BackgroundTransparency = 1
+    CloseText.Text = "X"
+    CloseText.TextColor3 = Theme.Text
+    CloseText.Font = Enum.Font.GothamBold
+    CloseText.TextSize = 18
+    CloseText.Parent = CloseBtn
     
     local CloseCorner = Instance.new("UICorner")
     CloseCorner.CornerRadius = UDim.new(0, 8)
@@ -344,20 +358,35 @@ function PrestigeUI:Create(title)
 end
 
 function PrestigeUI:AddTab(tabName)
-    local TabBtn = Instance.new("TextButton")
+    local Container = Instance.new("Frame")
+    Container.Name = tabName .. "TabContainer"
+    Container.Size = UDim2.new(1, 0, 0, 40)
+    Container.BackgroundTransparency = 1
+    Container.ClipsDescendants = true
+    Container.Parent = self.Sidebar
+    
+    -- Use ImageButton for tabs too
+    local TabBtn = Instance.new("ImageButton")
     TabBtn.Name = tabName .. "Tab"
-    TabBtn.Size = UDim2.new(1, 0, 0, 40)
+    TabBtn.Size = UDim2.new(1, 0, 1, 0)
     TabBtn.BackgroundColor3 = self.Theme.Tertiary
-    TabBtn.Text = tabName
-    TabBtn.TextColor3 = self.Theme.Text
-    TabBtn.Font = Enum.Font.GothamBold
-    TabBtn.TextSize = 14
+    TabBtn.Image = ""
+    TabBtn.ScaleType = Enum.ScaleType.Stretch
     TabBtn.AutoButtonColor = false
-    TabBtn.Parent = self.Sidebar
+    TabBtn.Parent = Container
     
     local TabCorner = Instance.new("UICorner")
     TabCorner.CornerRadius = UDim.new(0, 10)
     TabCorner.Parent = TabBtn
+    
+    local TabText = Instance.new("TextLabel")
+    TabText.Size = UDim2.new(1, 0, 1, 0)
+    TabText.BackgroundTransparency = 1
+    TabText.Text = tabName
+    TabText.TextColor3 = self.Theme.Text
+    TabText.Font = Enum.Font.GothamBold
+    TabText.TextSize = 14
+    TabText.Parent = TabBtn
     
     local Content = Instance.new("ScrollingFrame")
     Content.Name = tabName .. "Content"
@@ -388,7 +417,9 @@ function PrestigeUI:AddTab(tabName)
         Content.Visible = true
     end
     
-    -- REMOVED: All tab button hover animations
+    -- Block all default button behaviors for tabs
+    TabBtn.MouseButton1Down:Connect(function() end)
+    TabBtn.MouseButton1Up:Connect(function() end)
     
     TabBtn.MouseButton1Click:Connect(function()
         self.ActiveTab = tabName
@@ -403,13 +434,13 @@ function PrestigeUI:AddTab(tabName)
         end
     end)
     
-    self.Tabs[tabName] = {Button = TabBtn, Content = Content, Name = tabName}
+    self.Tabs[tabName] = {Button = TabBtn, Content = Content, Name = tabName, Container = Container}
     return Content
 end
 
 function PrestigeUI:RemoveTab(tabName)
     if self.Tabs[tabName] then
-        self.Tabs[tabName].Button:Destroy()
+        self.Tabs[tabName].Container:Destroy() -- Destroy the container instead of just the button
         self.Tabs[tabName].Content:Destroy()
         self.Tabs[tabName] = nil
         if self.ActiveTab == tabName then
@@ -433,23 +464,40 @@ function PrestigeUI:AddButton(parent, text, callback)
     Container.ClipsDescendants = true
     Container.Parent = parent
     
-    local Btn = Instance.new("TextButton")
+    -- Use ImageButton instead of TextButton to avoid default behaviors
+    local Btn = Instance.new("ImageButton")
     Btn.Name = text .. "Button"
     Btn.Size = UDim2.new(1, -20, 1, 0)
     Btn.Position = UDim2.new(0, 10, 0, 0)
     Btn.BackgroundColor3 = self.Theme.Primary
-    Btn.Text = text
-    Btn.TextColor3 = self.Theme.Text
-    Btn.Font = Enum.Font.GothamBold
-    Btn.TextSize = 14
+    Btn.Image = "" -- No image
+    Btn.ScaleType = Enum.ScaleType.Stretch
     Btn.AutoButtonColor = false
     Btn.Parent = Container
     
     local BtnCorner = Instance.new("UICorner")
     BtnCorner.CornerRadius = UDim.new(0, 8)
     BtnCorner.Parent = Btn
+    
+    -- Add text as a separate label to avoid TextButton behaviors
+    local BtnText = Instance.new("TextLabel")
+    BtnText.Name = "Text"
+    BtnText.Size = UDim2.new(1, 0, 1, 0)
+    BtnText.BackgroundTransparency = 1
+    BtnText.Text = text
+    BtnText.TextColor3 = self.Theme.Text
+    BtnText.Font = Enum.Font.GothamBold
+    BtnText.TextSize = 14
+    BtnText.Parent = Btn
 
-    -- REMOVED: All button hover animations
+    -- Completely block all input effects
+    Btn.MouseButton1Down:Connect(function()
+        -- Do nothing - block default behavior
+    end)
+    
+    Btn.MouseButton1Up:Connect(function()
+        -- Do nothing - block default behavior  
+    end)
     
     Btn.MouseButton1Click:Connect(function()
         if callback then callback() end
