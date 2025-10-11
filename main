@@ -1269,9 +1269,7 @@ function PrestigeUI:ApplyTheme()
         warn("ApplyTheme: Theme not initialized")
         return 
     end
-    
     local t = self.Theme
-    
     -- Safely update main frame colors
     if self.MainFrame then self.MainFrame.BackgroundColor3 = t.Dark end
     if self.TopBar then self.TopBar.BackgroundColor3 = t.Secondary end
@@ -1281,7 +1279,6 @@ function PrestigeUI:ApplyTheme()
     if self.Title then self.Title.TextColor3 = t.Text end
     if self.MinimizeBtn then self.MinimizeBtn.BackgroundColor3 = t.Primary end
     if self.CloseBtn then self.CloseBtn.BackgroundColor3 = t.Primary end
-    
     -- Update tabs
     if self.Tabs then
         for i, tab in ipairs(self.Tabs) do
@@ -1294,7 +1291,6 @@ function PrestigeUI:ApplyTheme()
             end
         end
     end
-    
     -- Update all elements
     if self.AllElements then
         for _, elem in ipairs(self.AllElements) do
@@ -1326,6 +1322,15 @@ function PrestigeUI:ApplyTheme()
                     if elem.Label then elem.Label.TextColor3 = t.Text end
                 elseif elem.Type == "Dropdown" then
                     if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
+                    -- Fix: Update ALL dropdown option text colors, not just the main one
+                    if elem.List then
+                        for _, c in ipairs(elem.List:GetChildren()) do
+                            if c:IsA("Frame") then
+                                local lbl = c:FindFirstChildWhichIsA("TextLabel")
+                                if lbl then lbl.TextColor3 = t.Text end
+                            end
+                        end
+                    end
                 elseif elem.Type == "Slider" then
                     if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
                     if elem.Label then elem.Label.TextColor3 = t.Text end
