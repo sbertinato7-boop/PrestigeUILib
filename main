@@ -701,6 +701,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     end)
 
     return Container
+    end
 end
 
 function PrestigeUI:AddSlider(parent, min, max, default, callback)
