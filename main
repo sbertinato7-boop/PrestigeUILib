@@ -495,38 +495,105 @@ function PrestigeUI:RemoveTab(tabName)
 end
 
 function PrestigeUI:AddButton(parent, text, callback)
+    local Container = Instance.new("Frame")
+    Container.Name = text .. "ButtonContainer"
+    Container.Size = UDim2.new(1, 0, 0, 35)
+    Container.BackgroundTransparency = 1
+    Container.Parent = parent
+    
     local Btn = Instance.new("TextButton")
     Btn.Name = text .. "Button"
-    Btn.Size = UDim2.new(1, 0, 0, 35)
+    Btn.Size = UDim2.new(1, -10, 1, 0) -- Reduced width with padding
+    Btn.Position = UDim2.new(0, 5, 0, 0) -- Centered with margins
     Btn.BackgroundColor3 = self.Theme.Primary
     Btn.Text = text
     Btn.TextColor3 = self.Theme.Text
     Btn.Font = Enum.Font.GothamBold
     Btn.TextSize = 14
     Btn.AutoButtonColor = false
-    Btn.Parent = parent
+    Btn.Parent = Container
     
     local BtnCorner = Instance.new("UICorner")
     BtnCorner.CornerRadius = UDim.new(0, 8)
     BtnCorner.Parent = Btn
     
+    -- Add a subtle inner shadow for depth
+    local InnerShadow = Instance.new("Frame")
+    InnerShadow.Name = "InnerShadow"
+    InnerShadow.Size = UDim2.new(1, 0, 1, 0)
+    InnerShadow.BackgroundTransparency = 1
+    InnerShadow.BorderSizePixel = 0
+    InnerShadow.ZIndex = 2
+    InnerShadow.Parent = Btn
+    
+    local ShadowCorner = Instance.new("UICorner")
+    ShadowCorner.CornerRadius = UDim.new(0, 8)
+    ShadowCorner.Parent = InnerShadow
+    
+    local UIGradient = Instance.new("UIGradient")
+    UIGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+        ColorSequenceKeypoint.new(0.1, Color3.fromRGB(255, 255, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+    }
+    UIGradient.Transparency = NumberSequence.new{
+        NumberSequenceKeypoint.new(0, 0.9),
+        NumberSequenceKeypoint.new(0.1, 0.8),
+        NumberSequenceKeypoint.new(1, 0.4)
+    }
+    UIGradient.Rotation = 90
+    UIGradient.Parent = InnerShadow
+    
+    -- Clean hover animation with scale instead of color change
     Btn.MouseEnter:Connect(function()
         TweenService:Create(Btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = Color3.fromRGB(20, 200, 255)
+            BackgroundColor3 = Color3.fromRGB(30, 210, 255),
+            Size = UDim2.new(1, -8, 1, -2) -- Subtle scale effect
+        }):Play()
+        
+        TweenService:Create(InnerShadow, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
+            BackgroundTransparency = 0.7
         }):Play()
     end)
     
     Btn.MouseLeave:Connect(function()
         TweenService:Create(Btn, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = self.Theme.Primary
+            BackgroundColor3 = self.Theme.Primary,
+            Size = UDim2.new(1, -10, 1, 0) -- Return to original size
+        }):Play()
+        
+        TweenService:Create(InnerShadow, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
+            BackgroundTransparency = 1
+        }):Play()
+    end)
+    
+    -- Click animation
+    Btn.MouseButton1Down:Connect(function()
+        TweenService:Create(Btn, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {
+            BackgroundColor3 = Color3.fromRGB(0, 160, 220),
+            Size = UDim2.new(1, -12, 1, -4)
+        }):Play()
+    end)
+    
+    Btn.MouseButton1Up:Connect(function()
+        TweenService:Create(Btn, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {
+            BackgroundColor3 = Color3.fromRGB(30, 210, 255),
+            Size = UDim2.new(1, -8, 1, -2)
         }):Play()
     end)
     
     Btn.MouseButton1Click:Connect(function()
-        if callback then callback() end
+        if callback then 
+            -- Add a subtle click feedback
+            TweenService:Create(Btn, TweenInfo.new(0.08, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                BackgroundColor3 = Color3.fromRGB(40, 230, 255)
+            }):Play()
+            task.wait(0.1)
+            callback() 
+        end
     end)
     
-    return Btn
+    return Container
 end
 
 function PrestigeUI:AddLabel(parent, text, textSize)
