@@ -495,37 +495,76 @@ function PrestigeUI:RemoveTab(tabName)
 end
 
 function PrestigeUI:AddButton(parent, text, callback)
-    local Container = Instance.new("Frame")
-    Container.Size = UDim2.new(1, 0, 0, 35)
-    Container.BackgroundTransparency = 1
-    Container.Parent = parent
-    
-    local Btn = Instance.new("ImageButton")  -- Use ImageButton instead
+    -- Create button with minimal properties
+    local Btn = Instance.new("TextButton")
     Btn.Name = text .. "Button"
-    Btn.Size = UDim2.new(1, 0, 1, 0)
+    Btn.Size = UDim2.new(1, 0, 0, 35)
     Btn.BackgroundColor3 = self.Theme.Primary
-    Btn.Image = ""  -- No image
-    Btn.ScaleType = Enum.ScaleType.Stretch
-    Btn.Parent = Container
-    
-    local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(1, 0, 1, 0)
-    Label.BackgroundTransparency = 1
-    Label.Text = text
-    Label.TextColor3 = self.Theme.Text
-    Label.Font = Enum.Font.GothamBold
-    Label.TextSize = 14
-    Label.Parent = Btn
+    Btn.Text = text
+    Btn.TextColor3 = self.Theme.Text
+    Btn.Font = Enum.Font.GothamBold
+    Btn.TextSize = 14
+    Btn.AutoButtonColor = false
+    Btn.Parent = parent
     
     local BtnCorner = Instance.new("UICorner")
     BtnCorner.CornerRadius = UDim.new(0, 8)
     BtnCorner.Parent = Btn
 
+    -- NUCLEAR OPTION: Completely disable ALL input events
+    -- Block MouseEnter
+    local enterBlock = Btn.MouseEnter:Connect(function()
+        -- Immediately cancel any tween that might start
+        TweenService:Create(Btn, TweenInfo.new(0), {
+            BackgroundColor3 = self.Theme.Primary,
+            BackgroundTransparency = 0,
+            Size = UDim2.new(1, 0, 0, 35),
+            Position = UDim2.new(0, 0, 0, 0)
+        }):Play()
+    end)
+    
+    -- Block MouseLeave
+    local leaveBlock = Btn.MouseLeave:Connect(function()
+        TweenService:Create(Btn, TweenInfo.new(0), {
+            BackgroundColor3 = self.Theme.Primary,
+            BackgroundTransparency = 0,
+            Size = UDim2.new(1, 0, 0, 35),
+            Position = UDim2.new(0, 0, 0, 0)
+        }):Play()
+    end)
+    
+    -- Block MouseButton1Down
+    local downBlock = Btn.MouseButton1Down:Connect(function()
+        TweenService:Create(Btn, TweenInfo.new(0), {
+            BackgroundColor3 = self.Theme.Primary
+        }):Play()
+    end)
+    
+    -- Block MouseButton1Up
+    local upBlock = Btn.MouseButton1Up:Connect(function()
+        TweenService:Create(Btn, TweenInfo.new(0), {
+            BackgroundColor3 = self.Theme.Primary
+        }):Play()
+    end)
+
+    -- Only allow click event
     Btn.MouseButton1Click:Connect(function()
         if callback then callback() end
     end)
-    
-    return Container
+
+    -- Force immediate style application every frame as backup
+    local renderConnection
+    renderConnection = game:GetService("RunService").RenderStepped:Connect(function()
+        Btn.BackgroundColor3 = self.Theme.Primary
+        Btn.BackgroundTransparency = 0
+        Btn.Size = UDim2.new(1, 0, 0, 35)
+        Btn.Position = UDim2.new(0, 0, 0, 0)
+    end)
+
+    -- Store connections to clean up later
+    self.Connections[Btn] = {enterBlock, leaveBlock, downBlock, upBlock, renderConnection}
+
+    return Btn
 end
 
 function PrestigeUI:AddParagraph(parent, title, content)
