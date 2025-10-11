@@ -258,38 +258,36 @@ function PrestigeUI:Create(title)
     
     self.Connections.LoadingTask = task.spawn(function()
         local tweenInfo = TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-        local finalSize = UDim2.new(1, 0, 1, 0)
     
-        -- Tween the bar smoothly from 0% to 100%
-        local barTween = TweenService:Create(LoadingBar, tweenInfo, {Size = finalSize})
+        -- Tween the bar
+        local barTween = TweenService:Create(LoadingBar, tweenInfo, {Size = UDim2.new(1, 0, 1, 0)})
         barTween:Play()
     
-        -- Animate percentage text separately
+        -- Animate text in sync
         for i = 0, 100 do
             LoadingText.Text = "Loading... " .. i .. "%"
-            task.wait(1.5 / 100) -- sync with tween duration
+            task.wait(1.5 / 100)
         end
     
-        -- Fade out everything instantly after completion
+        -- Immediately hide the bar and text
+        LoadingBar:Destroy()
+        LoadingText:Destroy()
+    
+        -- Then fade out the frame (so no bar is visible)
         local fadeTween = TweenService:Create(LoadingFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {BackgroundTransparency = 1})
         fadeTween:Play()
-        for _, child in pairs(LoadingFrame:GetChildren()) do
-            if child:IsA("TextLabel") then
-                TweenService:Create(child, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
-            elseif child:IsA("Frame") then
-                TweenService:Create(child, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-            end
-        end
     
         task.wait(0.35)
         LoadingFrame:Destroy()
+    
+        -- Show main UI
         MainFrame.Visible = true
         TweenService:Create(MainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
             Size = UDim2.new(0, 700, 0, 450),
             Position = UDim2.new(0.5, -350, 0.5, -225)
         }):Play()
     end)
-    
+        
     local dragging = false
     local dragInput, mousePos, framePos
     self.Connections.TopBarInputBegan = TopBar.InputBegan:Connect(function(input)
