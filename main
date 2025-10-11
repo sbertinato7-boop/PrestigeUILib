@@ -1959,6 +1959,3 @@ end
 
 _G.PrestigeUI = PrestigeUI
 return PrestigeUI
-
-_G.PrestigeUI = PrestigeUI
-return PrestigeUI
