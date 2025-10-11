@@ -1,5 +1,6 @@
 -- ========================================
--- PRESTIGE UI LIBRARY (Clean Animations)
+-- PRESTIGE UI LIBRARY (Enhanced Edition)
+-- Features: Custom Themes, Notifications, Auto-Save, Search, Minimize to Corner
 -- ========================================
 
 local PrestigeUI = {}
@@ -7,16 +8,68 @@ PrestigeUI.__index = PrestigeUI
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 
-local Theme = {
-    Primary = Color3.fromRGB(0, 180, 255),
-    Secondary = Color3.fromRGB(22, 22, 25),
-    Tertiary = Color3.fromRGB(28, 28, 32),
-    Text = Color3.fromRGB(255, 255, 255),
-    TextSecondary = Color3.fromRGB(180, 180, 190),
-    Dark = Color3.fromRGB(18, 18, 20),
-    Accent = Color3.fromRGB(255, 100, 100)
+-- Theme Presets
+local ThemePresets = {
+    Dark = {
+        Primary = Color3.fromRGB(0, 180, 255),
+        Secondary = Color3.fromRGB(22, 22, 25),
+        Tertiary = Color3.fromRGB(28, 28, 32),
+        Text = Color3.fromRGB(255, 255, 255),
+        TextSecondary = Color3.fromRGB(180, 180, 190),
+        Dark = Color3.fromRGB(18, 18, 20),
+        Accent = Color3.fromRGB(255, 100, 100)
+    },
+    Ocean = {
+        Primary = Color3.fromRGB(52, 152, 219),
+        Secondary = Color3.fromRGB(20, 30, 48),
+        Tertiary = Color3.fromRGB(30, 40, 58),
+        Text = Color3.fromRGB(236, 240, 241),
+        TextSecondary = Color3.fromRGB(149, 165, 166),
+        Dark = Color3.fromRGB(15, 25, 40),
+        Accent = Color3.fromRGB(46, 204, 113)
+    },
+    Sunset = {
+        Primary = Color3.fromRGB(255, 107, 107),
+        Secondary = Color3.fromRGB(40, 30, 35),
+        Tertiary = Color3.fromRGB(50, 38, 43),
+        Text = Color3.fromRGB(255, 250, 240),
+        TextSecondary = Color3.fromRGB(200, 180, 170),
+        Dark = Color3.fromRGB(30, 22, 28),
+        Accent = Color3.fromRGB(255, 159, 64)
+    },
+    Forest = {
+        Primary = Color3.fromRGB(46, 213, 115),
+        Secondary = Color3.fromRGB(25, 35, 30),
+        Tertiary = Color3.fromRGB(32, 42, 37),
+        Text = Color3.fromRGB(245, 255, 250),
+        TextSecondary = Color3.fromRGB(160, 180, 170),
+        Dark = Color3.fromRGB(18, 28, 23),
+        Accent = Color3.fromRGB(255, 195, 18)
+    },
+    Midnight = {
+        Primary = Color3.fromRGB(138, 43, 226),
+        Secondary = Color3.fromRGB(15, 15, 25),
+        Tertiary = Color3.fromRGB(20, 20, 32),
+        Text = Color3.fromRGB(240, 240, 255),
+        TextSecondary = Color3.fromRGB(150, 150, 180),
+        Dark = Color3.fromRGB(10, 10, 18),
+        Accent = Color3.fromRGB(255, 71, 87)
+    },
+    Purple = {
+        Primary = Color3.fromRGB(155, 89, 182),
+        Secondary = Color3.fromRGB(30, 25, 35),
+        Tertiary = Color3.fromRGB(38, 32, 43),
+        Text = Color3.fromRGB(250, 245, 255),
+        TextSecondary = Color3.fromRGB(180, 170, 190),
+        Dark = Color3.fromRGB(22, 18, 28),
+        Accent = Color3.fromRGB(255, 118, 117)
+    }
 }
+
+local Theme = ThemePresets.Dark
 
 -- Animation utility function
 local function tween(object, properties, duration, style, direction)
@@ -34,6 +87,10 @@ function PrestigeUI:Create(title)
     local self = setmetatable({}, PrestigeUI)
     self.Connections = {}
     self.Theme = Theme
+    self.Notifications = {}
+    self.ConfigData = {}
+    self.ToggleKeybind = Enum.KeyCode.RightShift
+    self.MinimizedIcon = nil
     title = title or "Prestige Hub"
     
     local ScreenGui = Instance.new("ScreenGui")
@@ -248,8 +305,6 @@ function PrestigeUI:Create(title)
     self.ContentArea = ContentArea
     self.Tabs = {}
     self.ActiveTab = nil
-    self.Theme = Theme
-    self.Connections = {}
     
     -- Button hover animations
     MinimizeBtn.MouseEnter:Connect(function()
@@ -346,43 +401,68 @@ function PrestigeUI:Create(title)
         end
     end)
 
+    -- Keybind toggle
+    self.Connections.KeybindToggle = UserInputService.InputBegan:Connect(function(input)
+        if input.KeyCode == self.ToggleKeybind then
+            if MainFrame.Visible then
+                self:MinimizeToCorner()
+            else
+                self:RestoreFromCorner()
+            end
+        end
+    end)
+
+    -- Load saved config
+    self:LoadConfig()
+
     self.Connections.CloseClick = CloseBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            if self.Closing then return end
-            self.Closing = true
-        
-            tween(CloseBtn, {BackgroundColor3 = Color3.fromRGB(200, 50, 50)}, 0.1)
-            tween(MainFrame, {
-                Size = UDim2.new(0, 600, 0, 400),
-                Position = UDim2.new(0.5, -300, 0.5, -200),
-                BackgroundTransparency = 1
-            }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-            
-            task.wait(0.3)
-        
-            for name, conn in pairs(self.Connections or {}) do
-                if typeof(conn) == "RBXScriptConnection" then
-                    pcall(function()
-                        conn:Disconnect()
-                    end)
-                end
-            end
-            self.Connections = {}
-        
-            if self.ScreenGui then
-                pcall(function()
-                    self.ScreenGui:Destroy()
-                end)
-            end
-        
-            table.clear(self)
-            _G.PrestigeUI = nil
-        
-            print("[PrestigeUI] Closed and cleaned successfully.")
+            self:Close()
         end
     end)
 
     return self
+end
+
+function PrestigeUI:Close()
+    if self.Closing then return end
+    self.Closing = true
+    
+    -- Save state before closing
+    self:SaveConfig()
+    
+    -- Animate close
+    local closeTween = tween(self.CloseBtn, {BackgroundColor3 = Color3.fromRGB(200, 50, 50)}, 0.1)
+    closeTween.Completed:Wait()
+    
+    local mainTween = tween(self.MainFrame, {
+        Size = UDim2.new(0, 600, 0, 400),
+        Position = UDim2.new(0.5, -300, 0.5, -200),
+        BackgroundTransparency = 1
+    }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+    mainTween.Completed:Wait()
+    
+    -- Cleanup connections
+    for name, conn in pairs(self.Connections or {}) do
+        if typeof(conn) == "RBXScriptConnection" then
+            pcall(function()
+                conn:Disconnect()
+            end)
+        end
+    end
+    self.Connections = {}
+    
+    -- Destroy GUI
+    if self.ScreenGui then
+        pcall(function()
+            self.ScreenGui:Destroy()
+        end)
+    end
+    
+    table.clear(self)
+    _G.PrestigeUI = nil
+    
+    print("[PrestigeUI] Closed and cleaned successfully.")
 end
 
 function PrestigeUI:AddTab(tabName)
@@ -651,7 +731,7 @@ function PrestigeUI:AddTextBox(parent, placeholder, callback)
     return TextBox
 end
 
-function PrestigeUI:AddToggle(parent, text, callback)
+function PrestigeUI:AddToggle(parent, text, default, callback)
     local Container = Instance.new("Frame")
     Container.Name = "ToggleContainer"
     Container.Size = UDim2.new(1, 0, 0, 40)
@@ -693,7 +773,13 @@ function PrestigeUI:AddToggle(parent, text, callback)
     ToggleButtonCorner.CornerRadius = UDim.new(0, 10)
     ToggleButtonCorner.Parent = ToggleButton
     
-    local toggled = false
+    local toggled = default or false
+    
+    -- Apply initial state
+    if toggled then
+        ToggleButton.Position = UDim2.new(0, 27, 0.5, -10.5)
+        ToggleBg.BackgroundColor3 = self.Theme.Primary
+    end
     
     -- Toggle hover animation
     ToggleBg.MouseEnter:Connect(function()
@@ -719,7 +805,7 @@ function PrestigeUI:AddToggle(parent, text, callback)
         end
     end)
     
-    return {Container = Container, Toggle = ToggleButton, State = toggled}
+    return {Container = Container, Toggle = ToggleButton, GetState = function() return toggled end}
 end
 
 function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
@@ -862,7 +948,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     return Container
 end
 
-function PrestigeUI:AddSlider(parent, min, max, default, callback)
+function PrestigeUI:AddSlider(parent, text, min, max, default, callback)
     local Container = Instance.new("Frame")
     Container.Name = "SliderContainer"
     Container.Size = UDim2.new(1, 0, 0, 40)
@@ -873,7 +959,7 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
     Label.Name = "Label"
     Label.Size = UDim2.new(1, 0, 0, 15)
     Label.BackgroundTransparency = 1
-    Label.Text = "Value: " .. (default or min)
+    Label.Text = text .. ": " .. (default or min)
     Label.TextColor3 = self.Theme.Text
     Label.Font = Enum.Font.GothamBold
     Label.TextSize = 12
@@ -918,6 +1004,11 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
     local dragging = false
     local value = default or min
     
+    -- Apply initial value
+    local percentage = (value - min) / (max - min)
+    SliderFill.Size = UDim2.new(percentage, 0, 1, 0)
+    SliderButton.Position = UDim2.new(percentage, -7, 0.5, -7)
+    
     -- Slider hover animation
     SliderButton.MouseEnter:Connect(function()
         tween(SliderButton, {Size = UDim2.new(0, 18, 0, 18)}, 0.2, Enum.EasingStyle.Back)
@@ -938,7 +1029,7 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
         
         tween(SliderFill, {Size = UDim2.new(percentage, 0, 1, 0)}, 0.1)
         tween(SliderButton, {Position = UDim2.new(percentage, -7, 0.5, -7)}, 0.1)
-        Label.Text = "Value: " .. value
+        Label.Text = text .. ": " .. value
         
         if callback then
             callback(value)
@@ -972,7 +1063,381 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
         end
     end)
     
-    return Container
+    return {Container = Container, GetValue = function() return value end}
+end
+
+-- ========================================
+-- NOTIFICATION SYSTEM
+-- ========================================
+
+function PrestigeUI:Notify(options)
+    options = options or {}
+    local title = options.Title or "Notification"
+    local message = options.Message or ""
+    local duration = options.Duration or 3
+    local type = options.Type or "Info" -- Info, Success, Warning, Error
+    
+    local typeColors = {
+        Info = Color3.fromRGB(52, 152, 219),
+        Success = Color3.fromRGB(46, 213, 115),
+        Warning = Color3.fromRGB(255, 195, 18),
+        Error = Color3.fromRGB(255, 71, 87)
+    }
+    
+    local NotifContainer = Instance.new("Frame")
+    NotifContainer.Name = "Notification"
+    NotifContainer.Size = UDim2.new(0, 320, 0, 80)
+    NotifContainer.Position = UDim2.new(1, 340, 1, -100 - (#self.Notifications * 90))
+    NotifContainer.BackgroundColor3 = self.Theme.Secondary
+    NotifContainer.BorderSizePixel = 0
+    NotifContainer.Parent = self.ScreenGui
+    
+    local NotifCorner = Instance.new("UICorner")
+    NotifCorner.CornerRadius = UDim.new(0, 12)
+    NotifCorner.Parent = NotifContainer
+    
+    local NotifAccent = Instance.new("Frame")
+    NotifAccent.Name = "Accent"
+    NotifAccent.Size = UDim2.new(0, 4, 1, 0)
+    NotifAccent.BackgroundColor3 = typeColors[type] or typeColors.Info
+    NotifAccent.BorderSizePixel = 0
+    NotifAccent.Parent = NotifContainer
+    
+    local AccentCorner = Instance.new("UICorner")
+    AccentCorner.CornerRadius = UDim.new(0, 12)
+    AccentCorner.Parent = NotifAccent
+    
+    local AccentCover = Instance.new("Frame")
+    AccentCover.Size = UDim2.new(0, 4, 1, 0)
+    AccentCover.Position = UDim2.new(0, 2, 0, 0)
+    AccentCover.BackgroundColor3 = typeColors[type] or typeColors.Info
+    AccentCover.BorderSizePixel = 0
+    AccentCover.Parent = NotifAccent
+    
+    local NotifTitle = Instance.new("TextLabel")
+    NotifTitle.Name = "Title"
+    NotifTitle.Size = UDim2.new(1, -50, 0, 25)
+    NotifTitle.Position = UDim2.new(0, 15, 0, 10)
+    NotifTitle.BackgroundTransparency = 1
+    NotifTitle.Text = title
+    NotifTitle.TextColor3 = self.Theme.Text
+    NotifTitle.Font = Enum.Font.GothamBold
+    NotifTitle.TextSize = 15
+    NotifTitle.TextXAlignment = Enum.TextXAlignment.Left
+    NotifTitle.Parent = NotifContainer
+    
+    local NotifMessage = Instance.new("TextLabel")
+    NotifMessage.Name = "Message"
+    NotifMessage.Size = UDim2.new(1, -50, 0, 40)
+    NotifMessage.Position = UDim2.new(0, 15, 0, 35)
+    NotifMessage.BackgroundTransparency = 1
+    NotifMessage.Text = message
+    NotifMessage.TextColor3 = self.Theme.TextSecondary
+    NotifMessage.Font = Enum.Font.Gotham
+    NotifMessage.TextSize = 12
+    NotifMessage.TextXAlignment = Enum.TextXAlignment.Left
+    NotifMessage.TextYAlignment = Enum.TextYAlignment.Top
+    NotifMessage.TextWrapped = true
+    NotifMessage.Parent = NotifContainer
+    
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Name = "Close"
+    CloseBtn.Size = UDim2.new(0, 20, 0, 20)
+    CloseBtn.Position = UDim2.new(1, -30, 0, 10)
+    CloseBtn.BackgroundTransparency = 1
+    CloseBtn.Text = "×"
+    CloseBtn.TextColor3 = self.Theme.TextSecondary
+    CloseBtn.Font = Enum.Font.GothamBold
+    CloseBtn.TextSize = 20
+    CloseBtn.Parent = NotifContainer
+    
+    table.insert(self.Notifications, NotifContainer)
+    
+    -- Slide in animation
+    tween(NotifContainer, {Position = UDim2.new(1, -330, 1, -100 - (#self.Notifications * 90))}, 0.5, Enum.EasingStyle.Back)
+    
+    local function removeNotif()
+        for i, notif in ipairs(self.Notifications) do
+            if notif == NotifContainer then
+                table.remove(self.Notifications, i)
+                break
+            end
+        end
+        
+        -- Slide out
+        local slideTween = tween(NotifContainer, {Position = UDim2.new(1, 340, NotifContainer.Position.Y.Scale, NotifContainer.Position.Y.Offset)}, 0.3, Enum.EasingStyle.Quad)
+        slideTween.Completed:Wait()
+        NotifContainer:Destroy()
+        
+        -- Reposition remaining notifications
+        for i, notif in ipairs(self.Notifications) do
+            tween(notif, {Position = UDim2.new(1, -330, 1, -100 - (i * 90))}, 0.3, Enum.EasingStyle.Quad)
+        end
+    end
+    
+    CloseBtn.MouseButton1Click:Connect(removeNotif)
+    
+    -- Auto dismiss
+    task.delay(duration, removeNotif)
+end
+
+-- ========================================
+-- THEME SYSTEM
+-- ========================================
+
+function PrestigeUI:SetTheme(themeName)
+    if ThemePresets[themeName] then
+        self.Theme = ThemePresets[themeName]
+        self:ApplyTheme()
+    end
+end
+
+function PrestigeUI:CreateCustomTheme(themeTable)
+    if themeTable and type(themeTable) == "table" then
+        self.Theme = {
+            Primary = themeTable.Primary or Theme.Primary,
+            Secondary = themeTable.Secondary or Theme.Secondary,
+            Tertiary = themeTable.Tertiary or Theme.Tertiary,
+            Text = themeTable.Text or Theme.Text,
+            TextSecondary = themeTable.TextSecondary or Theme.TextSecondary,
+            Dark = themeTable.Dark or Theme.Dark,
+            Accent = themeTable.Accent or Theme.Accent
+        }
+        self:ApplyTheme()
+    end
+end
+
+function PrestigeUI:ApplyTheme()
+    -- Apply theme to main UI elements
+    self.MainFrame.BackgroundColor3 = self.Theme.Dark
+    self.TopBar.BackgroundColor3 = self.Theme.Secondary
+    self.Sidebar.BackgroundColor3 = self.Theme.Secondary
+    self.ContentArea.BackgroundColor3 = self.Theme.Secondary
+    self.Title.TextColor3 = self.Theme.Text
+    self.MinimizeBtn.BackgroundColor3 = self.Theme.Primary
+    self.CloseBtn.BackgroundColor3 = self.Theme.Primary
+    
+    -- Apply to all tabs
+    for name, tab in pairs(self.Tabs) do
+        if self.ActiveTab == name then
+            tab.Button.BackgroundColor3 = self.Theme.Primary
+        else
+            tab.Button.BackgroundColor3 = self.Theme.Tertiary
+        end
+    end
+    
+    self:SaveConfig()
+end
+
+-- ========================================
+-- CONFIG SAVE/LOAD SYSTEM
+-- ========================================
+
+function PrestigeUI:SaveConfig()
+    local config = {
+        Theme = {},
+        ActiveTab = self.ActiveTab,
+        Elements = {}
+    }
+    
+    -- Save theme
+    for key, value in pairs(self.Theme) do
+        config.Theme[key] = {value.R, value.G, value.B}
+    end
+    
+    -- Save element states (toggles, sliders, etc.)
+    config.Elements = self.ConfigData
+    
+    -- Encode and store
+    local encoded = HttpService:JSONEncode(config)
+    local key = "PrestigeUI_" .. game.Players.LocalPlayer.UserId
+    
+    -- Use _G as temporary storage (persists for session)
+    _G[key] = encoded
+end
+
+function PrestigeUI:LoadConfig()
+    local key = "PrestigeUI_" .. game.Players.LocalPlayer.UserId
+    local encoded = _G[key]
+    
+    if encoded then
+        local success, config = pcall(function()
+            return HttpService:JSONDecode(encoded)
+        end)
+        
+        if success and config then
+            -- Load theme
+            if config.Theme then
+                local customTheme = {}
+                for key, rgb in pairs(config.Theme) do
+                    customTheme[key] = Color3.fromRGB(rgb[1], rgb[2], rgb[3])
+                end
+                self:CreateCustomTheme(customTheme)
+            end
+            
+            -- Load element states
+            if config.Elements then
+                self.ConfigData = config.Elements
+            end
+        end
+    end
+end
+
+-- ========================================
+-- MINIMIZE TO CORNER
+-- ========================================
+
+function PrestigeUI:MinimizeToCorner()
+    if self.MinimizedIcon then return end
+    
+    self.MainFrame.Visible = false
+    
+    local Icon = Instance.new("Frame")
+    Icon.Name = "MinimizedIcon"
+    Icon.Size = UDim2.new(0, 60, 0, 60)
+    Icon.Position = UDim2.new(1, -80, 1, -80)
+    Icon.BackgroundColor3 = self.Theme.Primary
+    Icon.BorderSizePixel = 0
+    Icon.Parent = self.ScreenGui
+    
+    local IconCorner = Instance.new("UICorner")
+    IconCorner.CornerRadius = UDim.new(0, 15)
+    IconCorner.Parent = Icon
+    
+    local IconText = Instance.new("TextLabel")
+    IconText.Size = UDim2.new(1, 0, 1, 0)
+    IconText.BackgroundTransparency = 1
+    IconText.Text = "P"
+    IconText.TextColor3 = self.Theme.Text
+    IconText.Font = Enum.Font.GothamBold
+    IconText.TextSize = 28
+    IconText.Parent = Icon
+    
+    -- Drag functionality
+    local dragging = false
+    local dragInput, mousePos, framePos
+    
+    Icon.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            mousePos = input.Position
+            framePos = Icon.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    Icon.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - mousePos
+            Icon.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    -- Hover animation
+    Icon.MouseEnter:Connect(function()
+        tween(Icon, {Size = UDim2.new(0, 70, 0, 70), BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2, Enum.EasingStyle.Back)
+    end)
+    
+    Icon.MouseLeave:Connect(function()
+        tween(Icon, {Size = UDim2.new(0, 60, 0, 60), BackgroundColor3 = self.Theme.Primary}, 0.2)
+    end)
+    
+    self.MinimizedIcon = Icon
+end
+
+function PrestigeUI:RestoreFromCorner()
+    if self.MinimizedIcon then
+        local fadeOut = tween(self.MinimizedIcon, {BackgroundTransparency = 1}, 0.2)
+        tween(self.MinimizedIcon:FindFirstChild("TextLabel"), {TextTransparency = 1}, 0.2)
+        fadeOut.Completed:Wait()
+        self.MinimizedIcon:Destroy()
+        self.MinimizedIcon = nil
+    end
+    
+    self.MainFrame.Visible = true
+    tween(self.MainFrame, {Size = UDim2.new(0, 700, 0, 450)}, 0.4, Enum.EasingStyle.Back)
+end
+
+function PrestigeUI:SetKeybind(keyCode)
+    self.ToggleKeybind = keyCode
+end
+
+-- ========================================
+-- SEARCH BAR
+-- ========================================
+
+function PrestigeUI:AddSearchBar(parent)
+    local Container = Instance.new("Frame")
+    Container.Name = "SearchContainer"
+    Container.Size = UDim2.new(1, 0, 0, 40)
+    Container.BackgroundColor3 = self.Theme.Tertiary
+    Container.BorderSizePixel = 0
+    Container.Parent = parent
+    
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 8)
+    Corner.Parent = Container
+    
+    local SearchIcon = Instance.new("TextLabel")
+    SearchIcon.Size = UDim2.new(0, 30, 1, 0)
+    SearchIcon.BackgroundTransparency = 1
+    SearchIcon.Text = "🔍"
+    SearchIcon.TextColor3 = self.Theme.TextSecondary
+    SearchIcon.Font = Enum.Font.Gotham
+    SearchIcon.TextSize = 16
+    SearchIcon.Parent = Container
+    
+    local SearchBox = Instance.new("TextBox")
+    SearchBox.Name = "SearchBox"
+    SearchBox.Size = UDim2.new(1, -40, 1, 0)
+    SearchBox.Position = UDim2.new(0, 35, 0, 0)
+    SearchBox.BackgroundTransparency = 1
+    SearchBox.Text = ""
+    SearchBox.PlaceholderText = "Search..."
+    SearchBox.TextColor3 = self.Theme.Text
+    SearchBox.PlaceholderColor3 = self.Theme.TextSecondary
+    SearchBox.Font = Enum.Font.Gotham
+    SearchBox.TextSize = 14
+    SearchBox.TextXAlignment = Enum.TextXAlignment.Left
+    SearchBox.ClearTextOnFocus = false
+    SearchBox.Parent = Container
+    
+    -- Focus animations
+    SearchBox.Focused:Connect(function()
+        tween(Container, {BackgroundColor3 = Color3.fromRGB(35, 35, 40)}, 0.2)
+        tween(SearchIcon, {TextColor3 = self.Theme.Primary}, 0.2)
+    end)
+    
+    SearchBox.FocusLost:Connect(function()
+        tween(Container, {BackgroundColor3 = self.Theme.Tertiary}, 0.2)
+        tween(SearchIcon, {TextColor3 = self.Theme.TextSecondary}, 0.2)
+    end)
+    
+    -- Search functionality
+    SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        local query = SearchBox.Text:lower()
+        
+        -- Filter tabs
+        for name, tab in pairs(self.Tabs) do
+            if query == "" or name:lower():find(query) then
+                tab.Container.Visible = true
+            else
+                tab.Container.Visible = false
+            end
+        end
+    end)
+    
+    return SearchBox
 end
 
 _G.PrestigeUI = PrestigeUI
