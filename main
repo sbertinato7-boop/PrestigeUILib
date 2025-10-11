@@ -85,8 +85,19 @@ end
 
 function PrestigeUI:Create(title)
     local self = setmetatable({}, PrestigeUI)
+    
+    -- Initialize theme FIRST before anything else
+    self.Theme = {
+        Primary = Color3.fromRGB(0, 180, 255),
+        Secondary = Color3.fromRGB(22, 22, 25),
+        Tertiary = Color3.fromRGB(28, 28, 32),
+        Text = Color3.fromRGB(255, 255, 255),
+        TextSecondary = Color3.fromRGB(180, 180, 190),
+        Dark = Color3.fromRGB(18, 18, 20),
+        Accent = Color3.fromRGB(255, 100, 100)
+    }
+    
     self.Connections = {}
-    self.Theme = ThemePresets.Dark  -- Use Dark preset as default
     self.Notifications = {}
     self.ConfigData = {}
     self.ToggleKeybind = Enum.KeyCode.RightShift
