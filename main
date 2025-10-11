@@ -433,7 +433,6 @@ function PrestigeUI:AddTab(tabName)
     
     -- FIX: Use the tab counter for consistent ordering
     self.TabCounter = self.TabCounter + 1
-    Container.LayoutOrder = self.TabCounter
     
     local TabBtn = Instance.new("Frame")
     TabBtn.Name = tabName .. "Tab"
