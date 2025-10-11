@@ -165,7 +165,6 @@ function PrestigeUI:Create(title)
     self.Theme = table.clone(ThemePresets.Dark)
     self.Connections = {}
     self.Notifications = {}
-    self.ConfigData = {}
     self.ToggleKeybind = Enum.KeyCode.RightShift
     self.MinimizedIcon = nil
     self.AllElements = {} -- Track all elements for theme updates
@@ -1256,62 +1255,81 @@ function PrestigeUI:CreateCustomTheme(themeTable)
 end
 
 function PrestigeUI:ApplyTheme()
+    if not self.Theme then 
+        warn("ApplyTheme: Theme not initialized")
+        return 
+    end
+    
     local t = self.Theme
-    self.MainFrame.BackgroundColor3 = t.Dark
-    self.TopBar.BackgroundColor3 = t.Secondary
-    self.TopBarBottom.BackgroundColor3 = t.Secondary
-    self.Sidebar.BackgroundColor3 = t.Secondary
-    self.ContentArea.BackgroundColor3 = t.Secondary
-    self.Title.TextColor3 = t.Text
-    self.MinimizeBtn.BackgroundColor3 = t.Primary
-    self.CloseBtn.BackgroundColor3 = t.Primary
     
-    for i, tab in ipairs(self.Tabs) do
-        if self.ActiveTab == tab.Name then
-            tab.Button.BackgroundColor3 = t.Primary
-        else
-            tab.Button.BackgroundColor3 = t.Tertiary
-        end
-    end
+    -- Safely update main frame colors
+    if self.MainFrame then self.MainFrame.BackgroundColor3 = t.Dark end
+    if self.TopBar then self.TopBar.BackgroundColor3 = t.Secondary end
+    if self.TopBarBottom then self.TopBarBottom.BackgroundColor3 = t.Secondary end
+    if self.Sidebar then self.Sidebar.BackgroundColor3 = t.Secondary end
+    if self.ContentArea then self.ContentArea.BackgroundColor3 = t.Secondary end
+    if self.Title then self.Title.TextColor3 = t.Text end
+    if self.MinimizeBtn then self.MinimizeBtn.BackgroundColor3 = t.Primary end
+    if self.CloseBtn then self.CloseBtn.BackgroundColor3 = t.Primary end
     
-    for _, elem in ipairs(self.AllElements) do
-        if elem.Type == "Tab" then
-            if self.ActiveTab == elem.Btn.Parent.Parent.Name:gsub("TabContainer", "") then
-                elem.Btn.BackgroundColor3 = t.Primary
-            else
-                elem.Btn.BackgroundColor3 = t.Tertiary
+    -- Update tabs
+    if self.Tabs then
+        for i, tab in ipairs(self.Tabs) do
+            if tab.Button then
+                if self.ActiveTab == tab.Name then
+                    tab.Button.BackgroundColor3 = t.Primary
+                else
+                    tab.Button.BackgroundColor3 = t.Tertiary
+                end
             end
-            elem.Text.TextColor3 = t.Text
-        elseif elem.Type == "Button" then
-            elem.Btn.BackgroundColor3 = t.Primary
-            elem.Text.TextColor3 = t.Text
-        elseif elem.Type == "Label" then
-            elem.Lbl.TextColor3 = t.Text
-        elseif elem.Type == "Para" then
-            elem.Bg.BackgroundColor3 = t.Tertiary
-            elem.Title.TextColor3 = t.Primary
-            elem.Content.TextColor3 = t.TextSecondary
-        elseif elem.Type == "TextBox" then
-            elem.Bg.BackgroundColor3 = t.Tertiary
-            elem.Box.TextColor3 = t.Text
-            elem.Box.PlaceholderColor3 = t.TextSecondary
-        elseif elem.Type == "Toggle" then
-            elem.Bg.BackgroundColor3 = t.Tertiary
-            elem.Label.TextColor3 = t.Text
-        elseif elem.Type == "Dropdown" then
-            elem.Bg.BackgroundColor3 = t.Tertiary
-        elseif elem.Type == "Slider" then
-            elem.Bg.BackgroundColor3 = t.Tertiary
-            elem.Label.TextColor3 = t.Text
-        elseif elem.Type == "SearchBar" then
-            elem.Bg.BackgroundColor3 = t.Tertiary
-            elem.Icon.TextColor3 = t.TextSecondary
-            elem.Box.TextColor3 = t.Text
-            elem.Box.PlaceholderColor3 = t.TextSecondary
         end
     end
     
-    self:SaveConfig()
+    -- Update all elements
+    if self.AllElements then
+        for _, elem in ipairs(self.AllElements) do
+            pcall(function()
+                if elem.Type == "Tab" then
+                    if elem.Btn and self.ActiveTab == elem.Btn.Parent.Parent.Name:gsub("TabContainer", "") then
+                        elem.Btn.BackgroundColor3 = t.Primary
+                    elseif elem.Btn then
+                        elem.Btn.BackgroundColor3 = t.Tertiary
+                    end
+                    if elem.Text then elem.Text.TextColor3 = t.Text end
+                elseif elem.Type == "Button" then
+                    if elem.Btn then elem.Btn.BackgroundColor3 = t.Primary end
+                    if elem.Text then elem.Text.TextColor3 = t.Text end
+                elseif elem.Type == "Label" then
+                    if elem.Lbl then elem.Lbl.TextColor3 = t.Text end
+                elseif elem.Type == "Para" then
+                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
+                    if elem.Title then elem.Title.TextColor3 = t.Primary end
+                    if elem.Content then elem.Content.TextColor3 = t.TextSecondary end
+                elseif elem.Type == "TextBox" then
+                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
+                    if elem.Box then 
+                        elem.Box.TextColor3 = t.Text 
+                        elem.Box.PlaceholderColor3 = t.TextSecondary
+                    end
+                elseif elem.Type == "Toggle" then
+                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
+                    if elem.Label then elem.Label.TextColor3 = t.Text end
+                elseif elem.Type == "Dropdown" then
+                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
+                elseif elem.Type == "Slider" then
+                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
+                    if elem.Label then elem.Label.TextColor3 = t.Text end
+                elseif elem.Type == "SearchBar" then
+                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
+                    if elem.Icon then elem.Icon.TextColor3 = t.TextSecondary end
+                    if elem.Box then 
+                        elem.Box.TextColor3 = t.Text 
+                        elem.Box.PlaceholderColor3 = t.TextSecondary
+                    end
+                end
+            end)
+        end
+    end
 end
 
 function PrestigeUI:AddSearchBar(parent)
@@ -1501,49 +1519,6 @@ end
 
 function PrestigeUI:SetKeybind(keyCode)
     self.ToggleKeybind = keyCode
-end
-
-function PrestigeUI:SaveConfig()
-    local config = {
-        Theme = {},
-        ActiveTab = self.ActiveTab,
-        Elements = {}
-    }
-    
-    for key, value in pairs(self.Theme) do
-        config.Theme[key] = {value.R, value.G, value.B}
-    end
-    
-    config.Elements = self.ConfigData
-    
-    local encoded = HttpService:JSONEncode(config)
-    local key = "PrestigeUI_" .. game.Players.LocalPlayer.UserId
-    _G[key] = encoded
-end
-
-function PrestigeUI:LoadConfig()
-    local key = "PrestigeUI_" .. game.Players.LocalPlayer.UserId
-    local encoded = _G[key]
-    
-    if encoded then
-        local success, config = pcall(function()
-            return HttpService:JSONDecode(encoded)
-        end)
-        
-        if success and config then
-            if config.Theme then
-                local customTheme = {}
-                for k, rgb in pairs(config.Theme) do
-                    customTheme[k] = Color3.fromRGB(rgb[1], rgb[2], rgb[3])
-                end
-                self:CreateCustomTheme(customTheme)
-            end
-            
-            if config.Elements then
-                self.ConfigData = config.Elements
-            end
-        end
-    end
 end
 
 -- ========================================
