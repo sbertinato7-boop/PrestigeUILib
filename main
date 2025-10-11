@@ -429,9 +429,6 @@ function PrestigeUI:AddTab(tabName)
     Container.ClipsDescendants = true
     Container.Parent = self.Sidebar
     
-    -- FIX: Set LayoutOrder to maintain proper order
-    Container.LayoutOrder = #self.Tabs + 1
-    
     local TabBtn = Instance.new("Frame")
     TabBtn.Name = tabName .. "Tab"
     TabBtn.Size = UDim2.new(1, 0, 1, 0)
