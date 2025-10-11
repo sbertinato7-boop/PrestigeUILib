@@ -87,7 +87,8 @@ function PrestigeUI:Create(title)
     self.ConfigData = {}
     self.ToggleKeybind = Enum.KeyCode.RightShift
     self.MinimizedIcon = nil
-    self.AllElements = {} -- Track all elements for theme updates
+    self.AllElements = {}
+    self.TabCounter = 0 -- Counter to track tab order
     title = title or "Prestige Hub"
     self.Tabs = {}
     
@@ -241,7 +242,7 @@ function PrestigeUI:Create(title)
     CloseCorner.CornerRadius = UDim.new(0, 8)
     CloseCorner.Parent = CloseBtn
     
-    local Sidebar = Instance.new("Frame")
+     local Sidebar = Instance.new("Frame")
     Sidebar.Name = "Sidebar"
     Sidebar.Size = UDim2.new(0, 180, 0, 387)
     Sidebar.Position = UDim2.new(0, 8, 0, 53)
@@ -255,6 +256,7 @@ function PrestigeUI:Create(title)
     
     local SidebarList = Instance.new("UIListLayout")
     SidebarList.Padding = UDim.new(0, 8)
+    SidebarList.SortOrder = Enum.SortOrder.LayoutOrder -- ADD THIS LINE
     SidebarList.Parent = Sidebar
     
     local SidebarPadding = Instance.new("UIPadding")
@@ -429,6 +431,10 @@ function PrestigeUI:AddTab(tabName)
     Container.ClipsDescendants = true
     Container.Parent = self.Sidebar
     
+    -- FIX: Use the tab counter for consistent ordering
+    self.TabCounter = self.TabCounter + 1
+    Container.LayoutOrder = self.TabCounter
+    
     local TabBtn = Instance.new("Frame")
     TabBtn.Name = tabName .. "Tab"
     TabBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -493,7 +499,6 @@ function PrestigeUI:AddTab(tabName)
     TabBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             self.ActiveTab = tabName
-            -- FIXED: Use ipairs to maintain order
             for i, tab in ipairs(self.Tabs) do
                 if tab.Name == tabName then
                     tween(tab.Button, {BackgroundColor3 = self.Theme.Primary}, 0.3)
@@ -506,12 +511,12 @@ function PrestigeUI:AddTab(tabName)
         end
     end)
 
-    -- FIXED: Only use array structure
     local tabData = {
         Name = tabName,
         Button = TabBtn, 
         Content = Content, 
-        Container = Container
+        Container = Container,
+        Text = TabText
     }
     table.insert(self.Tabs, tabData)
     
@@ -1143,24 +1148,19 @@ function PrestigeUI:ApplyTheme()
     self.MinimizeBtn.BackgroundColor3 = t.Primary
     self.CloseBtn.BackgroundColor3 = t.Primary
     
-    -- FIXED: Use ipairs for ordered iteration
+    -- Update tabs
     for i, tab in ipairs(self.Tabs) do
         if self.ActiveTab == tab.Name then
             tab.Button.BackgroundColor3 = t.Primary
+            tab.Text.TextColor3 = t.Text
         else
             tab.Button.BackgroundColor3 = t.Tertiary
+            tab.Text.TextColor3 = t.Text
         end
     end
     
     for _, elem in ipairs(self.AllElements) do
-        if elem.Type == "Tab" then
-            if self.ActiveTab == elem.Name then
-                elem.Btn.BackgroundColor3 = t.Primary
-            else
-                elem.Btn.BackgroundColor3 = t.Tertiary
-            end
-            elem.Text.TextColor3 = t.Text
-        elseif elem.Type == "Button" then
+        if elem.Type == "Button" then
             elem.Btn.BackgroundColor3 = t.Primary
             elem.Text.TextColor3 = t.Text
         elseif elem.Type == "Label" then
@@ -1198,7 +1198,7 @@ function PrestigeUI:AddSearchBar(parent)
     Container.Size = UDim2.new(1, 0, 0, 40)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
-    Container.LayoutOrder = -999
+    Container.LayoutOrder = 0  -- FIX: Set to 0 to ensure it's always first
     Container.Parent = parent
     
     local Corner = Instance.new("UICorner")
@@ -1242,7 +1242,6 @@ function PrestigeUI:AddSearchBar(parent)
     SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
         local query = SearchBox.Text:lower()
         
-        -- FIXED: Use ipairs for ordered iteration
         for i, tab in ipairs(self.Tabs) do
             local name = tab.Name
             local shouldShow = false
