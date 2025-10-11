@@ -495,47 +495,31 @@ function PrestigeUI:RemoveTab(tabName)
 end
 
 function PrestigeUI:AddButton(parent, text, callback)
-    local Container = Instance.new("Frame")
-    Container.Name = text .. "Container"
-    Container.Size = UDim2.new(1, 0, 0, 35)
-    Container.BackgroundTransparency = 1
-    Container.ClipsDescendants = true  -- CRITICAL: This prevents overflow
-    Container.Parent = parent
-    
+    -- Create with a unique class name to avoid global styling
     local Btn = Instance.new("TextButton")
-    Btn.Name = text .. "Button"
-    Btn.Size = UDim2.new(1, -20, 1, 0)  -- Reduced width with margins
-    Btn.Position = UDim2.new(0, 10, 0, 0)  -- Centered within container
+    Btn.Name = "PrestigeButton_" .. text
+    Btn.Size = UDim2.new(1, 0, 0, 35)
     Btn.BackgroundColor3 = self.Theme.Primary
     Btn.Text = text
     Btn.TextColor3 = self.Theme.Text
     Btn.Font = Enum.Font.GothamBold
     Btn.TextSize = 14
     Btn.AutoButtonColor = false
-    Btn.Parent = Container
+    Btn.Parent = parent
     
     local BtnCorner = Instance.new("UICorner")
     BtnCorner.CornerRadius = UDim.new(0, 8)
     BtnCorner.Parent = Btn
 
-    -- Clean, constrained hover animation
-    Btn.MouseEnter:Connect(function()
-        TweenService:Create(Btn, TweenInfo.new(0.2), {
-            BackgroundColor3 = Color3.fromRGB(30, 200, 245)
-        }):Play()
-    end)
-    
-    Btn.MouseLeave:Connect(function()
-        TweenService:Create(Btn, TweenInfo.new(0.2), {
-            BackgroundColor3 = self.Theme.Primary
-        }):Play()
-    end)
-    
+    -- DEBUG: Print when button is created to see what's happening
+    print("Button created: " .. text)
+
+    -- Use a completely different approach - ImageButton instead
     Btn.MouseButton1Click:Connect(function()
         if callback then callback() end
     end)
     
-    return Container
+    return Btn
 end
 
 function PrestigeUI:AddParagraph(parent, title, content)
