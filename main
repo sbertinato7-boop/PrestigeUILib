@@ -445,7 +445,7 @@ function PrestigeUI:AddTab(tabName)
     
     TabBtn.MouseEnter:Connect(function()
         if self.ActiveTab ~= tabName then
-            TabBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+            TabBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 40)  -- This affects ALL buttons!
         else
             TabBtn.BackgroundColor3 = self.Theme.Primary
         end
@@ -453,7 +453,7 @@ function PrestigeUI:AddTab(tabName)
     
     TabBtn.MouseLeave:Connect(function()
         if self.ActiveTab ~= tabName then
-            TabBtn.BackgroundColor3 = self.Theme.Tertiary
+            TabBtn.BackgroundColor3 = self.Theme.Tertiary  -- This affects ALL buttons!
         else
             TabBtn.BackgroundColor3 = self.Theme.Primary
         end
