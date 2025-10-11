@@ -478,18 +478,24 @@ function PrestigeUI:Close()
     if self.Closing then return end
     self.Closing = true
     
-    local closeTween = tween(self.CloseBtn, {BackgroundColor3 = Color3.fromRGB(200, 50, 50)}, 0.1)
-    if closeTween then closeTween.Completed:Wait() end
+    if self.CloseBtn and self.CloseBtn.Parent then
+        local closeTween = tween(self.CloseBtn, {BackgroundColor3 = Color3.fromRGB(200, 50, 50)}, 0.1)
+        if closeTween then closeTween.Completed:Wait() end
+    end
     
-    local mainTween = tween(self.MainFrame, {
-        Size = UDim2.new(0, 600, 0, 400),
-        Position = UDim2.new(0.5, -300, 0.5, -200),
-        BackgroundTransparency = 1
-    }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-    
-    -- WAIT for animation to complete before destroying
-    if mainTween then 
-        mainTween.Completed:Wait() 
+    if self.MainFrame and self.MainFrame.Parent then
+        local mainTween = tween(self.MainFrame, {
+            Size = UDim2.new(0, 600, 0, 400),
+            Position = UDim2.new(0.5, -300, 0.5, -200),
+            BackgroundTransparency = 1
+        }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        
+        -- WAIT for animation to complete before destroying
+        if mainTween then 
+            mainTween.Completed:Wait() 
+        else
+            task.wait(0.3)
+        end
     else
         task.wait(0.3)
     end
