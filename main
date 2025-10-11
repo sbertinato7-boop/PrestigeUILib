@@ -507,7 +507,8 @@ function PrestigeUI:AddTab(tabName)
 
         local tabData = {Button = TabBtn, Content = Content, Name = tabName, Container = Container}
         table.insert(self.Tabs, tabData)
-        Container.LayoutOrder = #self.Tabs  -- Set AFTER adding to table
+        
+        Container.LayoutOrder = #self.Tabs + 1 -- Set AFTER adding to table
     
     table.insert(self.AllElements, {Type = "Tab", Btn = TabBtn, Text = TabText})
     return Content
