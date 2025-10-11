@@ -1,5 +1,5 @@
 -- ========================================
--- PRESTIGE UI LIBRARY (Fixed Version)
+-- PRESTIGE UI LIBRARY (Complete Rewrite)
 -- ========================================
 
 local PrestigeUI = {}
@@ -87,8 +87,7 @@ function PrestigeUI:Create(title)
     self.ConfigData = {}
     self.ToggleKeybind = Enum.KeyCode.RightShift
     self.MinimizedIcon = nil
-    self.AllElements = {}
-    self.TabOrder = {} -- Track tab order
+    self.AllElements = {} -- Track all elements for theme updates
     title = title or "Prestige Hub"
     
     local ScreenGui = Instance.new("ScreenGui")
@@ -255,7 +254,6 @@ function PrestigeUI:Create(title)
     
     local SidebarList = Instance.new("UIListLayout")
     SidebarList.Padding = UDim.new(0, 8)
-    SidebarList.SortOrder = Enum.SortOrder.LayoutOrder
     SidebarList.Parent = Sidebar
     
     local SidebarPadding = Instance.new("UIPadding")
@@ -427,13 +425,8 @@ function PrestigeUI:AddTab(tabName)
     Container.Name = tabName .. "TabContainer"
     Container.Size = UDim2.new(1, 0, 0, 40)
     Container.BackgroundTransparency = 1
-    Container.ClipsDescendants = false
+    Container.ClipsDescendants = true
     Container.Parent = self.Sidebar
-    
-    -- Set layout order based on tab order
-    local layoutOrder = #self.TabOrder + 1000 -- Start at 1000 to leave room for search
-    Container.LayoutOrder = layoutOrder
-    table.insert(self.TabOrder, tabName)
     
     local TabBtn = Instance.new("Frame")
     TabBtn.Name = tabName .. "Tab"
@@ -495,104 +488,18 @@ function PrestigeUI:AddTab(tabName)
         end
     end)
     
-    -- FIXED: Improved drag-to-reorder functionality
-    local dragging = false
-    local dragStart = nil
-    local startLayoutOrder = nil
-    
     TabBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragStart = input.Position
-            startLayoutOrder = Container.LayoutOrder
-            
-            -- Small delay to distinguish between click and drag
-            task.wait(0.15)
-            
-            if dragStart and (input.Position - dragStart).Magnitude < 5 then
-                -- This is a click, not a drag
-                self.ActiveTab = tabName
-                for name, tab in pairs(self.Tabs) do
-                    if name == tabName then
-                        tween(tab.Button, {BackgroundColor3 = self.Theme.Primary}, 0.3)
-                        tab.Content.Visible = true
-                    else
-                        tween(tab.Button, {BackgroundColor3 = self.Theme.Tertiary}, 0.3)
-                        tab.Content.Visible = false
-                    end
-                end
-            else
-                dragging = true
-                tween(Container, {BackgroundTransparency = 0.5}, 0.2)
-            end
-        end
-    end)
-    
-    TabBtn.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement and dragging and dragStart then
-            local dragOffset = input.Position.Y - dragStart.Y
-            
-            -- Visual feedback
-            if math.abs(dragOffset) > 20 then
-                tween(TabBtn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
-            end
-        end
-    end)
-    
-    TabBtn.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            if dragging then
-                dragging = false
-                tween(Container, {BackgroundTransparency = 1}, 0.2)
-                tween(TabBtn, {BackgroundColor3 = self.ActiveTab == tabName and self.Theme.Primary or self.Theme.Tertiary}, 0.2)
-                
-                local dragOffset = input.Position.Y - dragStart.Y
-                
-                -- Only reorder if dragged more than 40 pixels
-                if math.abs(dragOffset) > 40 then
-                    -- Get all tab containers sorted by layout order
-                    local allContainers = {}
-                    for _, child in ipairs(self.Sidebar:GetChildren()) do
-                        if child:IsA("Frame") and child.Name:find("TabContainer") then
-                            table.insert(allContainers, child)
-                        end
-                    end
-                    
-                    table.sort(allContainers, function(a, b)
-                        return a.LayoutOrder < b.LayoutOrder
-                    end)
-                    
-                    -- Find current index
-                    local currentIndex = nil
-                    for i, container in ipairs(allContainers) do
-                        if container == Container then
-                            currentIndex = i
-                            break
-                        end
-                    end
-                    
-                    if currentIndex then
-                        local targetIndex = currentIndex
-                        
-                        if dragOffset > 0 and currentIndex < #allContainers then
-                            -- Move down
-                            targetIndex = currentIndex + 1
-                            local temp = allContainers[currentIndex].LayoutOrder
-                            allContainers[currentIndex].LayoutOrder = allContainers[targetIndex].LayoutOrder
-                            allContainers[targetIndex].LayoutOrder = temp
-                        elseif dragOffset < 0 and currentIndex > 1 then
-                            -- Move up (but not above search)
-                            local targetContainer = allContainers[currentIndex - 1]
-                            if targetContainer.LayoutOrder > 0 then -- Don't move above search (LayoutOrder -999)
-                                targetIndex = currentIndex - 1
-                                local temp = allContainers[currentIndex].LayoutOrder
-                                allContainers[currentIndex].LayoutOrder = allContainers[targetIndex].LayoutOrder
-                                allContainers[targetIndex].LayoutOrder = temp
-                            end
-                        end
-                    end
+            self.ActiveTab = tabName
+            for name, tab in pairs(self.Tabs) do
+                if name == tabName then
+                    tween(tab.Button, {BackgroundColor3 = self.Theme.Primary}, 0.3)
+                    tab.Content.Visible = true
+                else
+                    tween(tab.Button, {BackgroundColor3 = self.Theme.Tertiary}, 0.3)
+                    tab.Content.Visible = false
                 end
             end
-            dragStart = nil
         end
     end)
     
@@ -971,7 +878,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         end
     end)
 
-    table.insert(self.AllElements, {Type = "Dropdown", Bg = Container, List = DropdownList, Text = DropdownText})
+    table.insert(self.AllElements, {Type = "Dropdown", Bg = Container, List = DropdownList})
     return Container
 end
 
@@ -1088,7 +995,7 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
         end
     end)
     
-    table.insert(self.AllElements, {Type = "Slider", Bg = SliderBg, Fill = SliderFill, Btn = SliderButton, Label = Label})
+    table.insert(self.AllElements, {Type = "Slider", Bg = SliderBg, Btn = SliderButton, Label = Label})
     return {Container = Container, GetValue = function() return value end}
 end
 
@@ -1214,106 +1121,72 @@ function PrestigeUI:CreateCustomTheme(themeTable)
     end
 end
 
--- FIXED: ApplyTheme function with proper nil checks
 function PrestigeUI:ApplyTheme()
     local t = self.Theme
+    self.MainFrame.BackgroundColor3 = t.Dark
+    self.TopBar.BackgroundColor3 = t.Secondary
+    self.TopBarBottom.BackgroundColor3 = t.Secondary
+    self.Sidebar.BackgroundColor3 = t.Secondary
+    self.ContentArea.BackgroundColor3 = t.Secondary
+    self.Title.TextColor3 = t.Text
+    self.MinimizeBtn.BackgroundColor3 = t.Primary
+    self.CloseBtn.BackgroundColor3 = t.Primary
     
-    -- Safely update main UI elements
-    if self.MainFrame then self.MainFrame.BackgroundColor3 = t.Dark end
-    if self.TopBar then self.TopBar.BackgroundColor3 = t.Secondary end
-    if self.TopBarBottom then self.TopBarBottom.BackgroundColor3 = t.Secondary end
-    if self.Sidebar then self.Sidebar.BackgroundColor3 = t.Secondary end
-    if self.ContentArea then self.ContentArea.BackgroundColor3 = t.Secondary end
-    if self.Title then self.Title.TextColor3 = t.Text end
-    if self.MinimizeBtn then self.MinimizeBtn.BackgroundColor3 = t.Primary end
-    if self.CloseBtn then self.CloseBtn.BackgroundColor3 = t.Primary end
-    
-    -- Update tabs with proper checks
     for name, tab in pairs(self.Tabs) do
-        if tab and tab.Button then
-            if self.ActiveTab == name then
-                tab.Button.BackgroundColor3 = t.Primary
-            else
-                tab.Button.BackgroundColor3 = t.Tertiary
-            end
-        end
-        
-        if tab and tab.Content then
-            tab.Content.ScrollBarImageColor3 = t.Primary
+        if self.ActiveTab == name then
+            tab.Button.BackgroundColor3 = t.Primary
+        else
+            tab.Button.BackgroundColor3 = t.Tertiary
         end
     end
     
-    -- Update all elements with nil checks
     for _, elem in ipairs(self.AllElements) do
-        if not elem then continue end
-        
         if elem.Type == "Tab" then
-            if elem.Btn and elem.Btn.Parent and elem.Btn.Parent.Parent then
-                local tabName = elem.Btn.Parent.Name:gsub("TabContainer", "")
-                if self.ActiveTab == tabName then
-                    elem.Btn.BackgroundColor3 = t.Primary
-                else
-                    elem.Btn.BackgroundColor3 = t.Tertiary
-                end
+            if self.ActiveTab == elem.Btn.Parent.Parent.Name:gsub("TabContainer", "") then
+                elem.Btn.BackgroundColor3 = t.Primary
+            else
+                elem.Btn.BackgroundColor3 = t.Tertiary
             end
-            if elem.Text then elem.Text.TextColor3 = t.Text end
-            
+            elem.Text.TextColor3 = t.Text
         elseif elem.Type == "Button" then
-            if elem.Btn then elem.Btn.BackgroundColor3 = t.Primary end
-            if elem.Text then elem.Text.TextColor3 = t.Text end
-            
+            elem.Btn.BackgroundColor3 = t.Primary
+            elem.Text.TextColor3 = t.Text
         elseif elem.Type == "Label" then
-            if elem.Lbl then elem.Lbl.TextColor3 = t.Text end
-            
+            elem.Lbl.TextColor3 = t.Text
         elseif elem.Type == "Para" then
-            if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-            if elem.Title then elem.Title.TextColor3 = t.Primary end
-            if elem.Content then elem.Content.TextColor3 = t.TextSecondary end
-            
+            elem.Bg.BackgroundColor3 = t.Tertiary
+            elem.Title.TextColor3 = t.Primary
+            elem.Content.TextColor3 = t.TextSecondary
         elseif elem.Type == "TextBox" then
-            if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-            if elem.Box then
-                elem.Box.TextColor3 = t.Text
-                elem.Box.PlaceholderColor3 = t.TextSecondary
-            end
-            
+            elem.Bg.BackgroundColor3 = t.Tertiary
+            elem.Box.TextColor3 = t.Text
+            elem.Box.PlaceholderColor3 = t.TextSecondary
         elseif elem.Type == "Toggle" then
-            if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-            if elem.Btn then elem.Btn.BackgroundColor3 = t.Primary end
-            if elem.Label then elem.Label.TextColor3 = t.Text end
-            
+            elem.Bg.BackgroundColor3 = t.Tertiary
+            elem.Label.TextColor3 = t.Text
         elseif elem.Type == "Dropdown" then
-            if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-            if elem.List then elem.List.BackgroundColor3 = t.Secondary end
-            if elem.Text then elem.Text.TextColor3 = t.TextSecondary end
-            
+            elem.Bg.BackgroundColor3 = t.Tertiary
         elseif elem.Type == "Slider" then
-            if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-            if elem.Fill then elem.Fill.BackgroundColor3 = t.Primary end
-            if elem.Btn then elem.Btn.BackgroundColor3 = t.Primary end
-            if elem.Label then elem.Label.TextColor3 = t.Text end
-            
+            elem.Bg.BackgroundColor3 = t.Tertiary
+            elem.Label.TextColor3 = t.Text
         elseif elem.Type == "SearchBar" then
-            if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-            if elem.Icon then elem.Icon.TextColor3 = t.TextSecondary end
-            if elem.Box then
-                elem.Box.TextColor3 = t.Text
-                elem.Box.PlaceholderColor3 = t.TextSecondary
-            end
+            elem.Bg.BackgroundColor3 = t.Tertiary
+            elem.Icon.TextColor3 = t.TextSecondary
+            elem.Box.TextColor3 = t.Text
+            elem.Box.PlaceholderColor3 = t.TextSecondary
         end
     end
     
     self:SaveConfig()
 end
 
--- FIXED: Search bar with proper layout order
 function PrestigeUI:AddSearchBar(parent)
     local Container = Instance.new("Frame")
     Container.Name = "SearchContainer"
     Container.Size = UDim2.new(1, 0, 0, 40)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
-    Container.LayoutOrder = -999 -- Always at the top
+    Container.LayoutOrder = -999
     Container.Parent = parent
     
     local Corner = Instance.new("UICorner")
@@ -1358,33 +1231,26 @@ function PrestigeUI:AddSearchBar(parent)
         local query = SearchBox.Text:lower()
         
         for name, tab in pairs(self.Tabs) do
-            if not tab or not tab.Container then continue end
-            
             local shouldShow = false
             
             if query == "" then
                 shouldShow = true
             else
-                -- Search in tab name
                 if name:lower():find(query, 1, true) then
                     shouldShow = true
                 else
-                    -- Search in tab content
                     local function searchChildren(searchParent)
-                        if not searchParent then return false end
-                        
                         for _, child in ipairs(searchParent:GetChildren()) do
                             if child:IsA("TextLabel") then
-                                if child.Text and child.Text:lower():find(query, 1, true) then
+                                if child.Text:lower():find(query, 1, true) then
                                     return true
                                 end
                             elseif child:IsA("TextButton") then
-                                if child.Text and child.Text:lower():find(query, 1, true) then
+                                if child.Text:lower():find(query, 1, true) then
                                     return true
                                 end
                             elseif child:IsA("TextBox") then
-                                if (child.Text and child.Text:lower():find(query, 1, true)) or 
-                                   (child.PlaceholderText and child.PlaceholderText:lower():find(query, 1, true)) then
+                                if child.Text:lower():find(query, 1, true) or child.PlaceholderText:lower():find(query, 1, true) then
                                     return true
                                 end
                             end
@@ -1441,20 +1307,12 @@ function PrestigeUI:MinimizeToCorner()
     
     Icon.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            local clickTime = tick()
             dragging = true
             mousePos = input.Position
             framePos = Icon.Position
-            
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
-                    local clickDuration = tick() - clickTime
                     dragging = false
-                    
-                    -- If it was a quick click (not a drag), restore the window
-                    if clickDuration < 0.2 then
-                        self:RestoreFromCorner()
-                    end
                 end
             end)
         end
@@ -1481,6 +1339,12 @@ function PrestigeUI:MinimizeToCorner()
         tween(Icon, {Size = UDim2.new(0, 60, 0, 60), BackgroundColor3 = self.Theme.Primary}, 0.2)
     end)
     
+    Icon.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            self:RestoreFromCorner()
+        end
+    end)
+    
     self.MinimizedIcon = Icon
 end
 
@@ -1505,57 +1369,45 @@ function PrestigeUI:SetKeybind(keyCode)
 end
 
 function PrestigeUI:SaveConfig()
-    local success, err = pcall(function()
-        local config = {
-            Theme = {},
-            ActiveTab = self.ActiveTab,
-            Elements = {}
-        }
-        
-        for key, value in pairs(self.Theme) do
-            config.Theme[key] = {value.R, value.G, value.B}
-        end
-        
-        config.Elements = self.ConfigData
-        
-        local encoded = HttpService:JSONEncode(config)
-        local key = "PrestigeUI_" .. game.Players.LocalPlayer.UserId
-        _G[key] = encoded
-    end)
+    local config = {
+        Theme = {},
+        ActiveTab = self.ActiveTab,
+        Elements = {}
+    }
     
-    if not success then
-        warn("PrestigeUI: Failed to save config - " .. tostring(err))
+    for key, value in pairs(self.Theme) do
+        config.Theme[key] = {value.R, value.G, value.B}
     end
+    
+    config.Elements = self.ConfigData
+    
+    local encoded = HttpService:JSONEncode(config)
+    local key = "PrestigeUI_" .. game.Players.LocalPlayer.UserId
+    _G[key] = encoded
 end
 
 function PrestigeUI:LoadConfig()
-    local success, err = pcall(function()
-        local key = "PrestigeUI_" .. game.Players.LocalPlayer.UserId
-        local encoded = _G[key]
+    local key = "PrestigeUI_" .. game.Players.LocalPlayer.UserId
+    local encoded = _G[key]
+    
+    if encoded then
+        local success, config = pcall(function()
+            return HttpService:JSONDecode(encoded)
+        end)
         
-        if encoded then
-            local success, config = pcall(function()
-                return HttpService:JSONDecode(encoded)
-            end)
+        if success and config then
+            if config.Theme then
+                local customTheme = {}
+                for k, rgb in pairs(config.Theme) do
+                    customTheme[k] = Color3.fromRGB(rgb[1], rgb[2], rgb[3])
+                end
+                self:CreateCustomTheme(customTheme)
+            end
             
-            if success and config then
-                if config.Theme then
-                    local customTheme = {}
-                    for k, rgb in pairs(config.Theme) do
-                        customTheme[k] = Color3.fromRGB(rgb[1], rgb[2], rgb[3])
-                    end
-                    self:CreateCustomTheme(customTheme)
-                end
-                
-                if config.Elements then
-                    self.ConfigData = config.Elements
-                end
+            if config.Elements then
+                self.ConfigData = config.Elements
             end
         end
-    end)
-    
-    if not success then
-        warn("PrestigeUI: Failed to load config - " .. tostring(err))
     end
 end
 
