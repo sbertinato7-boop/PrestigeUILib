@@ -178,11 +178,13 @@ function PrestigeUI:Create(title)
     TopBarCorner.Parent = TopBar
     
     local TopBarBottom = Instance.new("Frame")
+    TopBarBottom.Name = "TopBarBottom"
     TopBarBottom.Size = UDim2.new(1, 0, 0, 15)
     TopBarBottom.Position = UDim2.new(0, 0, 1, -15)
     TopBarBottom.BackgroundColor3 = self.Theme.Secondary
     TopBarBottom.BorderSizePixel = 0
     TopBarBottom.Parent = TopBar
+    self.TopBarBottom = TopBarBottom
     
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Name = "Title"
@@ -1123,17 +1125,12 @@ function PrestigeUI:ApplyTheme()
     local t = self.Theme
     self.MainFrame.BackgroundColor3 = t.Dark
     self.TopBar.BackgroundColor3 = t.Secondary
+    self.TopBarBottom.BackgroundColor3 = t.Secondary
     self.Sidebar.BackgroundColor3 = t.Secondary
     self.ContentArea.BackgroundColor3 = t.Secondary
     self.Title.TextColor3 = t.Text
     self.MinimizeBtn.BackgroundColor3 = t.Primary
     self.CloseBtn.BackgroundColor3 = t.Primary
-    
-    for _, frame in ipairs(self.TopBar:GetChildren()) do
-        if frame.Name == "Frame" and not frame:IsDescendantOf(self.MinimizeBtn) and not frame:IsDescendantOf(self.CloseBtn) then
-            frame.BackgroundColor3 = t.Dark
-        end
-    end
     
     for name, tab in pairs(self.Tabs) do
         if self.ActiveTab == name then
@@ -1172,6 +1169,11 @@ function PrestigeUI:ApplyTheme()
         elseif elem.Type == "Slider" then
             elem.Bg.BackgroundColor3 = t.Tertiary
             elem.Label.TextColor3 = t.Text
+        elseif elem.Type == "SearchBar" then
+            elem.Bg.BackgroundColor3 = t.Tertiary
+            elem.Icon.TextColor3 = t.TextSecondary
+            elem.Box.TextColor3 = t.Text
+            elem.Box.PlaceholderColor3 = t.TextSecondary
         end
     end
     
@@ -1237,8 +1239,8 @@ function PrestigeUI:AddSearchBar(parent)
                 if name:lower():find(query, 1, true) then
                     shouldShow = true
                 else
-                    local function searchChildren(parent)
-                        for _, child in ipairs(parent:GetChildren()) do
+                    local function searchChildren(searchParent)
+                        for _, child in ipairs(searchParent:GetChildren()) do
                             if child:IsA("TextLabel") then
                                 if child.Text:lower():find(query, 1, true) then
                                     return true
@@ -1270,6 +1272,7 @@ function PrestigeUI:AddSearchBar(parent)
         end
     end)
     
+    table.insert(self.AllElements, {Type = "SearchBar", Bg = Container, Icon = SearchIcon, Box = SearchBox})
     return SearchBox
 end
 
