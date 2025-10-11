@@ -180,7 +180,7 @@ function PrestigeUI:Create(title)
     local TopBarBottom = Instance.new("Frame")
     TopBarBottom.Size = UDim2.new(1, 0, 0, 15)
     TopBarBottom.Position = UDim2.new(0, 0, 1, -15)
-    TopBarBottom.BackgroundColor3 = self.Theme.Dark
+    TopBarBottom.BackgroundColor3 = self.Theme.Secondary
     TopBarBottom.BorderSizePixel = 0
     TopBarBottom.Parent = TopBar
     
@@ -1181,8 +1181,7 @@ end
 function PrestigeUI:AddSearchBar(parent)
     local Container = Instance.new("Frame")
     Container.Name = "SearchContainer"
-    Container.Size = UDim2.new(1, -30, 0, 40)
-    Container.Position = UDim2.new(0, 15, 0, 0)
+    Container.Size = UDim2.new(1, 0, 0, 40)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
     Container.LayoutOrder = -999
