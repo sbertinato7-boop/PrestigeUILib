@@ -33,7 +33,7 @@
 ### Method 1: Direct Copy
 ```lua
 -- Copy the entire PrestigeUI library code into your script
-local PrestigeUI = loadstring(game:HttpGet("YOUR_SCRIPT_URL"))()
+local PrestigeUI = loadstring(game:HttpGet("(https://rawcdn.githack.com/sbertinato7-boop/PrestigeUILib/50fe3ab7da13675ef863dd0e9b18f42a64e8c105/main)"))()
 ```
 
 ### Method 2: Local Module
@@ -50,10 +50,10 @@ local PrestigeUI = require(game.ReplicatedStorage.PrestigeUI)
 
 ```lua
 -- Load the library
-local PrestigeUI = loadstring(game:HttpGet("YOUR_URL"))()
+local PrestigeUI = loadstring(game:HttpGet("(https://rawcdn.githack.com/sbertinato7-boop/PrestigeUILib/50fe3ab7da13675ef863dd0e9b18f42a64e8c105/main)"))()
 
 -- Create a new UI window
-local Window = PrestigeUI:Create("My Hub")
+local Window = PrestigeUI:Create("Prestige Hub")
 
 -- Create a tab
 local MainTab = Window:AddTab("Main")
@@ -67,7 +67,7 @@ end)
 ### Complete Example
 
 ```lua
-local PrestigeUI = loadstring(game:HttpGet("YOUR_URL"))()
+local PrestigeUI = loadstring(game:HttpGet("(https://rawcdn.githack.com/sbertinato7-boop/PrestigeUILib/50fe3ab7da13675ef863dd0e9b18f42a64e8c105/main)"))()
 
 -- Create window
 local Window = PrestigeUI:Create("Prestige Hub")
@@ -110,7 +110,7 @@ Creates a new UI window.
 
 **Example:**
 ```lua
-local Window = PrestigeUI:Create("My Custom Hub")
+local Window = PrestigeUI:Create("Prestige Hub")
 ```
 
 ---
@@ -669,7 +669,7 @@ Window.ToggleKeybind = Enum.KeyCode.Insert
 ### Example 1: Simple Script Hub
 
 ```lua
-local PrestigeUI = loadstring(game:HttpGet("YOUR_URL"))()
+local PrestigeUI = loadstring(game:HttpGet("(https://rawcdn.githack.com/sbertinato7-boop/PrestigeUILib/50fe3ab7da13675ef863dd0e9b18f42a64e8c105/main)"))()
 local Window = PrestigeUI:Create("Simple Hub")
 
 -- Main Tab
@@ -708,7 +708,7 @@ end)
 ### Example 2: Advanced Configuration
 
 ```lua
-local PrestigeUI = loadstring(game:HttpGet("YOUR_URL"))()
+local PrestigeUI = loadstring(game:HttpGet("(https://rawcdn.githack.com/sbertinato7-boop/PrestigeUILib/50fe3ab7da13675ef863dd0e9b18f42a64e8c105/main)"))()
 local Window = PrestigeUI:Create("Advanced Hub")
 
 -- Set theme
@@ -764,7 +764,7 @@ end)
 ### Example 3: Multi-Tab Hub
 
 ```lua
-local PrestigeUI = loadstring(game:HttpGet("YOUR_URL"))()
+local PrestigeUI = loadstring(game:HttpGet("(https://rawcdn.githack.com/sbertinato7-boop/PrestigeUILib/50fe3ab7da13675ef863dd0e9b18f42a64e8c105/main)"))()
 local Window = PrestigeUI:Create("Multi-Tab Hub")
 
 -- Home Tab
@@ -955,4 +955,4 @@ For issues, suggestions, or contributions:
 
 **End of Documentation**
 
-*Last Updated: 2024*
+*Last Updated: Oct 11 2025*
