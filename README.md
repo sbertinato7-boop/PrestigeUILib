@@ -761,53 +761,162 @@ end)
 
 ---
 
-### Example 3: Multi-Tab Hub
+### Example 3: Demo Hub
 
 ```lua
-local PrestigeUI = loadstring(game:HttpGet("(https://rawcdn.githack.com/sbertinato7-boop/PrestigeUILib/50fe3ab7da13675ef863dd0e9b18f42a64e8c105/main)"))()
-local Window = PrestigeUI:Create("Multi-Tab Hub")
+-- Load the library
+local PrestigeUI = loadstring(game:HttpGet("https://rawcdn.githack.com/sbertinato7-boop/PrestigeUILib/50fe3ab7da13675ef863dd0e9b18f42a64e8c105/main"))()
 
--- Home Tab
-local HomeTab = Window:AddTab("Home")
-Window:AddLabel(HomeTab, "Welcome to the Hub!", 20)
-Window:AddParagraph(HomeTab, "About", 
-    "This is a feature-rich script hub with multiple tabs and options.")
+-- Create main window
+local Window = PrestigeUI:Create("Demo Hub")
 
--- Combat Tab
-local CombatTab = Window:AddTab("Combat")
-Window:AddButton(CombatTab, "Kill Aura", function()
-    print("Kill Aura activated")
-end)
-Window:AddSlider(CombatTab, 1, 20, 5, function(value)
-    print("Kill Aura Range:", value)
-end)
+-- Add search bar to sidebar
+Window:AddSearchBar(Window.Sidebar)
 
--- Movement Tab
-local MovementTab = Window:AddTab("Movement")
-Window:AddToggle(MovementTab, "Fly", function(state)
-    print("Fly:", state)
-end)
-Window:AddToggle(MovementTab, "No Clip", function(state)
-    print("No Clip:", state)
+local Home = Window:AddTab("Home")
+
+Window:AddLabel(Home, "Welcome to Demo Hub", 18)
+Window:AddParagraph(Home, "Quick Start", "Explore the tabs to test all UI features. Press RightShift to toggle.")
+
+Window:AddDivider(Home, "Quick Actions")
+
+Window:AddButton(Home, "Test Notification", function()
+    Window:Notify({
+        Title = "Success!",
+        Message = "Button is working perfectly.",
+        Duration = 3,
+        Type = "Success"
+    })
 end)
 
--- Visual Tab
-local VisualTab = Window:AddTab("Visual")
-Window:AddToggle(VisualTab, "ESP", function(state)
-    print("ESP:", state)
-end)
-Window:AddToggle(VisualTab, "Fullbright", function(state)
-    print("Fullbright:", state)
+Window:AddToggle(Home, "Enable Feature", function(state)
+    print("Feature:", state and "ON" or "OFF")
 end)
 
--- Settings Tab
-local SettingsTab = Window:AddTab("Settings")
-Window:AddDropdown(SettingsTab, "Select Theme", 
-    {"Dark", "Ocean", "Sunset", "Cyberpunk", "Dracula"}, 
-    function(theme)
-        Window:SetTheme(theme)
-    end
-)
+Window:AddSlider(Home, 0, 100, 50, function(value)
+    print("Value:", value)
+end)
+
+local Elements = Window:AddTab("Elements")
+
+Window:AddLabel(Elements, "UI Components", 16)
+Window:AddDivider(Elements)
+
+-- TextBox
+Window:AddTextBox(Elements, "Enter text here...", function(text)
+    Window:Notify({
+        Title = "Text Entered",
+        Message = "You typed: " .. text,
+        Duration = 2,
+        Type = "Info"
+    })
+end)
+
+-- Dropdown
+Window:AddDropdown(Elements, "Select option", {"Red", "Green", "Blue", "Yellow"}, function(choice)
+    print("Selected:", choice)
+end)
+
+-- Multiple toggles
+Window:AddDivider(Elements, "Settings")
+Window:AddToggle(Elements, "Auto Save", function(state) end)
+Window:AddToggle(Elements, "Notifications", function(state) end)
+Window:AddToggle(Elements, "Sound Effects", function(state) end)
+
+local Themes = Window:AddTab("Themes")
+
+Window:AddLabel(Themes, "Theme Selection", 16)
+Window:AddDivider(Themes)
+
+-- Theme dropdown
+local themes = {"Dark", "Ocean", "Sunset", "Forest", "Midnight", "Purple", "Cyberpunk", "Neon", "Dracula", "Tokyo"}
+Window:AddDropdown(Themes, "Choose Theme", themes, function(theme)
+    Window:SetTheme(theme)
+    Window:Notify({
+        Title = "Theme Changed",
+        Message = "Applied " .. theme .. " theme",
+        Duration = 2,
+        Type = "Success"
+    })
+end)
+
+Window:AddDivider(Themes, "Custom Colors")
+
+-- Color pickers
+Window:AddColorPicker(Themes, "Primary Color", Color3.fromRGB(0, 180, 255), function(color)
+    Window.Theme.Primary = color
+    Window:ApplyTheme()
+end)
+
+Window:AddColorPicker(Themes, "Accent Color", Color3.fromRGB(255, 100, 100), function(color)
+    Window.Theme.Accent = color
+    Window:ApplyTheme()
+end)
+
+local Settings = Window:AddTab("Settings")
+
+Window:AddLabel(Settings, "Keybinds", 16)
+Window:AddDivider(Settings)
+
+Window:AddKeybind(Settings, "Toggle UI", Enum.KeyCode.RightShift, function(key)
+    Window:SetKeybind(key)
+end)
+
+Window:AddKeybind(Settings, "Quick Action", Enum.KeyCode.F, function(key)
+    print("Keybind set to:", key.Name)
+end)
+
+Window:AddDivider(Settings, "Notifications")
+
+Window:AddButton(Settings, "Info Message", function()
+    Window:Notify({Title = "Info", Message = "This is an info notification", Duration = 3, Type = "Info"})
+end)
+
+Window:AddButton(Settings, "Warning Message", function()
+    Window:Notify({Title = "Warning", Message = "This is a warning", Duration = 3, Type = "Warning"})
+end)
+
+Window:AddButton(Settings, "Error Message", function()
+    Window:Notify({Title = "Error", Message = "This is an error", Duration = 3, Type = "Error"})
+end)
+
+local About = Window:AddTab("About")
+
+Window:AddLabel(About, "Prestige UI Library", 18)
+Window:AddParagraph(About, "Version", "v2.0 - Complete Rewrite")
+Window:AddParagraph(About, "Features", "Modern UI with 15+ themes, animations, and more")
+
+Window:AddDivider(About)
+
+Window:AddButton(About, "Show Dialog", function()
+    Window:ShowDialog({
+        Title = "Example Dialog",
+        Message = "This is a modal dialog box with multiple buttons.",
+        Buttons = {
+            {"Confirm", function()
+                Window:Notify({Title = "Confirmed", Message = "You clicked confirm", Duration = 2, Type = "Success"})
+            end},
+            {"Cancel", function()
+                print("Cancelled")
+            end}
+        }
+    })
+end)
+
+Window:AddDivider(About)
+
+Window:AddButton(About, "Close UI", function()
+    Window:Close()
+end)
+
+Window:Notify({
+    Title = "Welcome!",
+    Message = "Demo Hub loaded successfully",
+    Duration = 4,
+    Type = "Success"
+})
+
+print("Demo Hub loaded! Press RightShift to toggle")
 ```
 
 ---
