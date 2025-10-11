@@ -36,6 +36,33 @@ local ThemePresets = {
         TextSecondary = Color3.fromRGB(200, 180, 170),
         Dark = Color3.fromRGB(30, 22, 28),
         Accent = Color3.fromRGB(255, 159, 64)
+    },
+    Forest = {
+        Primary = Color3.fromRGB(46, 213, 115),
+        Secondary = Color3.fromRGB(25, 35, 30),
+        Tertiary = Color3.fromRGB(32, 42, 37),
+        Text = Color3.fromRGB(245, 255, 250),
+        TextSecondary = Color3.fromRGB(160, 180, 170),
+        Dark = Color3.fromRGB(18, 28, 23),
+        Accent = Color3.fromRGB(255, 195, 18)
+    },
+    Midnight = {
+        Primary = Color3.fromRGB(138, 43, 226),
+        Secondary = Color3.fromRGB(15, 15, 25),
+        Tertiary = Color3.fromRGB(20, 20, 32),
+        Text = Color3.fromRGB(240, 240, 255),
+        TextSecondary = Color3.fromRGB(150, 150, 180),
+        Dark = Color3.fromRGB(10, 10, 18),
+        Accent = Color3.fromRGB(255, 71, 87)
+    },
+    Purple = {
+        Primary = Color3.fromRGB(155, 89, 182),
+        Secondary = Color3.fromRGB(30, 25, 35),
+        Tertiary = Color3.fromRGB(38, 32, 43),
+        Text = Color3.fromRGB(250, 245, 255),
+        TextSecondary = Color3.fromRGB(180, 170, 190),
+        Dark = Color3.fromRGB(22, 18, 28),
+        Accent = Color3.fromRGB(255, 118, 117)
     }
 }
 
@@ -153,7 +180,7 @@ function PrestigeUI:Create(title)
     local TopBarBottom = Instance.new("Frame")
     TopBarBottom.Size = UDim2.new(1, 0, 0, 15)
     TopBarBottom.Position = UDim2.new(0, 0, 1, -15)
-    TopBarBottom.BackgroundColor3 = self.Theme.Secondary
+    TopBarBottom.BackgroundColor3 = self.Theme.Dark
     TopBarBottom.BorderSizePixel = 0
     TopBarBottom.Parent = TopBar
     
@@ -1102,6 +1129,12 @@ function PrestigeUI:ApplyTheme()
     self.MinimizeBtn.BackgroundColor3 = t.Primary
     self.CloseBtn.BackgroundColor3 = t.Primary
     
+    for _, frame in ipairs(self.TopBar:GetChildren()) do
+        if frame.Name == "Frame" and not frame:IsDescendantOf(self.MinimizeBtn) and not frame:IsDescendantOf(self.CloseBtn) then
+            frame.BackgroundColor3 = t.Dark
+        end
+    end
+    
     for name, tab in pairs(self.Tabs) do
         if self.ActiveTab == name then
             tab.Button.BackgroundColor3 = t.Primary
@@ -1141,14 +1174,18 @@ function PrestigeUI:ApplyTheme()
             elem.Label.TextColor3 = t.Text
         end
     end
+    
+    self:SaveConfig()
 end
 
 function PrestigeUI:AddSearchBar(parent)
     local Container = Instance.new("Frame")
     Container.Name = "SearchContainer"
-    Container.Size = UDim2.new(1, 0, 0, 40)
+    Container.Size = UDim2.new(1, -30, 0, 40)
+    Container.Position = UDim2.new(0, 15, 0, 0)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
+    Container.LayoutOrder = -999
     Container.Parent = parent
     
     local Corner = Instance.new("UICorner")
@@ -1201,13 +1238,31 @@ function PrestigeUI:AddSearchBar(parent)
                 if name:lower():find(query, 1, true) then
                     shouldShow = true
                 else
-                    for _, child in ipairs(tab.Content:GetChildren()) do
-                        if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
-                            if child.Text:lower():find(query, 1, true) then
-                                shouldShow = true
-                                break
+                    local function searchChildren(parent)
+                        for _, child in ipairs(parent:GetChildren()) do
+                            if child:IsA("TextLabel") then
+                                if child.Text:lower():find(query, 1, true) then
+                                    return true
+                                end
+                            elseif child:IsA("TextButton") then
+                                if child.Text:lower():find(query, 1, true) then
+                                    return true
+                                end
+                            elseif child:IsA("TextBox") then
+                                if child.Text:lower():find(query, 1, true) or child.PlaceholderText:lower():find(query, 1, true) then
+                                    return true
+                                end
+                            end
+                            
+                            if searchChildren(child) then
+                                return true
                             end
                         end
+                        return false
+                    end
+                    
+                    if searchChildren(tab.Content) then
+                        shouldShow = true
                     end
                 end
             end
