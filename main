@@ -87,8 +87,7 @@ function PrestigeUI:Create(title)
     self.ConfigData = {}
     self.ToggleKeybind = Enum.KeyCode.RightShift
     self.MinimizedIcon = nil
-    self.AllElements = {}
-    self.TabCounter = 0 -- Counter to track tab order
+    self.AllElements = {} -- Track all elements for theme updates
     title = title or "Prestige Hub"
     self.Tabs = {}
     
@@ -242,7 +241,7 @@ function PrestigeUI:Create(title)
     CloseCorner.CornerRadius = UDim.new(0, 8)
     CloseCorner.Parent = CloseBtn
     
-     local Sidebar = Instance.new("Frame")
+    local Sidebar = Instance.new("Frame")
     Sidebar.Name = "Sidebar"
     Sidebar.Size = UDim2.new(0, 180, 0, 387)
     Sidebar.Position = UDim2.new(0, 8, 0, 53)
@@ -254,9 +253,8 @@ function PrestigeUI:Create(title)
     SidebarCorner.CornerRadius = UDim.new(0, 12)
     SidebarCorner.Parent = Sidebar
     
-   local SidebarList = Instance.new("UIListLayout")
+    local SidebarList = Instance.new("UIListLayout")
     SidebarList.Padding = UDim.new(0, 8)
-    SidebarList.SortOrder = Enum.SortOrder.LayoutOrder
     SidebarList.Parent = Sidebar
     
     local SidebarPadding = Instance.new("UIPadding")
@@ -431,9 +429,6 @@ function PrestigeUI:AddTab(tabName)
     Container.ClipsDescendants = true
     Container.Parent = self.Sidebar
     
-    -- FIX: Use the tab counter for consistent ordering
-    self.TabCounter = self.TabCounter + 1
-    
     local TabBtn = Instance.new("Frame")
     TabBtn.Name = tabName .. "Tab"
     TabBtn.Size = UDim2.new(1, 0, 1, 0)
@@ -488,7 +483,6 @@ function PrestigeUI:AddTab(tabName)
             tween(TabBtn, {BackgroundColor3 = Color3.fromRGB(35, 35, 40)}, 0.2)
         end
     end)
-    
     TabBtn.MouseLeave:Connect(function()
         if self.ActiveTab ~= tabName then
             tween(TabBtn, {BackgroundColor3 = self.Theme.Tertiary}, 0.2)
@@ -498,6 +492,7 @@ function PrestigeUI:AddTab(tabName)
     TabBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             self.ActiveTab = tabName
+            -- FIX: Use ipairs to maintain order
             for i, tab in ipairs(self.Tabs) do
                 if tab.Name == tabName then
                     tween(tab.Button, {BackgroundColor3 = self.Theme.Primary}, 0.3)
@@ -510,16 +505,11 @@ function PrestigeUI:AddTab(tabName)
         end
     end)
 
-    local tabData = {
-        Name = tabName,
-        Button = TabBtn, 
-        Content = Content, 
-        Container = Container,
-        Text = TabText
-    }
+    -- FIX: Only use array, no dictionary
+    local tabData = {Button = TabBtn, Content = Content, Name = tabName, Container = Container}
     table.insert(self.Tabs, tabData)
     
-    table.insert(self.AllElements, {Type = "Tab", Btn = TabBtn, Text = TabText, Name = tabName})
+    table.insert(self.AllElements, {Type = "Tab", Btn = TabBtn, Text = TabText})
     return Content
 end
 
@@ -1147,19 +1137,23 @@ function PrestigeUI:ApplyTheme()
     self.MinimizeBtn.BackgroundColor3 = t.Primary
     self.CloseBtn.BackgroundColor3 = t.Primary
     
-    -- Update tabs
     for i, tab in ipairs(self.Tabs) do
         if self.ActiveTab == tab.Name then
             tab.Button.BackgroundColor3 = t.Primary
-            tab.Text.TextColor3 = t.Text
         else
             tab.Button.BackgroundColor3 = t.Tertiary
-            tab.Text.TextColor3 = t.Text
         end
     end
     
     for _, elem in ipairs(self.AllElements) do
-        if elem.Type == "Button" then
+        if elem.Type == "Tab" then
+            if self.ActiveTab == elem.Btn.Parent.Parent.Name:gsub("TabContainer", "") then
+                elem.Btn.BackgroundColor3 = t.Primary
+            else
+                elem.Btn.BackgroundColor3 = t.Tertiary
+            end
+            elem.Text.TextColor3 = t.Text
+        elseif elem.Type == "Button" then
             elem.Btn.BackgroundColor3 = t.Primary
             elem.Text.TextColor3 = t.Text
         elseif elem.Type == "Label" then
@@ -1197,6 +1191,7 @@ function PrestigeUI:AddSearchBar(parent)
     Container.Size = UDim2.new(1, 0, 0, 40)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
+    Container.LayoutOrder = -999
     Container.Parent = parent
     
     local Corner = Instance.new("UICorner")
