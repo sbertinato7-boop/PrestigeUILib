@@ -1441,24 +1441,27 @@ function PrestigeUI:AddSearchBar(parent)
     return SearchBox
 end
 
-Here's the fixed MinimizeToCorner function:
-luafunction PrestigeUI:MinimizeToCorner()
+function PrestigeUI:MinimizeToCorner()
     if self.MinimizedIcon then return end
     
     -- Animate main frame before hiding
-    local mainShrink = tween(self.MainFrame, {
-        Size = UDim2.new(0, 600, 0, 400),
-        BackgroundTransparency = 1
-    }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-    
-    -- WAIT for the animation to complete
-    if mainShrink then
-        mainShrink.Completed:Wait()
+    if self.MainFrame and self.MainFrame.Parent then
+        local mainShrink = tween(self.MainFrame, {
+            Size = UDim2.new(0, 600, 0, 400),
+            BackgroundTransparency = 1
+        }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        
+        -- WAIT for the animation to complete
+        if mainShrink then
+            mainShrink.Completed:Wait()
+        else
+            task.wait(0.3)
+        end
+        
+        self.MainFrame.Visible = false
     else
-        task.wait(0.3)
+        return
     end
-    
-    self.MainFrame.Visible = false
     
     local Icon = Instance.new("Frame")
     Icon.Name = "MinimizedIcon"
@@ -1536,7 +1539,7 @@ luafunction PrestigeUI:MinimizeToCorner()
 end
 
 function PrestigeUI:RestoreFromCorner()
-    if self.MinimizedIcon then
+    if self.MinimizedIcon and self.MinimizedIcon.Parent then
         -- Shrink icon before destroying
         local iconShrink = tween(self.MinimizedIcon, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
         local textLabel = self.MinimizedIcon:FindFirstChildOfClass("TextLabel")
@@ -1556,16 +1559,14 @@ function PrestigeUI:RestoreFromCorner()
     end
     
     -- Animate main frame appearing
-    self.MainFrame.Visible = true
-    self.MainFrame.Size = UDim2.new(0, 600, 0, 400)
-    self.MainFrame.BackgroundTransparency = 1
-    
-    tween(self.MainFrame, {BackgroundTransparency = 0}, 0.3)
-    tween(self.MainFrame, {Size = UDim2.new(0, 700, 0, 450)}, 0.4, Enum.EasingStyle.Back)
-end
-
-function PrestigeUI:SetKeybind(keyCode)
-    self.ToggleKeybind = keyCode
+    if self.MainFrame and self.MainFrame.Parent then
+        self.MainFrame.Visible = true
+        self.MainFrame.Size = UDim2.new(0, 600, 0, 400)
+        self.MainFrame.BackgroundTransparency = 1
+        
+        tween(self.MainFrame, {BackgroundTransparency = 0}, 0.3)
+        tween(self.MainFrame, {Size = UDim2.new(0, 700, 0, 450)}, 0.4, Enum.EasingStyle.Back)
+    end
 end
 
 -- ========================================
