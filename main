@@ -305,6 +305,11 @@ function PrestigeUI:Create(title)
     
     ScreenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
     
+    -- Debug: Print theme colors to verify they're set
+    print("[PrestigeUI Debug] Theme Primary:", self.Theme.Primary)
+    print("[PrestigeUI Debug] Theme Secondary:", self.Theme.Secondary)
+    print("[PrestigeUI Debug] Theme Dark:", self.Theme.Dark)
+    
     self.ScreenGui = ScreenGui
     self.MainFrame = MainFrame
     self.TopBar = TopBar
