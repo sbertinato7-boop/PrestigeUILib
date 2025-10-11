@@ -611,19 +611,18 @@ end
 function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     local Container = Instance.new("Frame")
     Container.Name = "DropdownContainer"
-    Container.Size = UDim2.new(1, 0, 0, 0)
+    Container.Size = UDim2.new(1,0,0,0)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
     Container.AutomaticSize = Enum.AutomaticSize.Y
     Container.Parent = parent
 
     local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0, 8)
+    Corner.CornerRadius = UDim.new(0,8)
     Corner.Parent = Container
 
     local DropdownBtn = Instance.new("TextButton")
-    DropdownBtn.Name = "DropdownBtn"
-    DropdownBtn.Size = UDim2.new(1, 0, 0, 35)
+    DropdownBtn.Size = UDim2.new(1,0,0,35)
     DropdownBtn.BackgroundTransparency = 1
     DropdownBtn.BorderSizePixel = 0
     DropdownBtn.Text = placeholder or "Select..."
@@ -632,47 +631,37 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     DropdownBtn.TextSize = 14
     DropdownBtn.Parent = Container
 
-    local Padding = Instance.new("UIPadding")
-    Padding.PaddingLeft = UDim.new(0, 10)
-    Padding.PaddingRight = UDim.new(0, 10)
-    Padding.Parent = DropdownBtn
-
     local DropdownList = Instance.new("ScrollingFrame")
-    DropdownList.Name = "DropdownList"
-    DropdownList.Size = UDim2.new(1, 0, 0, 0)
-    DropdownList.Position = UDim2.new(0, 0, 0, 35)
+    DropdownList.Size = UDim2.new(1,0,0,0)
+    DropdownList.Position = UDim2.new(0,0,0,35)
     DropdownList.BackgroundColor3 = self.Theme.Secondary
     DropdownList.BorderSizePixel = 0
     DropdownList.ScrollBarThickness = 6
     DropdownList.ScrollBarImageColor3 = self.Theme.Primary
     DropdownList.Visible = false
-    DropdownList.CanvasSize = UDim2.new(0, 0, 0, 0)
     DropdownList.AutomaticCanvasSize = Enum.AutomaticSize.Y
     DropdownList.ClipsDescendants = true
     DropdownList.Parent = Container
 
-    local ListCorner = Instance.new("UICorner")
-    ListCorner.CornerRadius = UDim.new(0, 8)
-    ListCorner.Parent = DropdownList
-
     local ListLayout = Instance.new("UIListLayout")
-    ListLayout.Padding = UDim.new(0, 5)
+    ListLayout.Padding = UDim.new(0,5)
     ListLayout.Parent = DropdownList
 
     local ListPadding = Instance.new("UIPadding")
-    ListPadding.PaddingTop = UDim.new(0, 5)
-    ListPadding.PaddingBottom = UDim.new(0, 5)
-    ListPadding.PaddingLeft = UDim.new(0, 5)
-    ListPadding.PaddingRight = UDim.new(0, 5)
+    ListPadding.PaddingTop = UDim.new(0,5)
+    ListPadding.PaddingBottom = UDim.new(0,5)
+    ListPadding.PaddingLeft = UDim.new(0,5)
+    ListPadding.PaddingRight = UDim.new(0,5)
     ListPadding.Parent = DropdownList
 
     local isOpen = false
     local maxHeight = 150
 
+    local OptionButtons = {}
+
     for _, option in pairs(options) do
         local OptionBtn = Instance.new("TextButton")
-        OptionBtn.Name = option
-        OptionBtn.Size = UDim2.new(1, 0, 0, 30)
+        OptionBtn.Size = UDim2.new(1,0,0,30)
         OptionBtn.BackgroundColor3 = self.Theme.Tertiary
         OptionBtn.Text = option
         OptionBtn.TextColor3 = self.Theme.Text
@@ -682,8 +671,28 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         OptionBtn.Parent = DropdownList
 
         local OptionCorner = Instance.new("UICorner")
-        OptionCorner.CornerRadius = UDim.new(0, 6)
+        OptionCorner.CornerRadius = UDim.new(0,6)
         OptionCorner.Parent = OptionBtn
+
+        -- Hover animation
+        OptionBtn.MouseEnter:Connect(function()
+            TweenService:Create(OptionBtn, TweenInfo.new(0.2), {BackgroundColor3 = self.Theme.Primary}):Play()
+        end)
+        OptionBtn.MouseLeave:Connect(function()
+            TweenService:Create(OptionBtn, TweenInfo.new(0.2), {BackgroundColor3 = self.Theme.Tertiary}):Play()
+        end)
+
+        OptionBtn.MouseButton1Click:Connect(function()
+            DropdownBtn.Text = option
+            DropdownBtn.TextColor3 = self.Theme.Text
+            if callback then callback(option) end
+            isOpen = false
+            TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,0)}):Play()
+            task.delay(0.2, function() DropdownList.Visible = false end)
+        end)
+
+        table.insert(OptionButtons, OptionBtn)
+    end
 
     DropdownBtn.MouseButton1Click:Connect(function()
         isOpen = not isOpen
@@ -691,17 +700,14 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
             DropdownList.Visible = true
             task.wait()
             local contentHeight = ListLayout.AbsoluteContentSize.Y + ListPadding.PaddingTop.Offset + ListPadding.PaddingBottom.Offset
-            TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, math.min(contentHeight, maxHeight))}):Play()
+            TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,math.min(contentHeight, maxHeight))}):Play()
         else
             TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,0)}):Play()
-            task.delay(0.2, function()
-                DropdownList.Visible = false
-            end)
+            task.delay(0.2, function() DropdownList.Visible = false end)
         end
     end)
 
-    return Container
-    end
+    return Container, OptionButtons
 end
 
 function PrestigeUI:AddSlider(parent, min, max, default, callback)
