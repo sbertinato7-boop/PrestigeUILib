@@ -2095,9 +2095,8 @@ function PrestigeUI:AddTooltip(element, text)
     end)
 end
 
--- AddSection: Creates a true section within a tab to organize grouped features.
+-- AddSection: True group container for child elements in a tab. Maximizes layout control/UX.
 function PrestigeUI:AddSection(parentTab, title)
-    -- parentTab is the content frame returned by AddTab
     local Section = Instance.new("Frame")
     Section.Name = (title or "Section") .. "Container"
     Section.BackgroundTransparency = 1
@@ -2114,12 +2113,12 @@ function PrestigeUI:AddSection(parentTab, title)
     Pad.Parent = Section
     Pad.PaddingLeft = UDim.new(0, 6)
     Pad.PaddingRight = UDim.new(0, 6)
-    Pad.PaddingTop = UDim.new(0, 2)
-    Pad.PaddingBottom = UDim.new(0, 7)
+    Pad.PaddingTop = UDim.new(0, 4)
+    Pad.PaddingBottom = UDim.new(0, 6)
 
     if title and title ~= "" then
         local TitleLabel = Instance.new("TextLabel")
-        TitleLabel.Size = UDim2.new(1, 0, 0, 20)
+        TitleLabel.Size = UDim2.new(1, 0, 0, 18)
         TitleLabel.BackgroundTransparency = 1
         TitleLabel.Text = title
         TitleLabel.TextColor3 = self.Theme.TextSecondary
@@ -2136,13 +2135,10 @@ function PrestigeUI:AddSection(parentTab, title)
     return Section
 end
 
--- USAGE EXAMPLE:
--- local MainTab = Window:AddTab("Main")
--- local upgradesSection = Window:AddSection(MainTab, "Upgrade Automation")
--- Window:AddToggle(upgradesSection, "Auto Upgrade Tier", function(state) ... end)
--- local questsSection = Window:AddSection(MainTab, "Quests")
--- Window:AddToggle(questsSection, "Auto Complete Quests", function(state) ... end)
--- This will group toggles visually in MainTab in proper sections.
+-- USAGE: 
+-- local tab = Window:AddTab("Main")
+-- local sec = Window:AddSection(tab, "My Section")
+-- Window:AddButton(sec, "Press Me", function() ... end)
 
 _G.PrestigeUI = PrestigeUI
 return PrestigeUI
