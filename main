@@ -397,18 +397,43 @@ function PrestigeUI:Create(title)
         end
         task.wait(0.3)
         
+        -- Fade out loading frame
+        tween(LoadingFrame, {BackgroundTransparency = 1}, 0.3)
+        tween(LoadingTitle, {TextTransparency = 1}, 0.3)
+        tween(LoadingText, {TextTransparency = 1}, 0.3)
+        tween(LoadingBar, {BackgroundTransparency = 1}, 0.3)
+        tween(LoadingBarBg, {BackgroundTransparency = 1}, 0.3)
+        task.wait(0.3)
+        
         LoadingFrame:Destroy()
         
+        -- Fade in main frame
         MainFrame.Visible = true
         MainFrame.BackgroundTransparency = 1
-        MainFrame.Size = UDim2.new(0, 600, 0, 400)
-        MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
         
-        tween(MainFrame, {BackgroundTransparency = 0}, 0.3)
-        tween(MainFrame, {
-            Size = UDim2.new(0, 700, 0, 450),
-            Position = UDim2.new(0.5, -350, 0.5, -225)
-        }, 0.5, Enum.EasingStyle.Back)
+        -- Fade in background
+        tween(MainFrame, {BackgroundTransparency = 0}, 0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        
+        -- Fade in all children
+        task.wait(0.1)
+        local function fadeInChildren(parent)
+            for _, child in ipairs(parent:GetChildren()) do
+                if child:IsA("GuiObject") and not child:IsA("UICorner") and not child:IsA("UIPadding") then
+                    pcall(function()
+                        if child.BackgroundTransparency then
+                            child.BackgroundTransparency = 1
+                            tween(child, {BackgroundTransparency = 0}, 0.4)
+                        end
+                        if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
+                            child.TextTransparency = 1
+                            tween(child, {TextTransparency = 0}, 0.4)
+                        end
+                    end)
+                    fadeInChildren(child)
+                end
+            end
+        end
+        fadeInChildren(MainFrame)
     end)
     
     local dragging = false
@@ -478,19 +503,39 @@ function PrestigeUI:Close()
     if self.Closing then return end
     self.Closing = true
     
+    -- Fade out the close button
     if self.CloseBtn and self.CloseBtn.Parent then
-        local closeTween = tween(self.CloseBtn, {BackgroundColor3 = Color3.fromRGB(200, 50, 50)}, 0.1)
-        if closeTween then closeTween.Completed:Wait() end
+        tween(self.CloseBtn, {BackgroundColor3 = Color3.fromRGB(200, 50, 50)}, 0.1)
     end
     
+    -- Fade out the main frame
     if self.MainFrame and self.MainFrame.Parent then
         local mainTween = tween(self.MainFrame, {
-            Size = UDim2.new(0, 600, 0, 400),
-            Position = UDim2.new(0.5, -300, 0.5, -200),
             BackgroundTransparency = 1
-        }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        }, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
         
-        -- WAIT for animation to complete before destroying
+        -- Fade out all children recursively
+        local function fadeChildren(parent)
+            for _, child in ipairs(parent:GetChildren()) do
+                if child:IsA("GuiObject") then
+                    pcall(function()
+                        if child.BackgroundTransparency then
+                            tween(child, {BackgroundTransparency = 1}, 0.3)
+                        end
+                        if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
+                            tween(child, {TextTransparency = 1}, 0.3)
+                        end
+                        if child:IsA("ImageLabel") or child:IsA("ImageButton") then
+                            tween(child, {ImageTransparency = 1}, 0.3)
+                        end
+                    end)
+                    fadeChildren(child)
+                end
+            end
+        end
+        fadeChildren(self.MainFrame)
+        
+        -- Wait for animation to complete
         if mainTween then 
             mainTween.Completed:Wait() 
         else
@@ -500,6 +545,7 @@ function PrestigeUI:Close()
         task.wait(0.3)
     end
     
+    -- Clean up connections
     for name, conn in pairs(self.Connections or {}) do
         if typeof(conn) == "RBXScriptConnection" then
             pcall(function()
@@ -509,6 +555,7 @@ function PrestigeUI:Close()
     end
     self.Connections = {}
     
+    -- Destroy GUI
     if self.ScreenGui then
         pcall(function()
             self.ScreenGui:Destroy()
@@ -1444,16 +1491,36 @@ end
 function PrestigeUI:MinimizeToCorner()
     if self.MinimizedIcon then return end
     
-    -- Animate main frame before hiding
+    -- Fade out main frame
     if self.MainFrame and self.MainFrame.Parent then
-        local mainShrink = tween(self.MainFrame, {
-            Size = UDim2.new(0, 600, 0, 400),
+        local mainFade = tween(self.MainFrame, {
             BackgroundTransparency = 1
-        }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        }, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
         
-        -- WAIT for the animation to complete
-        if mainShrink then
-            mainShrink.Completed:Wait()
+        -- Fade out all children
+        local function fadeChildren(parent)
+            for _, child in ipairs(parent:GetChildren()) do
+                if child:IsA("GuiObject") then
+                    pcall(function()
+                        if child.BackgroundTransparency then
+                            tween(child, {BackgroundTransparency = 1}, 0.3)
+                        end
+                        if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
+                            tween(child, {TextTransparency = 1}, 0.3)
+                        end
+                        if child:IsA("ImageLabel") or child:IsA("ImageButton") then
+                            tween(child, {ImageTransparency = 1}, 0.3)
+                        end
+                    end)
+                    fadeChildren(child)
+                end
+            end
+        end
+        fadeChildren(self.MainFrame)
+        
+        -- Wait for fade to complete
+        if mainFade then
+            mainFade.Completed:Wait()
         else
             task.wait(0.3)
         end
@@ -1463,12 +1530,14 @@ function PrestigeUI:MinimizeToCorner()
         return
     end
     
+    -- Create minimized icon
     local Icon = Instance.new("Frame")
     Icon.Name = "MinimizedIcon"
     Icon.Size = UDim2.new(0, 60, 0, 60)
     Icon.Position = UDim2.new(1, -80, 1, -80)
     Icon.BackgroundColor3 = self.Theme.Primary
     Icon.BorderSizePixel = 0
+    Icon.BackgroundTransparency = 1  -- Start transparent
     Icon.Parent = self.ScreenGui
     
     local IconCorner = Instance.new("UICorner")
@@ -1482,8 +1551,14 @@ function PrestigeUI:MinimizeToCorner()
     IconText.TextColor3 = self.Theme.Text
     IconText.Font = Enum.Font.GothamBold
     IconText.TextSize = 28
+    IconText.TextTransparency = 1  -- Start transparent
     IconText.Parent = Icon
     
+    -- Fade in the icon
+    tween(Icon, {BackgroundTransparency = 0}, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    tween(IconText, {TextTransparency = 0}, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    
+    -- Dragging functionality
     local dragging = false
     local dragInput, mousePos, framePos
     
@@ -1514,11 +1589,11 @@ function PrestigeUI:MinimizeToCorner()
     end)
     
     Icon.MouseEnter:Connect(function()
-        tween(Icon, {Size = UDim2.new(0, 70, 0, 70), BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2, Enum.EasingStyle.Back)
+        tween(Icon, {Size = UDim2.new(0, 70, 0, 70), BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2, Enum.EasingStyle.Quad)
     end)
     
     Icon.MouseLeave:Connect(function()
-        tween(Icon, {Size = UDim2.new(0, 60, 0, 60), BackgroundColor3 = self.Theme.Primary}, 0.2)
+        tween(Icon, {Size = UDim2.new(0, 60, 0, 60), BackgroundColor3 = self.Theme.Primary}, 0.2, Enum.EasingStyle.Quad)
     end)
     
     Icon.InputBegan:Connect(function(input)
@@ -1528,28 +1603,21 @@ function PrestigeUI:MinimizeToCorner()
     end)
     
     self.MinimizedIcon = Icon
-    
-    -- Animate icon appearing
-    Icon.Size = UDim2.new(0, 0, 0, 0)
-    Icon.BackgroundTransparency = 1
-    IconText.TextTransparency = 1
-    
-    tween(Icon, {Size = UDim2.new(0, 60, 0, 60), BackgroundTransparency = 0}, 0.4, Enum.EasingStyle.Back)
-    tween(IconText, {TextTransparency = 0}, 0.4)
 end
 
+-- 3. UPDATE THE RestoreFromCorner FUNCTION (around line 1120)
 function PrestigeUI:RestoreFromCorner()
     if self.MinimizedIcon and self.MinimizedIcon.Parent then
-        -- Shrink icon before destroying
-        local iconShrink = tween(self.MinimizedIcon, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        -- Fade out icon
+        local iconFade = tween(self.MinimizedIcon, {BackgroundTransparency = 1}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
         local textLabel = self.MinimizedIcon:FindFirstChildOfClass("TextLabel")
         if textLabel then
-            tween(textLabel, {TextTransparency = 1}, 0.3)
+            tween(textLabel, {TextTransparency = 1}, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
         end
         
-        -- WAIT for the animation to complete
-        if iconShrink then
-            iconShrink.Completed:Wait()
+        -- Wait for fade to complete
+        if iconFade then
+            iconFade.Completed:Wait()
         else
             task.wait(0.3)
         end
@@ -1558,14 +1626,52 @@ function PrestigeUI:RestoreFromCorner()
         self.MinimizedIcon = nil
     end
     
-    -- Animate main frame appearing
+    -- Restore main frame with fade in
     if self.MainFrame and self.MainFrame.Parent then
         self.MainFrame.Visible = true
-        self.MainFrame.Size = UDim2.new(0, 600, 0, 400)
         self.MainFrame.BackgroundTransparency = 1
         
-        tween(self.MainFrame, {BackgroundTransparency = 0}, 0.3)
-        tween(self.MainFrame, {Size = UDim2.new(0, 700, 0, 450)}, 0.4, Enum.EasingStyle.Back)
+        -- Fade in main frame
+        tween(self.MainFrame, {BackgroundTransparency = 0}, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+        
+        -- Fade in all children
+        local function fadeInChildren(parent)
+            for _, child in ipairs(parent:GetChildren()) do
+                if child:IsA("GuiObject") then
+                    pcall(function()
+                        -- Store original transparency values
+                        local origBgTrans = 0
+                        local origTextTrans = 0
+                        local origImgTrans = 0
+                        
+                        -- Determine original transparency based on element type
+                        if child.Name:find("Corner") or child.Name:find("Padding") or child.Name:find("List") then
+                            return  -- Skip UICorner, UIPadding, UIListLayout
+                        end
+                        
+                        if child.Name:find("Bg") or child:isa("Frame") then
+                            origBgTrans = 0
+                        end
+                        
+                        -- Set to transparent first
+                        if child.BackgroundTransparency then
+                            child.BackgroundTransparency = 1
+                            tween(child, {BackgroundTransparency = origBgTrans}, 0.4)
+                        end
+                        if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
+                            child.TextTransparency = 1
+                            tween(child, {TextTransparency = origTextTrans}, 0.4)
+                        end
+                        if child:IsA("ImageLabel") or child:IsA("ImageButton") then
+                            child.ImageTransparency = 1
+                            tween(child, {ImageTransparency = origImgTrans}, 0.4)
+                        end
+                    end)
+                    fadeInChildren(child)
+                end
+            end
+        end
+        fadeInChildren(self.MainFrame)
     end
 end
 
