@@ -230,32 +230,6 @@ function PrestigeUI:Create(title)
     self.Theme = Theme
     self.Connections = {}
     
-    self.Connections.MinimizeEnter = MinimizeBtn.MouseEnter:Connect(function()
-        TweenService:Create(MinimizeBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = Color3.fromRGB(20, 200, 255)
-        }):Play()
-    end)
-    
-    self.Connections.MinimizeLeave = MinimizeBtn.MouseLeave:Connect(function()
-        TweenService:Create(MinimizeBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = Theme.Primary
-        }):Play()
-    end)
-    
-    self.Connections.CloseEnter = CloseBtn.MouseEnter:Connect(function()
-        TweenService:Create(CloseBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-        }):Play()
-    end)
-    
-    self.Connections.CloseLeave = CloseBtn.MouseLeave:Connect(function()
-        TweenService:Create(CloseBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = Theme.Primary
-        }):Play()
-    end)
-    
-    print("✓ Close button hover effects connected")
-    
     self.Connections.LoadingTask = task.spawn(function()
         for i = 0, 100 do
             LoadingBar.Size = UDim2.new(i/100, 0, 1, 0)
@@ -427,35 +401,6 @@ function PrestigeUI:AddTab(tabName)
         Content.Visible = true
     end
     
-    TabBtn.MouseEnter:Connect(function()
-        if self.ActiveTab ~= tabName then
-            TabBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-        else
-            TabBtn.BackgroundColor3 = self.Theme.Primary
-        end
-    end)
-    
-    TabBtn.MouseLeave:Connect(function()
-        if self.ActiveTab ~= tabName then
-            TabBtn.BackgroundColor3 = self.Theme.Tertiary
-        else
-            TabBtn.BackgroundColor3 = self.Theme.Primary
-        end
-    end)
-    
-    TabBtn.MouseButton1Click:Connect(function()
-        self.ActiveTab = tabName
-        for name, tab in pairs(self.Tabs) do
-            if name == tabName then
-                tab.Button.BackgroundColor3 = self.Theme.Primary
-                tab.Content.Visible = true
-            else
-                tab.Button.BackgroundColor3 = self.Theme.Tertiary
-                tab.Content.Visible = false
-            end
-        end
-    end)
-    
     self.Tabs[tabName] = {Button = TabBtn, Content = Content, Name = tabName}
     return Content
 end
@@ -586,16 +531,6 @@ function PrestigeUI:AddTextBox(parent, placeholder, callback)
     Padding.PaddingRight = UDim.new(0, 10)
     Padding.Parent = TextBox
     
-    Container.MouseEnter:Connect(function()
-        TweenService:Create(Container, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-        }):Play()
-    end)
-    Container.MouseLeave:Connect(function()
-        TweenService:Create(Container, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-            BackgroundColor3 = self.Theme.Tertiary
-        }):Play()
-    end)
     TextBox.FocusLost:Connect(function(enterPressed)
         if enterPressed and callback then
             callback(TextBox.Text)
@@ -749,23 +684,6 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         local OptionCorner = Instance.new("UICorner")
         OptionCorner.CornerRadius = UDim.new(0, 6)
         OptionCorner.Parent = OptionBtn
-
-        OptionBtn.MouseEnter:Connect(function()
-            TweenService:Create(OptionBtn, TweenInfo.new(0.2), {BackgroundColor3 = self.Theme.Primary}):Play()
-        end)
-        OptionBtn.MouseLeave:Connect(function()
-            TweenService:Create(OptionBtn, TweenInfo.new(0.2), {BackgroundColor3 = self.Theme.Tertiary}):Play()
-        end)
-
-        OptionBtn.MouseButton1Click:Connect(function()
-            DropdownBtn.Text = option
-            DropdownBtn.TextColor3 = self.Theme.Text
-            if callback then callback(option) end
-            isOpen = false
-            TweenService:Create(DropdownList, TweenInfo.new(0.2), {Size = UDim2.new(1,0,0,0)}):Play()
-            task.delay(0.2, function() DropdownList.Visible = false end)
-        end)
-    end
 
     DropdownBtn.MouseButton1Click:Connect(function()
         isOpen = not isOpen
