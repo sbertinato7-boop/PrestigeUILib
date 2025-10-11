@@ -515,7 +515,7 @@ function PrestigeUI:AddTab(tabName)
     }
     table.insert(self.Tabs, tabData)
     
-    table.insert(self.AllElements, {Type = "Tab", Btn = TabBtn, Text = TabText})
+    table.insert(self.AllElements, {Type = "Tab", Btn = TabBtn, Text = TabText, Name = tabName})
     return Content
 end
 
@@ -1143,6 +1143,7 @@ function PrestigeUI:ApplyTheme()
     self.MinimizeBtn.BackgroundColor3 = t.Primary
     self.CloseBtn.BackgroundColor3 = t.Primary
     
+    -- FIXED: Use ipairs for ordered iteration
     for i, tab in ipairs(self.Tabs) do
         if self.ActiveTab == tab.Name then
             tab.Button.BackgroundColor3 = t.Primary
@@ -1153,7 +1154,7 @@ function PrestigeUI:ApplyTheme()
     
     for _, elem in ipairs(self.AllElements) do
         if elem.Type == "Tab" then
-            if self.ActiveTab == elem.Btn.Parent.Parent.Name:gsub("TabContainer", "") then
+            if self.ActiveTab == elem.Name then
                 elem.Btn.BackgroundColor3 = t.Primary
             else
                 elem.Btn.BackgroundColor3 = t.Tertiary
@@ -1241,6 +1242,7 @@ function PrestigeUI:AddSearchBar(parent)
     SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
         local query = SearchBox.Text:lower()
         
+        -- FIXED: Use ipairs for ordered iteration
         for i, tab in ipairs(self.Tabs) do
             local name = tab.Name
             local shouldShow = false
@@ -1279,9 +1281,10 @@ function PrestigeUI:AddSearchBar(parent)
                     end
                 end
             end
-    
-    tab.Container.Visible = shouldShow
-end
+            
+            tab.Container.Visible = shouldShow
+        end
+    end)
     
     table.insert(self.AllElements, {Type = "SearchBar", Bg = Container, Icon = SearchIcon, Box = SearchBox})
     return SearchBox
