@@ -731,7 +731,8 @@ function PrestigeUI:AddTextBox(parent, placeholder, callback)
     return TextBox
 end
 
-function PrestigeUI:AddToggle(parent, text, default, callback)
+function PrestigeUI:AddToggle(parent, text, callback)
+    local default = false
     local Container = Instance.new("Frame")
     Container.Name = "ToggleContainer"
     Container.Size = UDim2.new(1, 0, 0, 40)
@@ -948,7 +949,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     return Container
 end
 
-function PrestigeUI:AddSlider(parent, text, min, max, default, callback)
+function PrestigeUI:AddSlider(parent, min, max, default, callback)
     local Container = Instance.new("Frame")
     Container.Name = "SliderContainer"
     Container.Size = UDim2.new(1, 0, 0, 40)
@@ -959,7 +960,7 @@ function PrestigeUI:AddSlider(parent, text, min, max, default, callback)
     Label.Name = "Label"
     Label.Size = UDim2.new(1, 0, 0, 15)
     Label.BackgroundTransparency = 1
-    Label.Text = text .. ": " .. (default or min)
+    Label.Text = "Value: " .. (default or min)
     Label.TextColor3 = self.Theme.Text
     Label.Font = Enum.Font.GothamBold
     Label.TextSize = 12
@@ -1029,7 +1030,7 @@ function PrestigeUI:AddSlider(parent, text, min, max, default, callback)
         
         tween(SliderFill, {Size = UDim2.new(percentage, 0, 1, 0)}, 0.1)
         tween(SliderButton, {Position = UDim2.new(percentage, -7, 0.5, -7)}, 0.1)
-        Label.Text = text .. ": " .. value
+        Label.Text = "Value: " .. value
         
         if callback then
             callback(value)
