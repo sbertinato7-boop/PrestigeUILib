@@ -322,12 +322,16 @@ function PrestigeUI:Create(title)
     CloseCorner.CornerRadius = UDim.new(0, 8)
     CloseCorner.Parent = CloseBtn
     
-    local Sidebar = Instance.new("Frame")
+    local Sidebar = Instance.new("ScrollingFrame")  -- Changed from Frame to ScrollingFrame
     Sidebar.Name = "Sidebar"
     Sidebar.Size = UDim2.new(0, 180, 0, 387)
     Sidebar.Position = UDim2.new(0, 8, 0, 53)
     Sidebar.BackgroundColor3 = self.Theme.Secondary
     Sidebar.BorderSizePixel = 0
+    Sidebar.ScrollBarThickness = 6  -- NEW
+    Sidebar.ScrollBarImageColor3 = self.Theme.Primary  -- NEW
+    Sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)  -- NEW
+    Sidebar.AutomaticCanvasSize = Enum.AutomaticSize.Y  -- NEW - Auto-expand for tabs
     Sidebar.Parent = MainFrame
     
     local SidebarCorner = Instance.new("UICorner")
@@ -839,6 +843,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     Container.Size = UDim2.new(1, 0, 0, 40)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
+    Container.ClipsDescendants = false  -- IMPORTANT: Don't clip dropdown
     Container.Parent = parent
 
     local Corner = Instance.new("UICorner")
@@ -868,10 +873,21 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     Padding.PaddingRight = UDim.new(0, 10)
     Padding.Parent = DropdownBtn
 
+    -- Arrow indicator
+    local Arrow = Instance.new("TextLabel")
+    Arrow.Size = UDim2.new(0, 20, 0, 40)
+    Arrow.Position = UDim2.new(1, -30, 0, 0)
+    Arrow.BackgroundTransparency = 1
+    Arrow.Text = "▼"
+    Arrow.TextColor3 = self.Theme.TextSecondary
+    Arrow.Font = Enum.Font.Gotham
+    Arrow.TextSize = 12
+    Arrow.Parent = DropdownBtn
+
     local DropdownList = Instance.new("ScrollingFrame")
     DropdownList.Name = "DropdownList"
     DropdownList.Size = UDim2.new(1, 0, 0, 0)
-    DropdownList.Position = UDim2.new(0, 0, 0, 40)
+    DropdownList.Position = UDim2.new(0, 0, 0, 45)
     DropdownList.BackgroundColor3 = self.Theme.Secondary
     DropdownList.BorderSizePixel = 0
     DropdownList.ScrollBarThickness = 6
@@ -934,8 +950,16 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
                 DropdownText.Text = option
                 DropdownText.TextColor3 = self.Theme.Text
                 if callback then callback(option) end
+                
+                -- Close dropdown
                 isOpen = false
+                Arrow.Text = "▼"
+                tween(Arrow, {Rotation = 0}, 0.2)
                 tween(DropdownList, {Size = UDim2.new(1, 0, 0, 0)}, 0.3, Enum.EasingStyle.Quad)
+                
+                -- Shrink container back to original size
+                tween(Container, {Size = UDim2.new(1, 0, 0, 40)}, 0.3, Enum.EasingStyle.Quad)
+                
                 task.wait(0.3)
                 DropdownList.Visible = false
             end
@@ -955,14 +979,33 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             isOpen = not isOpen
             if isOpen then
+                -- Calculate dropdown height
                 DropdownList.Visible = true
                 task.wait()
                 local contentHeight = ListLayout.AbsoluteContentSize.Y + ListPadding.PaddingTop.Offset + ListPadding.PaddingBottom.Offset
-                tween(DropdownList, {Size = UDim2.new(1, 0, 0, math.min(contentHeight, maxHeight))}, 0.3, Enum.EasingStyle.Back)
+                local dropdownHeight = math.min(contentHeight, maxHeight)
+                
+                -- Expand container to fit dropdown + button
+                local totalHeight = 40 + dropdownHeight + 10
+                tween(Container, {Size = UDim2.new(1, 0, 0, totalHeight)}, 0.3, Enum.EasingStyle.Back)
+                
+                -- Open dropdown
+                tween(DropdownList, {Size = UDim2.new(1, 0, 0, dropdownHeight)}, 0.3, Enum.EasingStyle.Back)
                 tween(Container, {BackgroundColor3 = Color3.fromRGB(35, 35, 40)}, 0.2)
+                
+                -- Rotate arrow
+                Arrow.Text = "▲"
+                tween(Arrow, {Rotation = 180}, 0.2)
             else
+                -- Close dropdown
+                Arrow.Text = "▼"
+                tween(Arrow, {Rotation = 0}, 0.2)
                 tween(DropdownList, {Size = UDim2.new(1, 0, 0, 0)}, 0.3, Enum.EasingStyle.Quad)
                 tween(Container, {BackgroundColor3 = self.Theme.Tertiary}, 0.2)
+                
+                -- Shrink container back
+                tween(Container, {Size = UDim2.new(1, 0, 0, 40)}, 0.3, Enum.EasingStyle.Quad)
+                
                 task.wait(0.3)
                 DropdownList.Visible = false
             end
