@@ -699,7 +699,6 @@ function PrestigeUI:AddLabel(parent, text, textSize)
     Label.TextSize = textSize
     Label.TextXAlignment = Enum.TextXAlignment.Left
     self.ElementOrder = (self.ElementOrder or 0) + 1
-    label.LayoutOrder = self.ElementOrder
     Label.Parent = parent
     table.insert(self.AllElements, {Type = "Label", Lbl = Label, Text = Label})
     return Label
