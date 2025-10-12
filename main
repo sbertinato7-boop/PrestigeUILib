@@ -173,6 +173,8 @@ local function tween(object, properties, duration, style, direction)
 end
 
 function PrestigeUI:Create(title)
+
+    for k,v in pairs(self.Theme or {}) do print(k,v) end
     self.Theme = self.Theme or PrestigeUI.Theme
     local self = setmetatable({}, PrestigeUI)
     
@@ -483,6 +485,8 @@ function PrestigeUI:Create(title)
             self:Close()
         end
     end)
+
+    print("Create() end, Theme:", self.Theme)
 
     return self
 end
