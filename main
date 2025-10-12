@@ -689,63 +689,70 @@ end
 
 function PrestigeUI:AddLabel(parent, text, textSize)
     textSize = textSize or 16
+    self.ElementOrder = (self.ElementOrder or 0) + 1
+
     local Label = Instance.new("TextLabel")
     Label.Name = "Label"
     Label.Size = UDim2.new(1, 0, 0, textSize + 8)
     Label.BackgroundTransparency = 1
     Label.Text = text
-    Label.TextColor3 = self.Theme.Text
+    Label.TextColor3 = (self.Theme and self.Theme.Text) or Color3.fromRGB(255,255,255)
     Label.Font = Enum.Font.GothamBold
     Label.TextSize = textSize
     Label.TextXAlignment = Enum.TextXAlignment.Left
-    self.ElementOrder = (self.ElementOrder or 0) + 1
+    Label.LayoutOrder = self.ElementOrder
     Label.Parent = parent
+
     table.insert(self.AllElements, {Type = "Label", Lbl = Label, Text = Label})
     return Label
 end
 
 function PrestigeUI:AddParagraph(parent, title, content)
+    self.ElementOrder = (self.ElementOrder or 0) + 1
+
     local Container = Instance.new("Frame")
     Container.Name = "Paragraph"
     Container.Size = UDim2.new(1, 0, 0, 60)
-    Container.BackgroundColor3 = self.Theme.Tertiary
+    Container.BackgroundColor3 = (self.Theme and self.Theme.Tertiary) or Color3.fromRGB(28,28,32)
     Container.BorderSizePixel = 0
+    Container.LayoutOrder = self.ElementOrder
     Container.Parent = parent
-    
+
     local Corner = Instance.new("UICorner")
     Corner.CornerRadius = UDim.new(0, 8)
     Corner.Parent = Container
-    
+
     local Padding = Instance.new("UIPadding")
     Padding.PaddingTop = UDim.new(0, 10)
     Padding.PaddingLeft = UDim.new(0, 10)
     Padding.PaddingRight = UDim.new(0, 10)
     Padding.PaddingBottom = UDim.new(0, 10)
     Padding.Parent = Container
-    
+
     local Title = Instance.new("TextLabel")
     Title.Name = "Title"
     Title.Size = UDim2.new(1, 0, 0, 18)
     Title.BackgroundTransparency = 1
-    Title.Text = title
-    Title.TextColor3 = self.Theme.Primary
+    Title.Text = title or ""
+    Title.TextColor3 = (self.Theme and self.Theme.Primary) or Color3.fromRGB(0,180,255)
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 14
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.Parent = Container
-    
+
     local ContentLabel = Instance.new("TextLabel")
     ContentLabel.Name = "Content"
     ContentLabel.Size = UDim2.new(1, 0, 0, 32)
     ContentLabel.Position = UDim2.new(0, 0, 0, 18)
     ContentLabel.BackgroundTransparency = 1
-    ContentLabel.Text = content
-    ContentLabel.TextColor3 = self.Theme.TextSecondary
+    ContentLabel.Text = content or ""
+    ContentLabel.TextColor3 = (self.Theme and self.Theme.TextSecondary) or Color3.fromRGB(180,180,180)
     ContentLabel.Font = Enum.Font.Gotham
     ContentLabel.TextSize = 12
     ContentLabel.TextXAlignment = Enum.TextXAlignment.Left
     ContentLabel.TextWrapped = true
     ContentLabel.Parent = Container
+
     table.insert(self.AllElements, {Type = "Para", Bg = Container, Title = Title, Content = ContentLabel})
     return Container
 end
@@ -1588,42 +1595,44 @@ end
 
 -- Section/Divider
 function PrestigeUI:AddDivider(parent, text)
+    text = text or ""
+    self.ElementOrder = (self.ElementOrder or 0) + 1
+
     local Container = Instance.new("Frame")
     Container.Name = "Divider"
-    Container.Size = UDim2.new(1, 0, 0, text and 35 or 15)
+    Container.Size = UDim2.new(1, 0, 0, 28)
     Container.BackgroundTransparency = 1
+    Container.LayoutOrder = self.ElementOrder
     Container.Parent = parent
-    
-    if text and text ~= "" then
-        -- Text label at the top
-        local Label = Instance.new("TextLabel")
-        Label.Size = UDim2.new(1, 0, 0, 20)
-        Label.Position = UDim2.new(0, 0, 0, 0)
-        Label.BackgroundTransparency = 1
-        Label.Text = text
-        Label.TextColor3 = self.Theme.TextSecondary
-        Label.Font = Enum.Font.GothamBold
-        Label.TextSize = 12
-        Label.TextXAlignment = Enum.TextXAlignment.Left
-        Label.Parent = Container
-        
-        -- Line BELOW the text
-        local Line = Instance.new("Frame")
-        Line.Size = UDim2.new(1, 0, 0, 2)
-        Line.Position = UDim2.new(0, 0, 0, 25)
-        Line.BackgroundColor3 = self.Theme.Tertiary
-        Line.BorderSizePixel = 0
-        Line.Parent = Container
-    else
-        -- Just a line, centered
-        local Line = Instance.new("Frame")
-        Line.Size = UDim2.new(1, 0, 0, 2)
-        Line.Position = UDim2.new(0, 0, 0.5, -1)
-        Line.BackgroundColor3 = self.Theme.Tertiary
-        Line.BorderSizePixel = 0
-        Line.Parent = Container
-    end
-    
+
+    local LineLeft = Instance.new("Frame")
+    LineLeft.Size = UDim2.new(0.45, -8, 0, 2)
+    LineLeft.Position = UDim2.new(0, 4, 0.5, -1)
+    LineLeft.AnchorPoint = Vector2.new(0, 0.5)
+    LineLeft.BackgroundColor3 = (self.Theme and self.Theme.Tertiary) or Color3.fromRGB(30,30,30)
+    LineLeft.BorderSizePixel = 0
+    LineLeft.Parent = Container
+
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(0.1, 0, 1, 0)
+    Label.Position = UDim2.new(0.5, -50, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = text
+    Label.Font = Enum.Font.GothamBold
+    Label.TextSize = 14
+    Label.TextColor3 = (self.Theme and self.Theme.TextSecondary) or Color3.fromRGB(180,180,180)
+    Label.TextXAlignment = Enum.TextXAlignment.Center
+    Label.Parent = Container
+
+    local LineRight = Instance.new("Frame")
+    LineRight.Size = UDim2.new(0.45, -8, 0, 2)
+    LineRight.Position = UDim2.new(1, - (0.45 * Container.AbsoluteSize.X) - 4, 0.5, -1) -- fallback pos; it's fine visually
+    LineRight.AnchorPoint = Vector2.new(1, 0.5)
+    LineRight.BackgroundColor3 = (self.Theme and self.Theme.Tertiary) or Color3.fromRGB(30,30,30)
+    LineRight.BorderSizePixel = 0
+    LineRight.Parent = Container
+
+    table.insert(self.AllElements, {Type = "Divider", Container = Container, Label = Label})
     return Container
 end
 
