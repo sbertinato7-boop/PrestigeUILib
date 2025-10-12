@@ -9,6 +9,16 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
 
+-- Prevent nil errors if Theme loads late
+PrestigeUI.Theme = PrestigeUI.Theme or {
+    Primary = Color3.fromRGB(0, 180, 255),
+    Secondary = Color3.fromRGB(22, 22, 25),
+    Tertiary = Color3.fromRGB(28, 28, 32),
+    Accent = Color3.fromRGB(255, 70, 70),
+    Text = Color3.fromRGB(255, 255, 255),
+    TextSecondary = Color3.fromRGB(180, 180, 180)
+}
+
 local ThemePresets = {
     Dark = {
         Primary = Color3.fromRGB(0, 180, 255),
