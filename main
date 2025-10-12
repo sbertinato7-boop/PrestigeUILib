@@ -170,6 +170,7 @@ local function tween(object, properties, duration, style, direction)
 end
 
 function PrestigeUI:Create(title)
+    self.Theme = self.Theme or PrestigeUI.Theme
     local self = setmetatable({}, PrestigeUI)
     
     self.Theme = table.clone(ThemePresets.Dark)
