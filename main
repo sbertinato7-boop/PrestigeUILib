@@ -1,13 +1,20 @@
--- ========================================
--- PRESTIGE UI LIBRARY (Complete Rewrite)
--- ========================================
-
 local PrestigeUI = {}
 PrestigeUI.__index = PrestigeUI
 
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local HttpService = game:GetService("HttpService")
+-- ✅ SAFETY INITIALIZATION (prevents nil errors)
+PrestigeUI.Theme = PrestigeUI.Theme or {
+    Primary = Color3.fromRGB(0, 180, 255),
+    Secondary = Color3.fromRGB(22, 22, 25),
+    Tertiary = Color3.fromRGB(28, 28, 32),
+    Accent = Color3.fromRGB(255, 70, 70),
+    Text = Color3.fromRGB(255, 255, 255),
+    TextSecondary = Color3.fromRGB(180, 180, 180)
+}
+
+PrestigeUI.Tabs = PrestigeUI.Tabs or {}
+PrestigeUI.AllElements = PrestigeUI.AllElements or {}
+PrestigeUI.Connections = PrestigeUI.Connections or {}
+PrestigeUI.TabCounter = PrestigeUI.TabCounter or 0
 
 local ThemePresets = {
     Dark = {
@@ -518,6 +525,10 @@ function PrestigeUI:Close()
 end
 
 function PrestigeUI:AddTab(tabName)
+    if not self.Theme then
+        warn("[PrestigeUI] Theme table missing — restoring defaults.")
+        self.Theme = PrestigeUI.Theme
+    end
     local Container = Instance.new("Frame")
     Container.Name = tabName .. "TabContainer"
     Container.Size = UDim2.new(1, 0, 0, 40)
@@ -591,8 +602,10 @@ function PrestigeUI:AddTab(tabName)
     TabBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             self.ActiveTab = tabName
-            -- FIX: Use ipairs to maintain order
-            for i, tab in ipairs(self.Tabs) do
+            if not self.Tabs or typeof(self.Tabs) ~= "table" then
+                self.Tabs = {}
+            end
+            for i, tab in ipairs(self.Tabs or {}) doo
                 if tab.Name == tabName then
                     tween(tab.Button, {BackgroundColor3 = self.Theme.Primary}, 0.3)
                     tab.Content.Visible = true
@@ -613,6 +626,10 @@ function PrestigeUI:AddTab(tabName)
 end
 
 function PrestigeUI:AddButton(parent, text, callback)
+    if not self.Theme then
+        warn("[PrestigeUI] Theme table missing — restoring defaults.")
+        self.Theme = PrestigeUI.Theme
+    end
     local Container = Instance.new("Frame")
     Container.Name = text .. "Container"
     Container.Size = UDim2.new(1, 0, 0, 40)
@@ -1272,7 +1289,7 @@ function PrestigeUI:ApplyTheme()
     if self.CloseBtn then self.CloseBtn.BackgroundColor3 = t.Primary end
     -- Update tabs
     if self.Tabs then
-        for i, tab in ipairs(self.Tabs) do
+        for i, tab in ipairs(self.Tabs or {}) doo
             if tab.Button then
                 if self.ActiveTab == tab.Name then
                     tab.Button.BackgroundColor3 = t.Primary
@@ -1388,7 +1405,7 @@ function PrestigeUI:AddSearchBar(parent)
     SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
         local query = SearchBox.Text:lower()
         
-        for i, tab in ipairs(self.Tabs) do
+        for i, tab in ipairs(self.Tabs or {}) doo
             local name = tab.Name
             local shouldShow = false
             
