@@ -30,7 +30,7 @@ local ThemePresets = {
     },
     Sunset = {
         Primary = Color3.fromRGB(255, 107, 107),
-        Secondary = Color3.fromRGB(40, 30, 35),
+        Secondary = Color3.fromRGB(40, 30, 48),
         Tertiary = Color3.fromRGB(50, 38, 43),
         Text = Color3.fromRGB(255, 250, 240),
         TextSecondary = Color3.fromRGB(200, 180, 170),
@@ -852,7 +852,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     Container.Size = UDim2.new(1, 0, 0, 40)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
-    Container.ClipsDescendants = false  -- IMPORTANT: Don't clip dropdown
+    Container.ClipsDescendants = false
     Container.Parent = parent
 
     local Corner = Instance.new("UICorner")
@@ -882,7 +882,6 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     Padding.PaddingRight = UDim.new(0, 10)
     Padding.Parent = DropdownBtn
 
-    -- Arrow indicator
     local Arrow = Instance.new("TextLabel")
     Arrow.Size = UDim2.new(0, 20, 0, 40)
     Arrow.Position = UDim2.new(1, -30, 0, 0)
@@ -914,6 +913,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
 
     local ListLayout = Instance.new("UIListLayout")
     ListLayout.Padding = UDim.new(0, 5)
+    ListLayout.SortOrder = Enum.SortOrder.LayoutOrder  -- CRITICAL: Sort by LayoutOrder
     ListLayout.Parent = DropdownList
 
     local ListPadding = Instance.new("UIPadding")
@@ -926,12 +926,14 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     local isOpen = false
     local maxHeight = 150
 
-    for _, option in pairs(options) do
+    -- FIXED: Use ipairs instead of pairs to maintain array order
+    for index, option in ipairs(options) do
         local OptionBtn = Instance.new("Frame")
         OptionBtn.Name = option
         OptionBtn.Size = UDim2.new(1, 0, 0, 30)
         OptionBtn.BackgroundColor3 = self.Theme.Tertiary
         OptionBtn.BorderSizePixel = 0
+        OptionBtn.LayoutOrder = index  -- CRITICAL: Set layout order based on index
         OptionBtn.Parent = DropdownList
 
         local OptionText = Instance.new("TextLabel")
@@ -960,13 +962,10 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
                 DropdownText.TextColor3 = self.Theme.Text
                 if callback then callback(option) end
                 
-                -- Close dropdown
                 isOpen = false
                 Arrow.Text = "▼"
                 tween(Arrow, {Rotation = 0}, 0.2)
                 tween(DropdownList, {Size = UDim2.new(1, 0, 0, 0)}, 0.3, Enum.EasingStyle.Quad)
-                
-                -- Shrink container back to original size
                 tween(Container, {Size = UDim2.new(1, 0, 0, 40)}, 0.3, Enum.EasingStyle.Quad)
                 
                 task.wait(0.3)
@@ -988,31 +987,23 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             isOpen = not isOpen
             if isOpen then
-                -- Calculate dropdown height
                 DropdownList.Visible = true
                 task.wait()
                 local contentHeight = ListLayout.AbsoluteContentSize.Y + ListPadding.PaddingTop.Offset + ListPadding.PaddingBottom.Offset
                 local dropdownHeight = math.min(contentHeight, maxHeight)
                 
-                -- Expand container to fit dropdown + button
                 local totalHeight = 40 + dropdownHeight + 10
                 tween(Container, {Size = UDim2.new(1, 0, 0, totalHeight)}, 0.3, Enum.EasingStyle.Back)
-                
-                -- Open dropdown
                 tween(DropdownList, {Size = UDim2.new(1, 0, 0, dropdownHeight)}, 0.3, Enum.EasingStyle.Back)
                 tween(Container, {BackgroundColor3 = Color3.fromRGB(35, 35, 40)}, 0.2)
                 
-                -- Rotate arrow
                 Arrow.Text = "▲"
                 tween(Arrow, {Rotation = 180}, 0.2)
             else
-                -- Close dropdown
                 Arrow.Text = "▼"
                 tween(Arrow, {Rotation = 0}, 0.2)
                 tween(DropdownList, {Size = UDim2.new(1, 0, 0, 0)}, 0.3, Enum.EasingStyle.Quad)
                 tween(Container, {BackgroundColor3 = self.Theme.Tertiary}, 0.2)
-                
-                -- Shrink container back
                 tween(Container, {Size = UDim2.new(1, 0, 0, 40)}, 0.3, Enum.EasingStyle.Quad)
                 
                 task.wait(0.3)
