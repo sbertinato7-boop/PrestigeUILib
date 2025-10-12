@@ -5,9 +5,12 @@
 local PrestigeUI = {}
 PrestigeUI.__index = PrestigeUI
 
+
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
+
+warn("[PrestigeUI] Loaded version with Theme init check")
 
 -- Prevent nil errors if Theme loads late
 PrestigeUI.Theme = PrestigeUI.Theme or {
