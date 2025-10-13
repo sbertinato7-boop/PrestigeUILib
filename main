@@ -2045,7 +2045,7 @@ function PrestigeUI:ShowDialog(options)
     end
 
     -- Check if we're in cooldown period
-    if self._dialogCooldown and tick() - self._dialogCooldown < 2 then
+    if self._dialogCooldown and tick() - self._dialogCooldown < 0.2 then
         warn("Dialog on cooldown, please wait")
         return
     end
