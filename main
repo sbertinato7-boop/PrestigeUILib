@@ -2038,13 +2038,25 @@ function PrestigeUI:ShowDialog(options)
         return
     end
 
+    -- Check if a dialog is already open
+    if self._dialogOpen then
+        warn("Dialog already open, ignoring new dialog request")
+        return
+    end
+
+    -- Check if we're in cooldown period
+    if self._dialogCooldown and tick() - self._dialogCooldown < 2 then
+        warn("Dialog on cooldown, please wait")
+        return
+    end
+
+    -- Mark dialog as open
+    self._dialogOpen = true
+
     options = options or {}
     local title = options.Title or "Dialog"
     local message = options.Message or ""
     local buttons = options.Buttons or {{"OK", function() end}}
-
-    -- Track if dialog is being destroyed to prevent re-opening
-    local isClosing = false
 
     -- Overlay that blocks all clicks under it
     local Overlay = Instance.new("Frame")
@@ -2061,11 +2073,8 @@ function PrestigeUI:ShowDialog(options)
 
     -- Block all GUI input events on the overlay
     Overlay.InputBegan:Connect(function(input)
-        input:GetPropertyChangedSignal("UserInputState"):Connect(function() end)
+        -- Sink the event
     end)
-    
-    Overlay.InputEnded:Connect(function() end)
-    Overlay.InputChanged:Connect(function() end)
 
     local Dialog = Instance.new("Frame")
     Dialog.Name = "DialogBox"
@@ -2108,6 +2117,19 @@ function PrestigeUI:ShowDialog(options)
     Message.ZIndex = 10001
     Message.Parent = Dialog
 
+    -- Function to close dialog with cooldown
+    local function closeDialog()
+        self._dialogOpen = false
+        self._dialogCooldown = tick()
+        
+        -- Destroy overlay after brief delay
+        task.delay(0.1, function()
+            if Overlay and Overlay.Parent then
+                Overlay:Destroy()
+            end
+        end)
+    end
+
     local buttonWidth = (360 / #buttons) - 10
     for i, btnData in ipairs(buttons) do
         local btnText, btnCallback = btnData[1], btnData[2]
@@ -2138,15 +2160,10 @@ function PrestigeUI:ShowDialog(options)
 
         Btn.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                if not isClosing then
-                    isClosing = true
-                    if btnCallback then 
-                        pcall(function() btnCallback() end)
-                    end
-                    -- Small delay before destroying
-                    task.wait(0.1)
-                    Overlay:Destroy()
+                if btnCallback then 
+                    pcall(function() btnCallback() end)
                 end
+                closeDialog()
             end
         end)
 
