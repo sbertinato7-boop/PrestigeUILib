@@ -2033,8 +2033,8 @@ function PrestigeUI:CreateCustomTheme(themeTable)
 end
 
 function PrestigeUI:ShowDialog(options)
-    if not self.ScreenGui or not self.Theme then 
-        warn("ShowDialog: ScreenGui or Theme not initialized")
+    if not self.Theme then
+        warn("ShowDialog: Theme not initialized")
         return
     end
 
@@ -2043,31 +2043,64 @@ function PrestigeUI:ShowDialog(options)
     local message = options.Message or ""
     local buttons = options.Buttons or {{"OK", function() end}}
 
-    -- Overlay that blocks all clicks under it
+    -- Ensure we have a PlayerGui to parent to (local script context)
+    local player = game.Players.LocalPlayer
+    if not player then
+        warn("ShowDialog: LocalPlayer not found (must run from a LocalScript)")
+        return
+    end
+    local playerGui = player:FindFirstChildOfClass("PlayerGui")
+    if not playerGui then
+        warn("ShowDialog: PlayerGui not found")
+        return
+    end
+
+    -- Remove any old dialog ScreenGui we created earlier
+    local existing = playerGui:FindFirstChild("PrestigeDialogGui")
+    if existing then
+        existing:Destroy()
+    end
+
+    -- Create a new top-level ScreenGui so this dialog sits above everything
+    local dialogGui = Instance.new("ScreenGui")
+    dialogGui.Name = "PrestigeDialogGui"
+    dialogGui.ResetOnSpawn = false
+    dialogGui.ZIndexBehavior = Enum.ZIndexBehavior.Global -- compare ZIndexes across ScreenGuis
+    dialogGui.DisplayOrder = 1000 -- very high so it draws above other ScreenGuis
+    dialogGui.Parent = playerGui
+
+    -- Fullscreen overlay that blocks clicks
     local Overlay = Instance.new("Frame")
     Overlay.Name = "DialogOverlay"
     Overlay.Size = UDim2.new(1, 0, 1, 0)
+    Overlay.Position = UDim2.new(0, 0, 0, 0)
     Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     Overlay.BackgroundTransparency = 0.5
     Overlay.BorderSizePixel = 0
-    Overlay.ZIndex = 9999
+    Overlay.ZIndex = 10000
     Overlay.Active = true
     Overlay.Selectable = true
     Overlay.ClipsDescendants = true
-    Overlay.Parent = self.ScreenGui
+    Overlay.Parent = dialogGui
 
-    -- Make sure Overlay intercepts all inputs
+    -- Absorb all input on the overlay (prevents click-through)
     Overlay.InputBegan:Connect(function(input)
-        -- Do nothing; just block clicks
+        -- no-op: this intentionally swallows input
     end)
+    Overlay.InputEnded:Connect(function(input)
+        -- no-op
+    end)
+    -- Also absorb MouseButton1Down specifically
+    Overlay.InputChanged:Connect(function(input) end)
 
+    -- Dialog frame inside overlay
     local Dialog = Instance.new("Frame")
     Dialog.Name = "DialogBox"
     Dialog.Size = UDim2.new(0, 400, 0, 200)
     Dialog.Position = UDim2.new(0.5, -200, 0.5, -100)
     Dialog.BackgroundColor3 = self.Theme.Secondary
     Dialog.BorderSizePixel = 0
-    Dialog.ZIndex = 10000
+    Dialog.ZIndex = 10001
     Dialog.Active = true
     Dialog.Selectable = true
     Dialog.Parent = Overlay
@@ -2085,7 +2118,7 @@ function PrestigeUI:ShowDialog(options)
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 18
     Title.TextXAlignment = Enum.TextXAlignment.Left
-    Title.ZIndex = 10001
+    Title.ZIndex = 10002
     Title.Parent = Dialog
 
     local Message = Instance.new("TextLabel")
@@ -2099,7 +2132,7 @@ function PrestigeUI:ShowDialog(options)
     Message.TextXAlignment = Enum.TextXAlignment.Left
     Message.TextYAlignment = Enum.TextYAlignment.Top
     Message.TextWrapped = true
-    Message.ZIndex = 10001
+    Message.ZIndex = 10002
     Message.Parent = Dialog
 
     local buttonWidth = (360 / #buttons) - 10
@@ -2107,11 +2140,12 @@ function PrestigeUI:ShowDialog(options)
         local btnText, btnCallback = btnData[1], btnData[2]
 
         local Btn = Instance.new("Frame")
+        Btn.Name = "DialogButton_" .. tostring(i)
         Btn.Size = UDim2.new(0, buttonWidth, 0, 35)
         Btn.Position = UDim2.new(0, 20 + (i - 1) * (buttonWidth + 10), 0, 150)
         Btn.BackgroundColor3 = i == 1 and self.Theme.Primary or self.Theme.Tertiary
         Btn.BorderSizePixel = 0
-        Btn.ZIndex = 10001
+        Btn.ZIndex = 10003
         Btn.Active = true
         Btn.Selectable = true
         Btn.Parent = Dialog
@@ -2127,29 +2161,32 @@ function PrestigeUI:ShowDialog(options)
         BtnLabel.TextColor3 = self.Theme.Text
         BtnLabel.Font = Enum.Font.GothamBold
         BtnLabel.TextSize = 14
-        BtnLabel.ZIndex = 10002
+        BtnLabel.ZIndex = 10004
         BtnLabel.Parent = Btn
 
+        -- Use InputBegan on the button to respond to clicks
         Btn.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                if btnCallback then 
+                if type(btnCallback) == "function" then
                     pcall(function() btnCallback() end)
                 end
-                Overlay:Destroy()
+                -- Cleanup our dialog ScreenGui entirely when done
+                if dialogGui and dialogGui.Parent then
+                    dialogGui:Destroy()
+                end
             end
         end)
 
         Btn.MouseEnter:Connect(function()
             tween(Btn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
         end)
-
         Btn.MouseLeave:Connect(function()
             local defaultColor = i == 1 and self.Theme.Primary or self.Theme.Tertiary
             tween(Btn, {BackgroundColor3 = defaultColor}, 0.2)
         end)
     end
 
-    -- Smooth open animation
+    -- Optional: animate dialog opening
     Dialog.BackgroundTransparency = 1
     tween(Dialog, {BackgroundTransparency = 0}, 0.3)
     Dialog.Size = UDim2.new(0, 350, 0, 180)
