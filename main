@@ -169,7 +169,7 @@ function PrestigeUI:Create(title)
     self.TabCounter = 0
     self.ActiveTab = nil
     self.ElementOrderCounters = {}
-    self.DropdownStates = {} -- Track dropdown states to prevent spam-click bugs
+    self.DropdownStates = {}
     title = title or "Prestige Hub"
     
     local ScreenGui = Instance.new("ScreenGui")
@@ -186,6 +186,7 @@ function PrestigeUI:Create(title)
     LoadingFrame.Position = UDim2.new(0.5, -200, 0.5, -100)
     LoadingFrame.BackgroundColor3 = self.Theme.Dark
     LoadingFrame.BorderSizePixel = 0
+    LoadingFrame.Active = true
     LoadingFrame.Parent = ScreenGui
     
     local LoadingCorner = Instance.new("UICorner")
@@ -233,7 +234,7 @@ function PrestigeUI:Create(title)
     LoadingText.TextSize = 14
     LoadingText.Parent = LoadingFrame
     
-    -- Main frame
+    -- Main frame with Active = true to block clicks
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 700, 0, 450)
@@ -242,6 +243,7 @@ function PrestigeUI:Create(title)
     MainFrame.BorderSizePixel = 0
     MainFrame.Visible = false
     MainFrame.ClipsDescendants = true
+    MainFrame.Active = true
     MainFrame.Parent = ScreenGui
     
     local MainCorner = Instance.new("UICorner")
@@ -254,6 +256,7 @@ function PrestigeUI:Create(title)
     TopBar.Size = UDim2.new(1, 0, 0, 45)
     TopBar.BackgroundColor3 = self.Theme.Secondary
     TopBar.BorderSizePixel = 0
+    TopBar.Active = true
     TopBar.Parent = MainFrame
     
     local TopBarCorner = Instance.new("UICorner")
@@ -283,6 +286,7 @@ function PrestigeUI:Create(title)
     MinimizeBtn.Position = UDim2.new(1, -80, 0.5, -17.5)
     MinimizeBtn.BackgroundColor3 = self.Theme.Primary
     MinimizeBtn.BorderSizePixel = 0
+    MinimizeBtn.Active = true
     MinimizeBtn.Parent = TopBar
 
     local MinimizeText = Instance.new("TextLabel")
@@ -303,6 +307,7 @@ function PrestigeUI:Create(title)
     CloseBtn.Position = UDim2.new(1, -40, 0.5, -17.5)
     CloseBtn.BackgroundColor3 = self.Theme.Primary
     CloseBtn.BorderSizePixel = 0
+    CloseBtn.Active = true
     CloseBtn.Parent = TopBar
 
     local CloseText = Instance.new("TextLabel")
@@ -329,6 +334,7 @@ function PrestigeUI:Create(title)
     Sidebar.ScrollBarImageColor3 = self.Theme.Primary
     Sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)
     Sidebar.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    Sidebar.Active = true
     Sidebar.Parent = MainFrame
     
     local SidebarCorner = Instance.new("UICorner")
@@ -354,6 +360,7 @@ function PrestigeUI:Create(title)
     ContentArea.Position = UDim2.new(0, 196, 0, 53)
     ContentArea.BackgroundColor3 = self.Theme.Secondary
     ContentArea.BorderSizePixel = 0
+    ContentArea.Active = true
     ContentArea.Parent = MainFrame
     
     local ContentCorner = Instance.new("UICorner")
@@ -572,6 +579,7 @@ function PrestigeUI:AddTab(tabName)
     TabBtn.Size = UDim2.new(1, 0, 1, 0)
     TabBtn.BackgroundColor3 = self.Theme.Tertiary
     TabBtn.BorderSizePixel = 0
+    TabBtn.Active = true
     TabBtn.Parent = Container
     
     local TabCorner = Instance.new("UICorner")
@@ -598,6 +606,7 @@ function PrestigeUI:AddTab(tabName)
     Content.Visible = false
     Content.CanvasSize = UDim2.new(0, 0, 0, 0)
     Content.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    Content.Active = true
     Content.Parent = self.ContentArea
     
     local ContentList = Instance.new("UIListLayout")
@@ -682,6 +691,7 @@ function PrestigeUI:AddButton(parent, text, callback)
     Btn.Size = UDim2.new(1, 0, 1, 0)
     Btn.BackgroundColor3 = self.Theme.Primary
     Btn.BorderSizePixel = 0
+    Btn.Active = true
     Btn.Parent = Container
     
     local BtnCorner = Instance.new("UICorner")
@@ -888,6 +898,7 @@ function PrestigeUI:AddToggle(parent, text, callback)
     ToggleBg.Position = UDim2.new(1, -50, 0.5, -12.5)
     ToggleBg.BackgroundColor3 = self.Theme.Tertiary
     ToggleBg.BorderSizePixel = 0
+    ToggleBg.Active = true
     ToggleBg.Parent = Container
     
     local ToggleBgCorner = Instance.new("UICorner")
@@ -947,7 +958,6 @@ function PrestigeUI:AddToggle(parent, text, callback)
     return {Container = Container, Toggle = ToggleButton, GetState = function() return toggled end}
 end
 
--- Fixed dropdown with spam-click protection
 function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     local Container = Instance.new("Frame")
     Container.Name = "DropdownContainer"
@@ -966,6 +976,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     DropdownBtn.Size = UDim2.new(1, 0, 0, 40)
     DropdownBtn.BackgroundTransparency = 1
     DropdownBtn.BorderSizePixel = 0
+    DropdownBtn.Active = true
     DropdownBtn.Parent = Container
     
     local DropdownText = Instance.new("TextLabel")
@@ -1005,6 +1016,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     DropdownList.AutomaticCanvasSize = Enum.AutomaticSize.Y
     DropdownList.ClipsDescendants = true
     DropdownList.ZIndex = 100
+    DropdownList.Active = true
     DropdownList.Parent = Container
 
     local ListCorner = Instance.new("UICorner")
@@ -1023,18 +1035,15 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     ListPadding.PaddingRight = UDim.new(0, 5)
     ListPadding.Parent = DropdownList
 
-    -- Fixed: Spam-click protection with debounce
     local isOpen = false
     local isAnimating = false
     local maxHeight = 150
     local dropdownId = tostring(Container)
     
-    -- Register dropdown elements for instant theme updates
     self:RegisterThemeElement(dropdownId .. "_Bg", Container, function(theme)
         Container.BackgroundColor3 = theme.Tertiary
     end)
     self:RegisterThemeElement(dropdownId .. "_Text", DropdownText, function(theme)
-        -- Only update if still showing placeholder
         if DropdownText.Text == placeholder or DropdownText.Text == "Select..." then
             DropdownText.TextColor3 = theme.TextSecondary
         else
@@ -1056,6 +1065,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         OptionBtn.BackgroundColor3 = self.Theme.Tertiary
         OptionBtn.BorderSizePixel = 0
         OptionBtn.LayoutOrder = index
+        OptionBtn.Active = true
         OptionBtn.Parent = DropdownList
 
         local OptionText = Instance.new("TextLabel")
@@ -1071,13 +1081,10 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         OptionCorner.CornerRadius = UDim.new(0, 6)
         OptionCorner.Parent = OptionBtn
 
-        -- Fixed: Track hover state for each option to prevent theme conflicts
         local optionHoverState = {isHovering = false}
         
-        -- Register each dropdown option for instant theme updates with forced color application
         local optId = dropdownId .. "_Option_" .. index
         self:RegisterThemeElement(optId .. "_Bg", OptionBtn, function(theme)
-            -- Force immediate update regardless of hover state during theme change
             OptionBtn.BackgroundColor3 = theme.Tertiary
         end)
         self:RegisterThemeElement(optId .. "_Text", OptionText, function(theme)
@@ -1090,7 +1097,6 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         end)
         OptionBtn.MouseLeave:Connect(function()
             optionHoverState.isHovering = false
-            -- Force immediate color update to current theme when mouse leaves
             OptionBtn.BackgroundColor3 = self.Theme.Tertiary
         end)
 
@@ -1125,7 +1131,6 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         end
     end)
 
-    -- Fixed: Safe toggle with animation protection
     DropdownBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 and not isAnimating then
             isAnimating = true
@@ -1187,6 +1192,7 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
     SliderBg.Position = UDim2.new(0, 0, 0, 20)
     SliderBg.BackgroundColor3 = self.Theme.Tertiary
     SliderBg.BorderSizePixel = 0
+    SliderBg.Active = true
     SliderBg.Parent = Container
     
     local SliderBgCorner = Instance.new("UICorner")
@@ -1208,6 +1214,7 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
     SliderButton.Position = UDim2.new(0, 0, 0.5, -7)
     SliderButton.BackgroundColor3 = self.Theme.Primary
     SliderButton.BorderSizePixel = 0
+    SliderButton.Active = true
     SliderButton.Parent = SliderBg
     
     local ButtonCorner = Instance.new("UICorner")
@@ -1221,7 +1228,6 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
     SliderFill.Size = UDim2.new(percentage, 0, 1, 0)
     SliderButton.Position = UDim2.new(percentage, -7, 0.5, -7)
     
-    -- Register slider elements for instant theme updates
     local sliderId = "Slider_" .. tostring(Container)
     self:RegisterThemeElement(sliderId .. "_Label", Label, function(theme)
         Label.TextColor3 = theme.Text
@@ -1316,7 +1322,6 @@ function PrestigeUI:AddDivider(parent, text)
         Line.BorderSizePixel = 0
         Line.Parent = Container
         
-        -- Register divider elements for instant theme updates
         local divId = "Divider_" .. tostring(Container)
         self:RegisterThemeElement(divId .. "_Label", Label, function(theme)
             Label.TextColor3 = theme.TextSecondary
@@ -1332,7 +1337,6 @@ function PrestigeUI:AddDivider(parent, text)
         Line.BorderSizePixel = 0
         Line.Parent = Container
         
-        -- Register divider line for instant theme updates
         local divId = "Divider_" .. tostring(Container)
         self:RegisterThemeElement(divId .. "_Line", Line, function(theme)
             Line.BackgroundColor3 = theme.Tertiary
@@ -1384,7 +1388,6 @@ function PrestigeUI:AddSection(parent, title)
         Line.LayoutOrder = self:GetNextOrder(Section)
         Line.Parent = Section
         
-        -- Register section elements for instant theme updates
         local secId = "Section_" .. title .. "_" .. tostring(Section)
         self:RegisterThemeElement(secId .. "_Title", TitleLabel, function(theme)
             TitleLabel.TextColor3 = theme.TextSecondary
@@ -1425,6 +1428,7 @@ function PrestigeUI:AddKeybind(parent, text, default, callback)
     KeybindBtn.Position = UDim2.new(1, -110, 0.5, -15)
     KeybindBtn.BackgroundColor3 = self.Theme.Tertiary
     KeybindBtn.BorderSizePixel = 0
+    KeybindBtn.Active = true
     KeybindBtn.Parent = Container
     
     local BtnCorner = Instance.new("UICorner")
@@ -1443,7 +1447,6 @@ function PrestigeUI:AddKeybind(parent, text, default, callback)
     
     local listening = false
     
-    -- Register keybind elements for instant theme updates
     local keyId = "Keybind_" .. text .. "_" .. tostring(Container)
     self:RegisterThemeElement(keyId .. "_Label", Label, function(theme)
         Label.TextColor3 = theme.Text
@@ -1521,13 +1524,13 @@ function PrestigeUI:AddColorPicker(parent, text, default, callback)
     ColorDisplay.Position = UDim2.new(1, -40, 0.5, -15)
     ColorDisplay.BackgroundColor3 = currentColor
     ColorDisplay.BorderSizePixel = 0
+    ColorDisplay.Active = true
     ColorDisplay.Parent = Container
     
     local DisplayCorner = Instance.new("UICorner")
     DisplayCorner.CornerRadius = UDim.new(0, 8)
     DisplayCorner.Parent = ColorDisplay
     
-    -- Register color picker elements for instant theme updates
     local colorId = "ColorPicker_" .. text .. "_" .. tostring(Container)
     self:RegisterThemeElement(colorId .. "_Label", Label, function(theme)
         Label.TextColor3 = theme.Text
@@ -1563,6 +1566,16 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
         return
     end
     
+    -- Overlay to block clicks
+    local Overlay = Instance.new("Frame")
+    Overlay.Size = UDim2.new(1, 0, 1, 0)
+    Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    Overlay.BackgroundTransparency = 0.5
+    Overlay.BorderSizePixel = 0
+    Overlay.ZIndex = 999
+    Overlay.Active = true
+    Overlay.Parent = self.ScreenGui
+    
     local PickerFrame = Instance.new("Frame")
     PickerFrame.Name = "ColorPickerFrame"
     PickerFrame.Size = UDim2.new(0, 300, 0, 350)
@@ -1570,7 +1583,8 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
     PickerFrame.BackgroundColor3 = self.Theme.Secondary
     PickerFrame.BorderSizePixel = 0
     PickerFrame.ZIndex = 1000
-    PickerFrame.Parent = self.ScreenGui
+    PickerFrame.Active = true
+    PickerFrame.Parent = Overlay
     
     local PickerCorner = Instance.new("UICorner")
     PickerCorner.CornerRadius = UDim.new(0, 12)
@@ -1583,6 +1597,7 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
     Title.TextColor3 = self.Theme.Text
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 16
+    Title.ZIndex = 1001
     Title.Parent = PickerFrame
     
     local r, g, b = math.floor(defaultColor.R * 255), math.floor(defaultColor.G * 255), math.floor(defaultColor.B * 255)
@@ -1597,6 +1612,7 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
         SliderLabel.Font = Enum.Font.Gotham
         SliderLabel.TextSize = 14
         SliderLabel.TextXAlignment = Enum.TextXAlignment.Left
+        SliderLabel.ZIndex = 1001
         SliderLabel.Parent = PickerFrame
         
         local SliderBg = Instance.new("Frame")
@@ -1604,12 +1620,15 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
         SliderBg.Position = UDim2.new(0, 60, 0, yPos + 7)
         SliderBg.BackgroundColor3 = self.Theme.Tertiary
         SliderBg.BorderSizePixel = 0
+        SliderBg.ZIndex = 1001
+        SliderBg.Active = true
         SliderBg.Parent = PickerFrame
         
         local SliderFill = Instance.new("Frame")
         SliderFill.Size = UDim2.new(defaultValue / 255, 0, 1, 0)
         SliderFill.BackgroundColor3 = self.Theme.Primary
         SliderFill.BorderSizePixel = 0
+        SliderFill.ZIndex = 1002
         SliderFill.Parent = SliderBg
         
         local ValueLabel = Instance.new("TextLabel")
@@ -1620,6 +1639,7 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
         ValueLabel.TextColor3 = self.Theme.Text
         ValueLabel.Font = Enum.Font.Gotham
         ValueLabel.TextSize = 14
+        ValueLabel.ZIndex = 1001
         ValueLabel.Parent = PickerFrame
         
         local value = defaultValue
@@ -1665,6 +1685,7 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
     Preview.Position = UDim2.new(0, 20, 0, 180)
     Preview.BackgroundColor3 = defaultColor
     Preview.BorderSizePixel = 0
+    Preview.ZIndex = 1001
     Preview.Parent = PickerFrame
     
     local PreviewCorner = Instance.new("UICorner")
@@ -1672,7 +1693,7 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
     PreviewCorner.Parent = Preview
     
     local updateTask = task.spawn(function()
-        while PickerFrame.Parent do
+        while Overlay.Parent do
             pcall(function()
                 Preview.BackgroundColor3 = Color3.fromRGB(getRed(), getGreen(), getBlue())
             end)
@@ -1685,6 +1706,8 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
     ApplyBtn.Position = UDim2.new(0, 20, 0, 280)
     ApplyBtn.BackgroundColor3 = self.Theme.Primary
     ApplyBtn.BorderSizePixel = 0
+    ApplyBtn.ZIndex = 1001
+    ApplyBtn.Active = true
     ApplyBtn.Parent = PickerFrame
     
     local ApplyCorner = Instance.new("UICorner")
@@ -1698,6 +1721,7 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
     ApplyText.TextColor3 = self.Theme.Text
     ApplyText.Font = Enum.Font.GothamBold
     ApplyText.TextSize = 14
+    ApplyText.ZIndex = 1002
     ApplyText.Parent = ApplyBtn
     
     ApplyBtn.InputBegan:Connect(function(input)
@@ -1707,7 +1731,7 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
                 if callback then callback(finalColor) end
             end)
             task.cancel(updateTask)
-            PickerFrame:Destroy()
+            Overlay:Destroy()
         end
     end)
     
@@ -1716,6 +1740,8 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
     CancelBtn.Position = UDim2.new(0, 160, 0, 280)
     CancelBtn.BackgroundColor3 = self.Theme.Tertiary
     CancelBtn.BorderSizePixel = 0
+    CancelBtn.ZIndex = 1001
+    CancelBtn.Active = true
     CancelBtn.Parent = PickerFrame
     
     local CancelCorner = Instance.new("UICorner")
@@ -1729,12 +1755,13 @@ function PrestigeUI:OpenColorPicker(defaultColor, callback)
     CancelText.TextColor3 = self.Theme.Text
     CancelText.Font = Enum.Font.GothamBold
     CancelText.TextSize = 14
+    CancelText.ZIndex = 1002
     CancelText.Parent = CancelBtn
     
     CancelBtn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             task.cancel(updateTask)
-            PickerFrame:Destroy()
+            Overlay:Destroy()
         end
     end)
 end
@@ -1776,7 +1803,6 @@ function PrestigeUI:AddSearchBar(parent)
     SearchBox.ClearTextOnFocus = false
     SearchBox.Parent = Container
     
-    -- Register search bar elements for instant theme updates
     local searchId = "SearchBar_" .. tostring(Container)
     self:RegisterThemeElement(searchId .. "_Bg", Container, function(theme)
         Container.BackgroundColor3 = theme.Tertiary
@@ -1867,6 +1893,7 @@ function PrestigeUI:Notify(options)
     NotifContainer.Position = UDim2.new(1, 360, 1, -120 - (#self.Notifications * 110))
     NotifContainer.BackgroundColor3 = self.Theme.Secondary
     NotifContainer.BorderSizePixel = 0
+    NotifContainer.Active = true
     NotifContainer.Parent = self.ScreenGui
     
     local NotifCorner = Instance.new("UICorner")
@@ -1943,14 +1970,12 @@ function PrestigeUI:Notify(options)
     task.delay(duration, removeNotif)
 end
 
--- Fixed: Instant theme update system - applies theme to all registered elements immediately
 function PrestigeUI:ApplyTheme()
     if not self.Theme then 
         warn("ApplyTheme: Theme not initialized")
         return 
     end
     
-    -- Apply theme to all registered elements using their update callbacks
     for id, data in pairs(self.ThemeElements) do
         if data.Element and data.Element.Parent and data.Update then
             pcall(function()
@@ -1959,11 +1984,9 @@ function PrestigeUI:ApplyTheme()
         end
     end
     
-    -- CRITICAL FIX: Force all dropdown options to update immediately
     if self.ScreenGui then
         for _, descendant in ipairs(self.ScreenGui:GetDescendants()) do
             if descendant:IsA("Frame") and descendant.Parent and descendant.Parent:IsA("ScrollingFrame") then
-                -- Check if this is a dropdown option frame
                 if descendant.Parent.Name:find("DropdownContainer") or descendant.Size == UDim2.new(1, 0, 0, 30) then
                     pcall(function()
                         descendant.BackgroundColor3 = self.Theme.Tertiary
@@ -1977,7 +2000,7 @@ end
 function PrestigeUI:SetTheme(themeName)
     if ThemePresets[themeName] then
         self.Theme = table.clone(ThemePresets[themeName])
-        self:ApplyTheme() -- Instant theme application
+        self:ApplyTheme()
     else
         warn("Theme '" .. tostring(themeName) .. "' not found")
     end
@@ -1994,7 +2017,7 @@ function PrestigeUI:CreateCustomTheme(themeTable)
             Dark = themeTable.Dark or ThemePresets.Dark.Dark,
             Accent = themeTable.Accent or ThemePresets.Dark.Accent
         }
-        self:ApplyTheme() -- Instant theme application
+        self:ApplyTheme()
     end
 end
 
@@ -2015,6 +2038,7 @@ function PrestigeUI:ShowDialog(options)
     Overlay.BackgroundTransparency = 0.5
     Overlay.BorderSizePixel = 0
     Overlay.ZIndex = 999
+    Overlay.Active = true
     Overlay.Parent = self.ScreenGui
     
     local Dialog = Instance.new("Frame")
@@ -2023,6 +2047,7 @@ function PrestigeUI:ShowDialog(options)
     Dialog.BackgroundColor3 = self.Theme.Secondary
     Dialog.BorderSizePixel = 0
     Dialog.ZIndex = 1000
+    Dialog.Active = true
     Dialog.Parent = Overlay
     
     local DialogCorner = Instance.new("UICorner")
@@ -2038,6 +2063,7 @@ function PrestigeUI:ShowDialog(options)
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 18
     Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.ZIndex = 1001
     Title.Parent = Dialog
     
     local Message = Instance.new("TextLabel")
@@ -2051,6 +2077,7 @@ function PrestigeUI:ShowDialog(options)
     Message.TextXAlignment = Enum.TextXAlignment.Left
     Message.TextYAlignment = Enum.TextYAlignment.Top
     Message.TextWrapped = true
+    Message.ZIndex = 1001
     Message.Parent = Dialog
     
     local buttonWidth = (360 / #buttons) - 10
@@ -2062,6 +2089,8 @@ function PrestigeUI:ShowDialog(options)
         Btn.Position = UDim2.new(0, 20 + (i - 1) * (buttonWidth + 10), 0, 150)
         Btn.BackgroundColor3 = i == 1 and self.Theme.Primary or self.Theme.Tertiary
         Btn.BorderSizePixel = 0
+        Btn.ZIndex = 1001
+        Btn.Active = true
         Btn.Parent = Dialog
         
         local BtnCorner = Instance.new("UICorner")
@@ -2075,6 +2104,7 @@ function PrestigeUI:ShowDialog(options)
         BtnLabel.TextColor3 = self.Theme.Text
         BtnLabel.Font = Enum.Font.GothamBold
         BtnLabel.TextSize = 14
+        BtnLabel.ZIndex = 1002
         BtnLabel.Parent = Btn
         
         Btn.InputBegan:Connect(function(input)
@@ -2113,6 +2143,7 @@ function PrestigeUI:AddTooltip(element, text)
     Tooltip.BorderSizePixel = 0
     Tooltip.Visible = false
     Tooltip.ZIndex = 10000
+    Tooltip.Active = true
     Tooltip.Parent = self.ScreenGui
     
     local TooltipCorner = Instance.new("UICorner")
@@ -2129,6 +2160,7 @@ function PrestigeUI:AddTooltip(element, text)
     TooltipText.TextSize = 12
     TooltipText.TextWrapped = true
     TooltipText.TextXAlignment = Enum.TextXAlignment.Left
+    TooltipText.ZIndex = 10001
     TooltipText.Parent = Tooltip
     
     element.MouseEnter:Connect(function()
@@ -2169,6 +2201,7 @@ function PrestigeUI:MinimizeToCorner()
     Icon.Position = UDim2.new(1, -80, 1, -80)
     Icon.BackgroundColor3 = self.Theme.Primary
     Icon.BorderSizePixel = 0
+    Icon.Active = true
     Icon.Parent = self.ScreenGui
     
     local IconCorner = Instance.new("UICorner")
