@@ -1958,6 +1958,20 @@ function PrestigeUI:ApplyTheme()
             end)
         end
     end
+    
+    -- CRITICAL FIX: Force all dropdown options to update immediately
+    if self.ScreenGui then
+        for _, descendant in ipairs(self.ScreenGui:GetDescendants()) do
+            if descendant:IsA("Frame") and descendant.Parent and descendant.Parent:IsA("ScrollingFrame") then
+                -- Check if this is a dropdown option frame
+                if descendant.Parent.Name:find("DropdownContainer") or descendant.Size == UDim2.new(1, 0, 0, 30) then
+                    pcall(function()
+                        descendant.BackgroundColor3 = self.Theme.Tertiary
+                    end)
+                end
+            end
+        end
+    end
 end
 
 function PrestigeUI:SetTheme(themeName)
