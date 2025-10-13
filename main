@@ -89,15 +89,6 @@ local ThemePresets = {
         Dark = Color3.fromRGB(5, 5, 5),
         Accent = Color3.fromRGB(255, 20, 147)
     },
-    Minimal = {
-        Primary = Color3.fromRGB(100, 100, 100),
-        Secondary = Color3.fromRGB(245, 245, 245),
-        Tertiary = Color3.fromRGB(235, 235, 235),
-        Text = Color3.fromRGB(50, 50, 50),
-        TextSecondary = Color3.fromRGB(120, 120, 120),
-        Dark = Color3.fromRGB(255, 255, 255),
-        Accent = Color3.fromRGB(200, 200, 200)
-    },
     Dracula = {
         Primary = Color3.fromRGB(189, 147, 249),
         Secondary = Color3.fromRGB(40, 42, 54),
