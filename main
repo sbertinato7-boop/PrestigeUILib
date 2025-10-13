@@ -2033,76 +2033,61 @@ function PrestigeUI:CreateCustomTheme(themeTable)
 end
 
 function PrestigeUI:ShowDialog(options)
-    if not self.Theme then
-        warn("ShowDialog: Theme not initialized")
-        return
-    end
-
     options = options or {}
     local title = options.Title or "Dialog"
     local message = options.Message or ""
     local buttons = options.Buttons or {{"OK", function() end}}
 
-    -- Ensure we have a PlayerGui to parent to (local script context)
     local player = game.Players.LocalPlayer
     if not player then
-        warn("ShowDialog: LocalPlayer not found (must run from a LocalScript)")
+        warn("ShowDialog: Must be run from a LocalScript (LocalPlayer not found)")
         return
     end
+
     local playerGui = player:FindFirstChildOfClass("PlayerGui")
     if not playerGui then
         warn("ShowDialog: PlayerGui not found")
         return
     end
 
-    -- Remove any old dialog ScreenGui we created earlier
-    local existing = playerGui:FindFirstChild("PrestigeDialogGui")
-    if existing then
-        existing:Destroy()
-    end
+    -- Destroy old dialog ScreenGui if it exists
+    local old = playerGui:FindFirstChild("PrestigeDialogGui")
+    if old then old:Destroy() end
 
-    -- Create a new top-level ScreenGui so this dialog sits above everything
-    local dialogGui = Instance.new("ScreenGui")
-    dialogGui.Name = "PrestigeDialogGui"
-    dialogGui.ResetOnSpawn = false
-    dialogGui.ZIndexBehavior = Enum.ZIndexBehavior.Global -- compare ZIndexes across ScreenGuis
-    dialogGui.DisplayOrder = 1000 -- very high so it draws above other ScreenGuis
-    dialogGui.Parent = playerGui
+    -- Create NEW ScreenGui that sits above everything
+    local DialogGui = Instance.new("ScreenGui")
+    DialogGui.Name = "PrestigeDialogGui"
+    DialogGui.DisplayOrder = 9999 -- higher than all other UIs
+    DialogGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+    DialogGui.ResetOnSpawn = false
+    DialogGui.IgnoreGuiInset = true
+    DialogGui.Parent = playerGui
 
-    -- Fullscreen overlay that blocks clicks
-    local Overlay = Instance.new("Frame")
-    Overlay.Name = "DialogOverlay"
+    -- Create blocking overlay
+    local Overlay = Instance.new("TextButton")
+    Overlay.Name = "Overlay"
     Overlay.Size = UDim2.new(1, 0, 1, 0)
-    Overlay.Position = UDim2.new(0, 0, 0, 0)
     Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     Overlay.BackgroundTransparency = 0.5
     Overlay.BorderSizePixel = 0
-    Overlay.ZIndex = 10000
+    Overlay.AutoButtonColor = false
+    Overlay.Text = ""
     Overlay.Active = true
     Overlay.Selectable = true
-    Overlay.ClipsDescendants = true
-    Overlay.Parent = dialogGui
+    Overlay.ZIndex = 9999
+    Overlay.Parent = DialogGui
 
-    -- Absorb all input on the overlay (prevents click-through)
-    Overlay.InputBegan:Connect(function(input)
-        -- no-op: this intentionally swallows input
-    end)
-    Overlay.InputEnded:Connect(function(input)
-        -- no-op
-    end)
-    -- Also absorb MouseButton1Down specifically
-    Overlay.InputChanged:Connect(function(input) end)
+    -- Using TextButton instead of Frame forces Roblox to treat it as clickable, blocking all inputs
+    -- This ensures you CANNOT click through to any UI underneath
 
-    -- Dialog frame inside overlay
     local Dialog = Instance.new("Frame")
     Dialog.Name = "DialogBox"
     Dialog.Size = UDim2.new(0, 400, 0, 200)
     Dialog.Position = UDim2.new(0.5, -200, 0.5, -100)
-    Dialog.BackgroundColor3 = self.Theme.Secondary
+    Dialog.BackgroundColor3 = self.Theme and self.Theme.Secondary or Color3.fromRGB(35,35,40)
     Dialog.BorderSizePixel = 0
-    Dialog.ZIndex = 10001
+    Dialog.ZIndex = 10000
     Dialog.Active = true
-    Dialog.Selectable = true
     Dialog.Parent = Overlay
 
     local DialogCorner = Instance.new("UICorner")
@@ -2114,11 +2099,11 @@ function PrestigeUI:ShowDialog(options)
     Title.Position = UDim2.new(0, 20, 0, 15)
     Title.BackgroundTransparency = 1
     Title.Text = title
-    Title.TextColor3 = self.Theme.Primary
+    Title.TextColor3 = self.Theme and self.Theme.Primary or Color3.fromRGB(0,180,255)
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 18
     Title.TextXAlignment = Enum.TextXAlignment.Left
-    Title.ZIndex = 10002
+    Title.ZIndex = 10001
     Title.Parent = Dialog
 
     local Message = Instance.new("TextLabel")
@@ -2126,56 +2111,34 @@ function PrestigeUI:ShowDialog(options)
     Message.Position = UDim2.new(0, 20, 0, 60)
     Message.BackgroundTransparency = 1
     Message.Text = message
-    Message.TextColor3 = self.Theme.Text
+    Message.TextColor3 = self.Theme and self.Theme.Text or Color3.fromRGB(255,255,255)
     Message.Font = Enum.Font.Gotham
     Message.TextSize = 14
+    Message.TextWrapped = true
     Message.TextXAlignment = Enum.TextXAlignment.Left
     Message.TextYAlignment = Enum.TextYAlignment.Top
-    Message.TextWrapped = true
-    Message.ZIndex = 10002
+    Message.ZIndex = 10001
     Message.Parent = Dialog
 
     local buttonWidth = (360 / #buttons) - 10
     for i, btnData in ipairs(buttons) do
         local btnText, btnCallback = btnData[1], btnData[2]
 
-        local Btn = Instance.new("Frame")
-        Btn.Name = "DialogButton_" .. tostring(i)
+        local Btn = Instance.new("TextButton")
         Btn.Size = UDim2.new(0, buttonWidth, 0, 35)
         Btn.Position = UDim2.new(0, 20 + (i - 1) * (buttonWidth + 10), 0, 150)
-        Btn.BackgroundColor3 = i == 1 and self.Theme.Primary or self.Theme.Tertiary
-        Btn.BorderSizePixel = 0
-        Btn.ZIndex = 10003
-        Btn.Active = true
-        Btn.Selectable = true
+        Btn.BackgroundColor3 = (self.Theme and (i == 1 and self.Theme.Primary or self.Theme.Tertiary)) or Color3.fromRGB(45,45,50)
+        Btn.Text = btnText
+        Btn.TextColor3 = self.Theme and self.Theme.Text or Color3.fromRGB(255,255,255)
+        Btn.Font = Enum.Font.GothamBold
+        Btn.TextSize = 14
+        Btn.AutoButtonColor = false
+        Btn.ZIndex = 10002
         Btn.Parent = Dialog
 
         local BtnCorner = Instance.new("UICorner")
         BtnCorner.CornerRadius = UDim.new(0, 8)
         BtnCorner.Parent = Btn
-
-        local BtnLabel = Instance.new("TextLabel")
-        BtnLabel.Size = UDim2.new(1, 0, 1, 0)
-        BtnLabel.BackgroundTransparency = 1
-        BtnLabel.Text = btnText
-        BtnLabel.TextColor3 = self.Theme.Text
-        BtnLabel.Font = Enum.Font.GothamBold
-        BtnLabel.TextSize = 14
-        BtnLabel.ZIndex = 10004
-        BtnLabel.Parent = Btn
-
-        -- Use InputBegan on the button to respond to clicks
-        Btn.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                if type(btnCallback) == "function" then
-                    pcall(function() btnCallback() end)
-                end
-                -- Cleanup our dialog ScreenGui entirely when done
-                if dialogGui and dialogGui.Parent then
-                    dialogGui:Destroy()
-                end
-            end
-        end)
 
         Btn.MouseEnter:Connect(function()
             tween(Btn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
@@ -2184,13 +2147,17 @@ function PrestigeUI:ShowDialog(options)
             local defaultColor = i == 1 and self.Theme.Primary or self.Theme.Tertiary
             tween(Btn, {BackgroundColor3 = defaultColor}, 0.2)
         end)
+        Btn.MouseButton1Click:Connect(function()
+            if btnCallback then pcall(btnCallback) end
+            DialogGui:Destroy()
+        end)
     end
 
-    -- Optional: animate dialog opening
+    -- Animate dialog open
     Dialog.BackgroundTransparency = 1
-    tween(Dialog, {BackgroundTransparency = 0}, 0.3)
+    tween(Dialog, {BackgroundTransparency = 0}, 0.25)
     Dialog.Size = UDim2.new(0, 350, 0, 180)
-    tween(Dialog, {Size = UDim2.new(0, 400, 0, 200)}, 0.3, Enum.EasingStyle.Back)
+    tween(Dialog, {Size = UDim2.new(0, 400, 0, 200)}, 0.25, Enum.EasingStyle.Back)
 end
 
 function PrestigeUI:AddTooltip(element, text)
