@@ -173,11 +173,11 @@ function PrestigeUI:Create(title)
     self.Notifications = {}
     self.ToggleKeybind = Enum.KeyCode.RightShift
     self.MinimizedIcon = nil
-    self.AllElements = {}
+    self.ThemeElements = {} -- NEW: Centralized theme element tracking with update callbacks
     self.Tabs = {}
     self.TabCounter = 0
     self.ActiveTab = nil
-    self.ElementOrderCounters = {} -- Track order per parent container
+    self.ElementOrderCounters = {}
     title = title or "Prestige Hub"
     
     local ScreenGui = Instance.new("ScreenGui")
@@ -343,7 +343,6 @@ function PrestigeUI:Create(title)
     SidebarCorner.CornerRadius = UDim.new(0, 12)
     SidebarCorner.Parent = Sidebar
     
-    -- CRITICAL FIX: Sidebar UIListLayout must sort by LayoutOrder
     local SidebarList = Instance.new("UIListLayout")
     SidebarList.SortOrder = Enum.SortOrder.LayoutOrder
     SidebarList.Padding = UDim.new(0, 8)
@@ -377,9 +376,44 @@ function PrestigeUI:Create(title)
     self.TopBarBottom = TopBarBottom
     self.Title = TitleLabel
     self.MinimizeBtn = MinimizeBtn
+    self.MinimizeBtnText = MinimizeText
     self.CloseBtn = CloseBtn
+    self.CloseBtnText = CloseText
     self.Sidebar = Sidebar
     self.ContentArea = ContentArea
+    
+    -- NEW: Register core UI elements for theme updates
+    self:RegisterThemeElement("MainFrame", MainFrame, function(theme)
+        MainFrame.BackgroundColor3 = theme.Dark
+    end)
+    self:RegisterThemeElement("TopBar", TopBar, function(theme)
+        TopBar.BackgroundColor3 = theme.Secondary
+    end)
+    self:RegisterThemeElement("TopBarBottom", TopBarBottom, function(theme)
+        TopBarBottom.BackgroundColor3 = theme.Secondary
+    end)
+    self:RegisterThemeElement("Sidebar", Sidebar, function(theme)
+        Sidebar.BackgroundColor3 = theme.Secondary
+        Sidebar.ScrollBarImageColor3 = theme.Primary
+    end)
+    self:RegisterThemeElement("ContentArea", ContentArea, function(theme)
+        ContentArea.BackgroundColor3 = theme.Secondary
+    end)
+    self:RegisterThemeElement("TitleLabel", TitleLabel, function(theme)
+        TitleLabel.TextColor3 = theme.Text
+    end)
+    self:RegisterThemeElement("MinimizeBtn", MinimizeBtn, function(theme)
+        MinimizeBtn.BackgroundColor3 = theme.Primary
+    end)
+    self:RegisterThemeElement("MinimizeBtnText", MinimizeText, function(theme)
+        MinimizeText.TextColor3 = theme.Text
+    end)
+    self:RegisterThemeElement("CloseBtn", CloseBtn, function(theme)
+        CloseBtn.BackgroundColor3 = theme.Primary
+    end)
+    self:RegisterThemeElement("CloseBtnText", CloseText, function(theme)
+        CloseText.TextColor3 = theme.Text
+    end)
     
     -- Button hover effects
     MinimizeBtn.MouseEnter:Connect(function()
@@ -513,7 +547,16 @@ function PrestigeUI:Close()
     _G.PrestigeUI = nil
 end
 
--- CRITICAL FIX: Helper to get next LayoutOrder for any parent
+-- NEW: Centralized theme element registration system
+function PrestigeUI:RegisterThemeElement(id, element, updateCallback)
+    if not element or not updateCallback then return end
+    self.ThemeElements[id] = {
+        Element = element,
+        Update = updateCallback
+    }
+end
+
+-- Helper to get next LayoutOrder for any parent
 function PrestigeUI:GetNextOrder(parent)
     if not self.ElementOrderCounters[parent] then
         self.ElementOrderCounters[parent] = 0
@@ -528,7 +571,6 @@ function PrestigeUI:AddTab(tabName)
     Container.Size = UDim2.new(1, 0, 0, 40)
     Container.BackgroundTransparency = 1
     Container.ClipsDescendants = true
-    -- FIXED: Set LayoutOrder BEFORE parenting
     self.TabCounter = self.TabCounter + 1
     Container.LayoutOrder = self.TabCounter
     Container.Parent = self.Sidebar
@@ -566,7 +608,6 @@ function PrestigeUI:AddTab(tabName)
     Content.AutomaticCanvasSize = Enum.AutomaticSize.Y
     Content.Parent = self.ContentArea
     
-    -- CRITICAL FIX: Content UIListLayout must sort by LayoutOrder
     local ContentList = Instance.new("UIListLayout")
     ContentList.SortOrder = Enum.SortOrder.LayoutOrder
     ContentList.Padding = UDim.new(0, 10)
@@ -579,7 +620,6 @@ function PrestigeUI:AddTab(tabName)
     ContentPadding.PaddingBottom = UDim.new(0, 15)
     ContentPadding.Parent = Content
 
-    -- Initialize order counter for this content area
     self.ElementOrderCounters[Content] = 0
 
     if self.ActiveTab == nil then
@@ -587,6 +627,22 @@ function PrestigeUI:AddTab(tabName)
         TabBtn.BackgroundColor3 = self.Theme.Primary
         Content.Visible = true
     end
+    
+    -- NEW: Register tab elements for theme updates
+    local tabId = "Tab_" .. tabName
+    self:RegisterThemeElement(tabId .. "_Btn", TabBtn, function(theme)
+        if self.ActiveTab == tabName then
+            TabBtn.BackgroundColor3 = theme.Primary
+        else
+            TabBtn.BackgroundColor3 = theme.Tertiary
+        end
+    end)
+    self:RegisterThemeElement(tabId .. "_Text", TabText, function(theme)
+        TabText.TextColor3 = theme.Text
+    end)
+    self:RegisterThemeElement(tabId .. "_Content", Content, function(theme)
+        Content.ScrollBarImageColor3 = theme.Primary
+    end)
     
     TabBtn.MouseEnter:Connect(function()
         if self.ActiveTab ~= tabName then
@@ -616,7 +672,6 @@ function PrestigeUI:AddTab(tabName)
 
     local tabData = {Button = TabBtn, Content = Content, Name = tabName, Container = Container}
     table.insert(self.Tabs, tabData)
-    table.insert(self.AllElements, {Type = "Tab", Btn = TabBtn, Text = TabText})
     
     return Content
 end
@@ -627,7 +682,6 @@ function PrestigeUI:AddButton(parent, text, callback)
     Container.Size = UDim2.new(1, 0, 0, 40)
     Container.BackgroundTransparency = 1
     Container.ClipsDescendants = false
-    -- FIXED: Set LayoutOrder to maintain creation order
     Container.LayoutOrder = self:GetNextOrder(parent)
     Container.Parent = parent
     
@@ -650,6 +704,15 @@ function PrestigeUI:AddButton(parent, text, callback)
     BtnText.Font = Enum.Font.GothamBold
     BtnText.TextSize = 14
     BtnText.Parent = Btn
+
+    -- NEW: Register button elements for theme updates
+    local btnId = "Button_" .. text .. "_" .. tostring(Btn)
+    self:RegisterThemeElement(btnId .. "_Bg", Btn, function(theme)
+        Btn.BackgroundColor3 = theme.Primary
+    end)
+    self:RegisterThemeElement(btnId .. "_Text", BtnText, function(theme)
+        BtnText.TextColor3 = theme.Text
+    end)
 
     Btn.MouseEnter:Connect(function()
         tween(Btn, {BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2)
@@ -674,7 +737,6 @@ function PrestigeUI:AddButton(parent, text, callback)
         end
     end)
     
-    table.insert(self.AllElements, {Type = "Button", Btn = Btn, Text = BtnText})
     return Container
 end
 
@@ -689,11 +751,15 @@ function PrestigeUI:AddLabel(parent, text, textSize)
     Label.Font = Enum.Font.GothamBold
     Label.TextSize = textSize
     Label.TextXAlignment = Enum.TextXAlignment.Left
-    -- FIXED: Set LayoutOrder to maintain creation order
     Label.LayoutOrder = self:GetNextOrder(parent)
     Label.Parent = parent
     
-    table.insert(self.AllElements, {Type = "Label", Lbl = Label, Text = Label})
+    -- NEW: Register label for theme updates
+    local labelId = "Label_" .. tostring(Label)
+    self:RegisterThemeElement(labelId, Label, function(theme)
+        Label.TextColor3 = theme.Text
+    end)
+    
     return Label
 end
 
@@ -703,7 +769,6 @@ function PrestigeUI:AddParagraph(parent, title, content)
     Container.Size = UDim2.new(1, 0, 0, 60)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
-    -- FIXED: Set LayoutOrder to maintain creation order
     Container.LayoutOrder = self:GetNextOrder(parent)
     Container.Parent = parent
     
@@ -740,7 +805,18 @@ function PrestigeUI:AddParagraph(parent, title, content)
     ContentLabel.TextWrapped = true
     ContentLabel.Parent = Container
     
-    table.insert(self.AllElements, {Type = "Para", Bg = Container, Title = Title, Content = ContentLabel})
+    -- NEW: Register paragraph elements for theme updates
+    local paraId = "Para_" .. tostring(Container)
+    self:RegisterThemeElement(paraId .. "_Bg", Container, function(theme)
+        Container.BackgroundColor3 = theme.Tertiary
+    end)
+    self:RegisterThemeElement(paraId .. "_Title", Title, function(theme)
+        Title.TextColor3 = theme.Primary
+    end)
+    self:RegisterThemeElement(paraId .. "_Content", ContentLabel, function(theme)
+        ContentLabel.TextColor3 = theme.TextSecondary
+    end)
+    
     return Container
 end
 
@@ -750,7 +826,6 @@ function PrestigeUI:AddTextBox(parent, placeholder, callback)
     Container.Size = UDim2.new(1, 0, 0, 40)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
-    -- FIXED: Set LayoutOrder to maintain creation order
     Container.LayoutOrder = self:GetNextOrder(parent)
     Container.Parent = parent
     
@@ -775,6 +850,16 @@ function PrestigeUI:AddTextBox(parent, placeholder, callback)
     Padding.PaddingRight = UDim.new(0, 10)
     Padding.Parent = TextBox
     
+    -- NEW: Register textbox elements for theme updates
+    local boxId = "TextBox_" .. tostring(Container)
+    self:RegisterThemeElement(boxId .. "_Bg", Container, function(theme)
+        Container.BackgroundColor3 = theme.Tertiary
+    end)
+    self:RegisterThemeElement(boxId .. "_Input", TextBox, function(theme)
+        TextBox.TextColor3 = theme.Text
+        TextBox.PlaceholderColor3 = theme.TextSecondary
+    end)
+    
     TextBox.Focused:Connect(function()
         tween(Container, {BackgroundColor3 = Color3.fromRGB(35, 35, 40)}, 0.2)
     end)
@@ -785,7 +870,6 @@ function PrestigeUI:AddTextBox(parent, placeholder, callback)
         end
     end)
     
-    table.insert(self.AllElements, {Type = "TextBox", Bg = Container, Box = TextBox})
     return TextBox
 end
 
@@ -794,7 +878,6 @@ function PrestigeUI:AddToggle(parent, text, callback)
     Container.Name = "ToggleContainer"
     Container.Size = UDim2.new(1, 0, 0, 40)
     Container.BackgroundTransparency = 1
-    -- FIXED: Set LayoutOrder to maintain creation order
     Container.LayoutOrder = self:GetNextOrder(parent)
     Container.Parent = parent
     
@@ -832,6 +915,22 @@ function PrestigeUI:AddToggle(parent, text, callback)
     
     local toggled = false
     
+    -- NEW: Register toggle elements for theme updates
+    local toggleId = "Toggle_" .. text .. "_" .. tostring(Container)
+    self:RegisterThemeElement(toggleId .. "_Label", Label, function(theme)
+        Label.TextColor3 = theme.Text
+    end)
+    self:RegisterThemeElement(toggleId .. "_Bg", ToggleBg, function(theme)
+        if toggled then
+            ToggleBg.BackgroundColor3 = theme.Primary
+        else
+            ToggleBg.BackgroundColor3 = theme.Tertiary
+        end
+    end)
+    self:RegisterThemeElement(toggleId .. "_Btn", ToggleButton, function(theme)
+        ToggleButton.BackgroundColor3 = theme.Primary
+    end)
+    
     ToggleBg.MouseEnter:Connect(function()
         tween(ToggleButton, {Size = UDim2.new(0, 23, 0, 23)}, 0.2, Enum.EasingStyle.Back)
     end)
@@ -853,7 +952,6 @@ function PrestigeUI:AddToggle(parent, text, callback)
         end
     end)
     
-    table.insert(self.AllElements, {Type = "Toggle", Bg = ToggleBg, Btn = ToggleButton, Label = Label})
     return {Container = Container, Toggle = ToggleButton, GetState = function() return toggled end}
 end
 
@@ -864,7 +962,6 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
     Container.ClipsDescendants = false
-    -- FIXED: Set LayoutOrder to maintain creation order
     Container.LayoutOrder = self:GetNextOrder(parent)
     Container.Parent = parent
 
@@ -921,7 +1018,6 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     ListCorner.CornerRadius = UDim.new(0, 8)
     ListCorner.Parent = DropdownList
 
-    -- FIXED: DropdownList UIListLayout must sort by LayoutOrder
     local ListLayout = Instance.new("UIListLayout")
     ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
     ListLayout.Padding = UDim.new(0, 5)
@@ -936,8 +1032,24 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
 
     local isOpen = false
     local maxHeight = 150
+    local optionElements = {} -- NEW: Track option elements for theme updates
 
-    -- FIXED: Use ipairs to maintain array order
+    -- NEW: Register dropdown elements for theme updates
+    local dropId = "Dropdown_" .. tostring(Container)
+    self:RegisterThemeElement(dropId .. "_Bg", Container, function(theme)
+        Container.BackgroundColor3 = theme.Tertiary
+    end)
+    self:RegisterThemeElement(dropId .. "_Text", DropdownText, function(theme)
+        DropdownText.TextColor3 = theme.TextSecondary
+    end)
+    self:RegisterThemeElement(dropId .. "_Arrow", Arrow, function(theme)
+        Arrow.TextColor3 = theme.TextSecondary
+    end)
+    self:RegisterThemeElement(dropId .. "_List", DropdownList, function(theme)
+        DropdownList.BackgroundColor3 = theme.Secondary
+        DropdownList.ScrollBarImageColor3 = theme.Primary
+    end)
+
     for index, option in ipairs(options) do
         local OptionBtn = Instance.new("Frame")
         OptionBtn.Name = option
@@ -959,6 +1071,15 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         local OptionCorner = Instance.new("UICorner")
         OptionCorner.CornerRadius = UDim.new(0, 6)
         OptionCorner.Parent = OptionBtn
+
+        -- NEW: Register each dropdown option for theme updates
+        local optId = dropId .. "_Option_" .. index
+        self:RegisterThemeElement(optId .. "_Bg", OptionBtn, function(theme)
+            OptionBtn.BackgroundColor3 = theme.Tertiary
+        end)
+        self:RegisterThemeElement(optId .. "_Text", OptionText, function(theme)
+            OptionText.TextColor3 = theme.Text
+        end)
 
         OptionBtn.MouseEnter:Connect(function()
             tween(OptionBtn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
@@ -1023,7 +1144,6 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         end
     end)
 
-    table.insert(self.AllElements, {Type = "Dropdown", Bg = Container, List = DropdownList})
     return Container
 end
 
@@ -1032,7 +1152,6 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
     Container.Name = "SliderContainer"
     Container.Size = UDim2.new(1, 0, 0, 40)
     Container.BackgroundTransparency = 1
-    -- FIXED: Set LayoutOrder to maintain creation order
     Container.LayoutOrder = self:GetNextOrder(parent)
     Container.Parent = parent
     
@@ -1085,6 +1204,21 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
     SliderFill.Size = UDim2.new(percentage, 0, 1, 0)
     SliderButton.Position = UDim2.new(percentage, -7, 0.5, -7)
     
+    -- NEW: Register slider elements for theme updates
+    local sliderId = "Slider_" .. tostring(Container)
+    self:RegisterThemeElement(sliderId .. "_Label", Label, function(theme)
+        Label.TextColor3 = theme.Text
+    end)
+    self:RegisterThemeElement(sliderId .. "_Bg", SliderBg, function(theme)
+        SliderBg.BackgroundColor3 = theme.Tertiary
+    end)
+    self:RegisterThemeElement(sliderId .. "_Fill", SliderFill, function(theme)
+        SliderFill.BackgroundColor3 = theme.Primary
+    end)
+    self:RegisterThemeElement(sliderId .. "_Btn", SliderButton, function(theme)
+        SliderButton.BackgroundColor3 = theme.Primary
+    end)
+    
     SliderButton.MouseEnter:Connect(function()
         tween(SliderButton, {Size = UDim2.new(0, 18, 0, 18)}, 0.2, Enum.EasingStyle.Back)
         tween(SliderButton, {BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2)
@@ -1136,7 +1270,6 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
         end
     end)
     
-    table.insert(self.AllElements, {Type = "Slider", Bg = SliderBg, Btn = SliderButton, Label = Label})
     return {Container = Container, GetValue = function() return value end}
 end
 
@@ -1145,7 +1278,6 @@ function PrestigeUI:AddDivider(parent, text)
     Container.Name = "Divider"
     Container.Size = UDim2.new(1, 0, 0, text and 35 or 15)
     Container.BackgroundTransparency = 1
-    -- FIXED: Set LayoutOrder to maintain creation order
     Container.LayoutOrder = self:GetNextOrder(parent)
     Container.Parent = parent
     
@@ -1166,6 +1298,15 @@ function PrestigeUI:AddDivider(parent, text)
         Line.BackgroundColor3 = self.Theme.Tertiary
         Line.BorderSizePixel = 0
         Line.Parent = Container
+        
+        -- NEW: Register divider elements for theme updates
+        local divId = "Divider_" .. tostring(Container)
+        self:RegisterThemeElement(divId .. "_Label", Label, function(theme)
+            Label.TextColor3 = theme.TextSecondary
+        end)
+        self:RegisterThemeElement(divId .. "_Line", Line, function(theme)
+            Line.BackgroundColor3 = theme.Tertiary
+        end)
     else
         local Line = Instance.new("Frame")
         Line.Size = UDim2.new(1, 0, 0, 2)
@@ -1173,6 +1314,12 @@ function PrestigeUI:AddDivider(parent, text)
         Line.BackgroundColor3 = self.Theme.Tertiary
         Line.BorderSizePixel = 0
         Line.Parent = Container
+        
+        -- NEW: Register divider line for theme updates
+        local divId = "Divider_" .. tostring(Container)
+        self:RegisterThemeElement(divId .. "_Line", Line, function(theme)
+            Line.BackgroundColor3 = theme.Tertiary
+        end)
     end
     
     return Container
@@ -1184,11 +1331,9 @@ function PrestigeUI:AddSection(parent, title)
     Section.BackgroundTransparency = 1
     Section.Size = UDim2.new(1, 0, 0, 0)
     Section.AutomaticSize = Enum.AutomaticSize.Y
-    -- FIXED: Set LayoutOrder to maintain creation order
     Section.LayoutOrder = self:GetNextOrder(parent)
     Section.Parent = parent
 
-    -- FIXED: Section UIListLayout must sort by LayoutOrder
     local Layout = Instance.new("UIListLayout")
     Layout.SortOrder = Enum.SortOrder.LayoutOrder
     Layout.Padding = UDim.new(0, 7)
@@ -1201,7 +1346,6 @@ function PrestigeUI:AddSection(parent, title)
     Pad.PaddingBottom = UDim.new(0, 6)
     Pad.Parent = Section
 
-    -- Initialize order counter for this section
     self.ElementOrderCounters[Section] = 0
 
     if title and title ~= "" then
@@ -1222,6 +1366,15 @@ function PrestigeUI:AddSection(parent, title)
         Line.BorderSizePixel = 0
         Line.LayoutOrder = self:GetNextOrder(Section)
         Line.Parent = Section
+        
+        -- NEW: Register section elements for theme updates
+        local secId = "Section_" .. title .. "_" .. tostring(Section)
+        self:RegisterThemeElement(secId .. "_Title", TitleLabel, function(theme)
+            TitleLabel.TextColor3 = theme.TextSecondary
+        end)
+        self:RegisterThemeElement(secId .. "_Line", Line, function(theme)
+            Line.BackgroundColor3 = theme.Tertiary
+        end)
     end
     
     return Section
@@ -1272,6 +1425,20 @@ function PrestigeUI:AddKeybind(parent, text, default, callback)
     KeyText.Parent = KeybindBtn
     
     local listening = false
+    
+    -- NEW: Register keybind elements for theme updates
+    local keyId = "Keybind_" .. text .. "_" .. tostring(Container)
+    self:RegisterThemeElement(keyId .. "_Label", Label, function(theme)
+        Label.TextColor3 = theme.Text
+    end)
+    self:RegisterThemeElement(keyId .. "_Bg", KeybindBtn, function(theme)
+        if not listening then
+            KeybindBtn.BackgroundColor3 = theme.Tertiary
+        end
+    end)
+    self:RegisterThemeElement(keyId .. "_Text", KeyText, function(theme)
+        KeyText.TextColor3 = theme.Text
+    end)
     
     KeybindBtn.MouseEnter:Connect(function()
         tween(KeybindBtn, {BackgroundColor3 = Color3.fromRGB(35, 35, 40)}, 0.2)
@@ -1342,6 +1509,12 @@ function PrestigeUI:AddColorPicker(parent, text, default, callback)
     local DisplayCorner = Instance.new("UICorner")
     DisplayCorner.CornerRadius = UDim.new(0, 8)
     DisplayCorner.Parent = ColorDisplay
+    
+    -- NEW: Register color picker elements for theme updates
+    local colorId = "ColorPicker_" .. text .. "_" .. tostring(Container)
+    self:RegisterThemeElement(colorId .. "_Label", Label, function(theme)
+        Label.TextColor3 = theme.Text
+    end)
     
     ColorDisplay.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -1586,6 +1759,19 @@ function PrestigeUI:AddSearchBar(parent)
     SearchBox.ClearTextOnFocus = false
     SearchBox.Parent = Container
     
+    -- NEW: Register search bar elements for theme updates
+    local searchId = "SearchBar_" .. tostring(Container)
+    self:RegisterThemeElement(searchId .. "_Bg", Container, function(theme)
+        Container.BackgroundColor3 = theme.Tertiary
+    end)
+    self:RegisterThemeElement(searchId .. "_Icon", SearchIcon, function(theme)
+        SearchIcon.TextColor3 = theme.TextSecondary
+    end)
+    self:RegisterThemeElement(searchId .. "_Box", SearchBox, function(theme)
+        SearchBox.TextColor3 = theme.Text
+        SearchBox.PlaceholderColor3 = theme.TextSecondary
+    end)
+    
     SearchBox.Focused:Connect(function()
         tween(Container, {BackgroundColor3 = Color3.fromRGB(35, 35, 40)}, 0.2)
         tween(SearchIcon, {TextColor3 = self.Theme.Primary}, 0.2)
@@ -1642,7 +1828,6 @@ function PrestigeUI:AddSearchBar(parent)
         end
     end)
     
-    table.insert(self.AllElements, {Type = "SearchBar", Bg = Container, Icon = SearchIcon, Box = SearchBox})
     return SearchBox
 end
 
@@ -1741,10 +1926,29 @@ function PrestigeUI:Notify(options)
     task.delay(duration, removeNotif)
 end
 
+-- NEW: Unified theme update system - applies theme to all registered elements
+function PrestigeUI:ApplyTheme()
+    if not self.Theme then 
+        warn("ApplyTheme: Theme not initialized")
+        return 
+    end
+    
+    -- Apply theme to all registered elements using their update callbacks
+    for id, data in pairs(self.ThemeElements) do
+        if data.Element and data.Element.Parent and data.Update then
+            pcall(function()
+                data.Update(self.Theme)
+            end)
+        end
+    end
+end
+
 function PrestigeUI:SetTheme(themeName)
     if ThemePresets[themeName] then
         self.Theme = table.clone(ThemePresets[themeName])
         self:ApplyTheme()
+    else
+        warn("Theme '" .. tostring(themeName) .. "' not found")
     end
 end
 
@@ -1760,88 +1964,6 @@ function PrestigeUI:CreateCustomTheme(themeTable)
             Accent = themeTable.Accent or ThemePresets.Dark.Accent
         }
         self:ApplyTheme()
-    end
-end
-
-function PrestigeUI:ApplyTheme()
-    if not self.Theme then 
-        warn("ApplyTheme: Theme not initialized")
-        return 
-    end
-    local t = self.Theme
-    
-    if self.MainFrame then self.MainFrame.BackgroundColor3 = t.Dark end
-    if self.TopBar then self.TopBar.BackgroundColor3 = t.Secondary end
-    if self.TopBarBottom then self.TopBarBottom.BackgroundColor3 = t.Secondary end
-    if self.Sidebar then self.Sidebar.BackgroundColor3 = t.Secondary end
-    if self.ContentArea then self.ContentArea.BackgroundColor3 = t.Secondary end
-    if self.Title then self.Title.TextColor3 = t.Text end
-    if self.MinimizeBtn then self.MinimizeBtn.BackgroundColor3 = t.Primary end
-    if self.CloseBtn then self.CloseBtn.BackgroundColor3 = t.Primary end
-    
-    if self.Tabs then
-        for _, tab in ipairs(self.Tabs) do
-            if tab.Button then
-                if self.ActiveTab == tab.Name then
-                    tab.Button.BackgroundColor3 = t.Primary
-                else
-                    tab.Button.BackgroundColor3 = t.Tertiary
-                end
-            end
-        end
-    end
-    
-    if self.AllElements then
-        for _, elem in ipairs(self.AllElements) do
-            pcall(function()
-                if elem.Type == "Tab" then
-                    if elem.Btn and self.ActiveTab == elem.Btn.Parent.Parent.Name:gsub("TabContainer", "") then
-                        elem.Btn.BackgroundColor3 = t.Primary
-                    elseif elem.Btn then
-                        elem.Btn.BackgroundColor3 = t.Tertiary
-                    end
-                    if elem.Text then elem.Text.TextColor3 = t.Text end
-                elseif elem.Type == "Button" then
-                    if elem.Btn then elem.Btn.BackgroundColor3 = t.Primary end
-                    if elem.Text then elem.Text.TextColor3 = t.Text end
-                elseif elem.Type == "Label" then
-                    if elem.Lbl then elem.Lbl.TextColor3 = t.Text end
-                elseif elem.Type == "Para" then
-                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-                    if elem.Title then elem.Title.TextColor3 = t.Primary end
-                    if elem.Content then elem.Content.TextColor3 = t.TextSecondary end
-                elseif elem.Type == "TextBox" then
-                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-                    if elem.Box then 
-                        elem.Box.TextColor3 = t.Text 
-                        elem.Box.PlaceholderColor3 = t.TextSecondary
-                    end
-                elseif elem.Type == "Toggle" then
-                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-                    if elem.Label then elem.Label.TextColor3 = t.Text end
-                elseif elem.Type == "Dropdown" then
-                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-                    if elem.List then
-                        for _, c in ipairs(elem.List:GetChildren()) do
-                            if c:IsA("Frame") then
-                                local lbl = c:FindFirstChildWhichIsA("TextLabel")
-                                if lbl then lbl.TextColor3 = t.Text end
-                            end
-                        end
-                    end
-                elseif elem.Type == "Slider" then
-                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-                    if elem.Label then elem.Label.TextColor3 = t.Text end
-                elseif elem.Type == "SearchBar" then
-                    if elem.Bg then elem.Bg.BackgroundColor3 = t.Tertiary end
-                    if elem.Icon then elem.Icon.TextColor3 = t.TextSecondary end
-                    if elem.Box then 
-                        elem.Box.TextColor3 = t.Text 
-                        elem.Box.PlaceholderColor3 = t.TextSecondary
-                    end
-                end
-            end)
-        end
     end
 end
 
