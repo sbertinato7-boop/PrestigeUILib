@@ -2059,11 +2059,11 @@ function PrestigeUI:ShowDialog(options)
     DialogGui.Name = "PrestigeDialogGui"
     DialogGui.IgnoreGuiInset = true
     DialogGui.ResetOnSpawn = false
-    DialogGui.DisplayOrder = 999999 -- ensure it's above everything
+    DialogGui.DisplayOrder = 999999
     DialogGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
     DialogGui.Parent = playerGui
 
-    -- Click-blocking overlay (TextButton, not Frame)
+    -- Click-blocking overlay
     local Overlay = Instance.new("TextButton")
     Overlay.Name = "Overlay"
     Overlay.Size = UDim2.new(1, 0, 1, 0)
@@ -2076,10 +2076,10 @@ function PrestigeUI:ShowDialog(options)
     Overlay.ZIndex = 999999
     Overlay.Parent = DialogGui
 
-    -- Optional: eat outside clicks (prevents bubbling)
+    -- Prevent default Roblox refocus animations
     Overlay.MouseButton1Click:Connect(function() end)
 
-    -- Dialog box
+    -- Dialog box (centered)
     local Dialog = Instance.new("Frame")
     Dialog.Name = "DialogBox"
     Dialog.Size = UDim2.new(0, 400, 0, 200)
@@ -2088,6 +2088,7 @@ function PrestigeUI:ShowDialog(options)
     Dialog.BorderSizePixel = 0
     Dialog.Active = true
     Dialog.ZIndex = 1000000
+    Dialog.ClipsDescendants = true
     Dialog.Parent = Overlay
 
     local DialogCorner = Instance.new("UICorner")
@@ -2145,14 +2146,14 @@ function PrestigeUI:ShowDialog(options)
 
         Btn.MouseEnter:Connect(function()
             if self.Theme and self.Theme.Primary then
-                tween(Btn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
+                tween(Btn, {BackgroundColor3 = self.Theme.Primary}, 0.15)
             end
         end)
 
         Btn.MouseLeave:Connect(function()
             local defaultColor = i == 1 and self.Theme.Primary or self.Theme.Tertiary
             if self.Theme then
-                tween(Btn, {BackgroundColor3 = defaultColor}, 0.2)
+                tween(Btn, {BackgroundColor3 = defaultColor}, 0.15)
             end
         end)
 
@@ -2162,11 +2163,12 @@ function PrestigeUI:ShowDialog(options)
         end)
     end
 
-    -- Open animation
+    -- Subtle fade-in only (no size bounce)
     Dialog.BackgroundTransparency = 1
+    Overlay.BackgroundTransparency = 1
+
+    tween(Overlay, {BackgroundTransparency = 0.5}, 0.25)
     tween(Dialog, {BackgroundTransparency = 0}, 0.25)
-    Dialog.Size = UDim2.new(0, 350, 0, 180)
-    tween(Dialog, {Size = UDim2.new(0, 400, 0, 200)}, 0.25, Enum.EasingStyle.Back)
 end
 
 function PrestigeUI:AddTooltip(element, text)
