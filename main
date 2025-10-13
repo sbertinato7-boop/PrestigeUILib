@@ -414,7 +414,8 @@ function PrestigeUI:Create(title)
         CloseText.TextColor3 = theme.Text
     end)
     
-    -- Button hover effects
+    -- Button hover effects with debounce
+    local minimizeDebounce = false
     MinimizeBtn.MouseEnter:Connect(function()
         tween(MinimizeBtn, {BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2)
     end)
@@ -422,6 +423,7 @@ function PrestigeUI:Create(title)
         tween(MinimizeBtn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
     end)
     
+    local closeDebounce = false
     CloseBtn.MouseEnter:Connect(function()
         tween(CloseBtn, {BackgroundColor3 = self.Theme.Accent}, 0.2)
     end)
@@ -472,10 +474,11 @@ function PrestigeUI:Create(title)
         end
     end)
     
-    -- Minimize functionality
+    -- Minimize functionality with debounce
     local minimized = false
     self.Connections.MinimizeClick = MinimizeBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and not minimizeDebounce then
+            minimizeDebounce = true
             minimized = not minimized
             if minimized then
                 tween(MainFrame, {Size = UDim2.new(0, 700, 0, 45)}, 0.4, Enum.EasingStyle.Quad)
@@ -488,6 +491,8 @@ function PrestigeUI:Create(title)
                 Sidebar.Visible = true
                 ContentArea.Visible = true
             end
+            task.wait(0.5)
+            minimizeDebounce = false
         end
     end)
 
@@ -503,7 +508,8 @@ function PrestigeUI:Create(title)
     end)
 
     self.Connections.CloseClick = CloseBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and not closeDebounce then
+            closeDebounce = true
             self:Close()
         end
     end)
@@ -716,6 +722,8 @@ function PrestigeUI:AddButton(parent, text, callback)
         BtnText.TextColor3 = theme.Text
     end)
 
+    local buttonDebounce = false
+    
     Btn.MouseEnter:Connect(function()
         tween(Btn, {BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2)
         tween(Btn, {Size = UDim2.new(1, 5, 1, 0)}, 0.2, Enum.EasingStyle.Back)
@@ -726,10 +734,13 @@ function PrestigeUI:AddButton(parent, text, callback)
     end)
     
     Btn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and not buttonDebounce then
+            buttonDebounce = true
             tween(Btn, {Size = UDim2.new(1, -5, 0.9, 0)}, 0.1)
             task.wait(0.1)
             if callback then callback() end
+            task.wait(0.3)
+            buttonDebounce = false
         end
     end)
     
@@ -2037,7 +2048,7 @@ function PrestigeUI:ShowDialog(options)
     Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     Overlay.BackgroundTransparency = 0.5
     Overlay.BorderSizePixel = 0
-    Overlay.ZIndex = 1003
+    Overlay.ZIndex = 999
     Overlay.Active = true
     Overlay.Parent = self.ScreenGui
     
