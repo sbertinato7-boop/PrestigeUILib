@@ -159,7 +159,7 @@ end
 
 function PrestigeUI:Create(title)
     local self = setmetatable({}, PrestigeUI)
-    self.Theme = table.clone(PrestigeUI.Theme)
+    self.Theme = table.clone(ThemePresets.Dark)
     self.Connections = {}
     self.Notifications = {}
     self.ToggleKeybind = Enum.KeyCode.RightShift
@@ -169,7 +169,7 @@ function PrestigeUI:Create(title)
     self.TabCounter = 0
     self.ActiveTab = nil
     self.ElementOrderCounters = {}
-    self.DropdownStates = {}
+    self.DropdownStates = {} -- Track dropdown states to prevent spam-click bugs
     title = title or "Prestige Hub"
     
     local ScreenGui = Instance.new("ScreenGui")
@@ -426,24 +426,16 @@ function PrestigeUI:Create(title)
     self.Connections.LoadingTask = task.spawn(function()
         for i = 0, 100 do
             task.wait(0.015)
-            if LoadingBar and LoadingBar.Parent then
-                LoadingBar:TweenSize(UDim2.new(i/100, 0, 1, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.015, true)
-            end
-            if LoadingText and LoadingText.Parent then
-                LoadingText.Text = "Loading... " .. i .. "%"
-            end
+            LoadingBar:TweenSize(UDim2.new(i/100, 0, 1, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.015, true)
+            LoadingText.Text = "Loading... " .. i .. "%"
         end
         task.wait(0.3)
-        if LoadingFrame and LoadingFrame.Parent then
-            tween(LoadingFrame, {BackgroundTransparency = 1}, 0.3)
-            task.wait(0.3)
-            LoadingFrame:Destroy()
-        end
-        if MainFrame and MainFrame.Parent then
-            MainFrame.Visible = true
-            MainFrame.BackgroundTransparency = 1
-            tween(MainFrame, {BackgroundTransparency = 0}, 0.5, Enum.EasingStyle.Quad)
-        end
+        tween(LoadingFrame, {BackgroundTransparency = 1}, 0.3)
+        task.wait(0.3)
+        LoadingFrame:Destroy()
+        MainFrame.Visible = true
+        MainFrame.BackgroundTransparency = 1
+        tween(MainFrame, {BackgroundTransparency = 0}, 0.5, Enum.EasingStyle.Quad)
     end)
     
     -- Dragging
@@ -516,7 +508,22 @@ function PrestigeUI:Close()
     if self.Closing then return end
     self.Closing = true
     
-    -- Disconnect all connections
+    if self.CloseBtn and self.CloseBtn.Parent then
+        local closeTween = tween(self.CloseBtn, {BackgroundColor3 = Color3.fromRGB(200, 50, 50)}, 0.1)
+        if closeTween then closeTween.Completed:Wait() end
+    end
+    
+    if self.MainFrame and self.MainFrame.Parent then
+        local mainTween = tween(self.MainFrame, {BackgroundTransparency = 1}, 0.3, Enum.EasingStyle.Quad)
+        if mainTween then 
+            mainTween.Completed:Wait() 
+        else
+            task.wait(0.3)
+        end
+    else
+        task.wait(0.3)
+    end
+    
     for _, conn in pairs(self.Connections or {}) do
         if typeof(conn) == "RBXScriptConnection" then
             pcall(function() conn:Disconnect() end)
@@ -524,15 +531,11 @@ function PrestigeUI:Close()
     end
     self.Connections = {}
     
-    -- Destroy UI elements
     if self.ScreenGui then
         pcall(function() self.ScreenGui:Destroy() end)
     end
     
-    if self.MinimizedIcon then
-        pcall(function() self.MinimizedIcon:Destroy() end)
-    end
-    
+    table.clear(self)
     _G.PrestigeUI = nil
 end
 
@@ -555,11 +558,6 @@ function PrestigeUI:GetNextOrder(parent)
 end
 
 function PrestigeUI:AddTab(tabName)
-    if not self.Sidebar then 
-        warn("AddTab: Sidebar not initialized")
-        return nil
-    end
-    
     local Container = Instance.new("Frame")
     Container.Name = tabName .. "TabContainer"
     Container.Size = UDim2.new(1, 0, 0, 40)
@@ -589,7 +587,7 @@ function PrestigeUI:AddTab(tabName)
     TabText.TextSize = 14
     TabText.Parent = TabBtn
     
-    -- Content scrolling frame
+    -- Content scrolling frame with UIListLayout that respects LayoutOrder
     local Content = Instance.new("ScrollingFrame")
     Content.Name = tabName .. "Content"
     Content.Size = UDim2.new(1, 0, 1, 0)
@@ -622,35 +620,47 @@ function PrestigeUI:AddTab(tabName)
         Content.Visible = true
     end
     
-    -- Safe event connections
-    if TabBtn then
-        TabBtn.MouseEnter:Connect(function()
-            if self.ActiveTab ~= tabName then
-                tween(TabBtn, {BackgroundColor3 = Color3.fromRGB(35, 35, 40)}, 0.2)
-            end
-        end)
-        
-        TabBtn.MouseLeave:Connect(function()
-            if self.ActiveTab ~= tabName then
-                tween(TabBtn, {BackgroundColor3 = self.Theme.Tertiary}, 0.2)
-            end
-        end)
-        
-        TabBtn.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                self.ActiveTab = tabName
-                for _, tab in ipairs(self.Tabs) do
-                    if tab.Name == tabName then
-                        tween(tab.Button, {BackgroundColor3 = self.Theme.Primary}, 0.3)
-                        tab.Content.Visible = true
-                    else
-                        tween(tab.Button, {BackgroundColor3 = self.Theme.Tertiary}, 0.3)
-                        tab.Content.Visible = false
-                    end
+    -- Register tab elements for theme updates with instant color application
+    local tabId = "Tab_" .. tabName
+    self:RegisterThemeElement(tabId .. "_Btn", TabBtn, function(theme)
+        if self.ActiveTab == tabName then
+            TabBtn.BackgroundColor3 = theme.Primary
+        else
+            TabBtn.BackgroundColor3 = theme.Tertiary
+        end
+    end)
+    self:RegisterThemeElement(tabId .. "_Text", TabText, function(theme)
+        TabText.TextColor3 = theme.Text
+    end)
+    self:RegisterThemeElement(tabId .. "_Content", Content, function(theme)
+        Content.ScrollBarImageColor3 = theme.Primary
+    end)
+    
+    TabBtn.MouseEnter:Connect(function()
+        if self.ActiveTab ~= tabName then
+            tween(TabBtn, {BackgroundColor3 = Color3.fromRGB(35, 35, 40)}, 0.2)
+        end
+    end)
+    TabBtn.MouseLeave:Connect(function()
+        if self.ActiveTab ~= tabName then
+            tween(TabBtn, {BackgroundColor3 = self.Theme.Tertiary}, 0.2)
+        end
+    end)
+    
+    TabBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            self.ActiveTab = tabName
+            for _, tab in ipairs(self.Tabs) do
+                if tab.Name == tabName then
+                    tween(tab.Button, {BackgroundColor3 = self.Theme.Primary}, 0.3)
+                    tab.Content.Visible = true
+                else
+                    tween(tab.Button, {BackgroundColor3 = self.Theme.Tertiary}, 0.3)
+                    tab.Content.Visible = false
                 end
             end
-        end)
-    end
+        end
+    end)
 
     local tabData = {Button = TabBtn, Content = Content, Name = tabName, Container = Container}
     table.insert(self.Tabs, tabData)
@@ -659,11 +669,6 @@ function PrestigeUI:AddTab(tabName)
 end
 
 function PrestigeUI:AddButton(parent, text, callback)
-    if not parent then 
-        warn("AddButton: Invalid parent")
-        return nil
-    end
-    
     local Container = Instance.new("Frame")
     Container.Name = text .. "Container"
     Container.Size = UDim2.new(1, 0, 0, 40)
@@ -692,42 +697,37 @@ function PrestigeUI:AddButton(parent, text, callback)
     BtnText.TextSize = 14
     BtnText.Parent = Btn
 
-    -- Safe tween function
-    local function safeTween(object, properties, duration, style, direction)
-        if object and object.Parent then
-            return tween(object, properties, duration, style, direction)
-        end
-        return nil
-    end
+    -- Register button elements for instant theme updates
+    local btnId = "Button_" .. text .. "_" .. tostring(Btn)
+    self:RegisterThemeElement(btnId .. "_Bg", Btn, function(theme)
+        Btn.BackgroundColor3 = theme.Primary
+    end)
+    self:RegisterThemeElement(btnId .. "_Text", BtnText, function(theme)
+        BtnText.TextColor3 = theme.Text
+    end)
 
-    -- FIXED: Safe event connections
-    if Btn then
-        Btn.MouseEnter:Connect(function()
-            safeTween(Btn, {BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2)
-            safeTween(Btn, {Size = UDim2.new(1, 5, 1, 0)}, 0.2, Enum.EasingStyle.Back)
-        end)
-        
-        Btn.MouseLeave:Connect(function()
-            safeTween(Btn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
-            safeTween(Btn, {Size = UDim2.new(1, 0, 1, 0)}, 0.2)
-        end)
-        
-        Btn.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                safeTween(Btn, {Size = UDim2.new(1, -5, 0.9, 0)}, 0.1)
-                task.wait(0.1)
-                if callback then 
-                    pcall(callback)
-                end
-            end
-        end)
-        
-        Btn.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                safeTween(Btn, {Size = UDim2.new(1, 5, 1, 0)}, 0.2, Enum.EasingStyle.Back)
-            end
-        end)
-    end
+    Btn.MouseEnter:Connect(function()
+        tween(Btn, {BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2)
+        tween(Btn, {Size = UDim2.new(1, 5, 1, 0)}, 0.2, Enum.EasingStyle.Back)
+    end)
+    Btn.MouseLeave:Connect(function()
+        tween(Btn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
+        tween(Btn, {Size = UDim2.new(1, 0, 1, 0)}, 0.2)
+    end)
+    
+    Btn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            tween(Btn, {Size = UDim2.new(1, -5, 0.9, 0)}, 0.1)
+            task.wait(0.1)
+            if callback then callback() end
+        end
+    end)
+    
+    Btn.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            tween(Btn, {Size = UDim2.new(1, 5, 1, 0)}, 0.2, Enum.EasingStyle.Back)
+        end
+    end)
     
     return Container
 end
@@ -866,11 +866,6 @@ function PrestigeUI:AddTextBox(parent, placeholder, callback)
 end
 
 function PrestigeUI:AddToggle(parent, text, callback)
-    if not parent then 
-        warn("AddToggle: Invalid parent")
-        return nil
-    end
-    
     local Container = Instance.new("Frame")
     Container.Name = "ToggleContainer"
     Container.Size = UDim2.new(1, 0, 0, 40)
@@ -912,69 +907,48 @@ function PrestigeUI:AddToggle(parent, text, callback)
     
     local toggled = false
     
-    -- Safe tween function
-    local function safeTween(object, properties, duration, style, direction)
-        if object and object.Parent then
-            return tween(object, properties, duration, style, direction)
+    -- Register toggle elements for instant theme updates
+    local toggleId = "Toggle_" .. text .. "_" .. tostring(Container)
+    self:RegisterThemeElement(toggleId .. "_Label", Label, function(theme)
+        Label.TextColor3 = theme.Text
+    end)
+    self:RegisterThemeElement(toggleId .. "_Bg", ToggleBg, function(theme)
+        if toggled then
+            ToggleBg.BackgroundColor3 = theme.Primary
+        else
+            ToggleBg.BackgroundColor3 = theme.Tertiary
         end
-        return nil
-    end
+    end)
+    self:RegisterThemeElement(toggleId .. "_Btn", ToggleButton, function(theme)
+        ToggleButton.BackgroundColor3 = theme.Primary
+    end)
     
-    -- FIXED: Safe event connections
-    if ToggleBg then
-        ToggleBg.MouseEnter:Connect(function()
-            safeTween(ToggleButton, {Size = UDim2.new(0, 23, 0, 23)}, 0.2, Enum.EasingStyle.Back)
-        end)
-        
-        ToggleBg.MouseLeave:Connect(function()
-            safeTween(ToggleButton, {Size = UDim2.new(0, 21, 0, 21)}, 0.2)
-        end)
-        
-        ToggleBg.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                toggled = not toggled
-                if toggled then
-                    safeTween(ToggleButton, {Position = UDim2.new(0, 27, 0.5, -10.5)}, 0.3, Enum.EasingStyle.Back)
-                    safeTween(ToggleBg, {BackgroundColor3 = self.Theme.Primary}, 0.3)
-                else
-                    safeTween(ToggleButton, {Position = UDim2.new(0, 2, 0.5, -10.5)}, 0.3, Enum.EasingStyle.Back)
-                    safeTween(ToggleBg, {BackgroundColor3 = self.Theme.Tertiary}, 0.3)
-                end
-                if callback then 
-                    pcall(callback, toggled)
-                end
-            end
-        end)
-    end
+    ToggleBg.MouseEnter:Connect(function()
+        tween(ToggleButton, {Size = UDim2.new(0, 23, 0, 23)}, 0.2, Enum.EasingStyle.Back)
+    end)
+    ToggleBg.MouseLeave:Connect(function()
+        tween(ToggleButton, {Size = UDim2.new(0, 21, 0, 21)}, 0.2)
+    end)
     
-    return {
-        Container = Container, 
-        Toggle = ToggleButton, 
-        GetState = function() return toggled end,
-        SetState = function(state)
-            toggled = state
-            if ToggleButton and ToggleButton.Parent then
-                if toggled then
-                    ToggleButton.Position = UDim2.new(0, 27, 0.5, -10.5)
-                    ToggleBg.BackgroundColor3 = self.Theme.Primary
-                else
-                    ToggleButton.Position = UDim2.new(0, 2, 0.5, -10.5)
-                    ToggleBg.BackgroundColor3 = self.Theme.Tertiary
-                end
+    ToggleBg.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            toggled = not toggled
+            if toggled then
+                tween(ToggleButton, {Position = UDim2.new(0, 27, 0.5, -10.5)}, 0.3, Enum.EasingStyle.Back)
+                tween(ToggleBg, {BackgroundColor3 = self.Theme.Primary}, 0.3)
+            else
+                tween(ToggleButton, {Position = UDim2.new(0, 2, 0.5, -10.5)}, 0.3, Enum.EasingStyle.Back)
+                tween(ToggleBg, {BackgroundColor3 = self.Theme.Tertiary}, 0.3)
             end
+            if callback then callback(toggled) end
         end
-    }
+    end)
+    
+    return {Container = Container, Toggle = ToggleButton, GetState = function() return toggled end}
 end
 
 -- Fixed dropdown with spam-click protection
 function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
-    if not parent then 
-        warn("AddDropdown: Invalid parent")
-        return nil
-    end
-    
-    options = options or {}
-    
     local Container = Instance.new("Frame")
     Container.Name = "DropdownContainer"
     Container.Size = UDim2.new(1, 0, 0, 40)
@@ -1190,17 +1164,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     return Container
 end
 
-function PrestigeUI:AddSlider(parent, text, min, max, default, callback)
-    if not parent then 
-        warn("AddSlider: Invalid parent")
-        return nil
-    end
-    
-    -- Ensure all values are numbers
-    min = tonumber(min) or 0
-    max = tonumber(max) or 100
-    default = tonumber(default) or min
-    
+function PrestigeUI:AddSlider(parent, min, max, default, callback)
     local Container = Instance.new("Frame")
     Container.Name = "SliderContainer"
     Container.Size = UDim2.new(1, 0, 0, 40)
@@ -1211,7 +1175,7 @@ function PrestigeUI:AddSlider(parent, text, min, max, default, callback)
     local Label = Instance.new("TextLabel")
     Label.Size = UDim2.new(1, 0, 0, 15)
     Label.BackgroundTransparency = 1
-    Label.Text = text .. ": " .. (default or min)
+    Label.Text = "Value: " .. (default or min)
     Label.TextColor3 = self.Theme.Text
     Label.Font = Enum.Font.GothamBold
     Label.TextSize = 12
@@ -1251,13 +1215,9 @@ function PrestigeUI:AddSlider(parent, text, min, max, default, callback)
     ButtonCorner.Parent = SliderButton
     
     local dragging = false
-    local value = default
+    local value = default or min
     
-    -- FIXED: Safe percentage calculation
     local percentage = (value - min) / (max - min)
-    if percentage ~= percentage then percentage = 0 end -- Handle NaN
-    percentage = math.clamp(percentage, 0, 1)
-    
     SliderFill.Size = UDim2.new(percentage, 0, 1, 0)
     SliderButton.Position = UDim2.new(percentage, -7, 0.5, -7)
     
@@ -1276,114 +1236,58 @@ function PrestigeUI:AddSlider(parent, text, min, max, default, callback)
         SliderButton.BackgroundColor3 = theme.Primary
     end)
     
-    -- FIXED: Safe tween calls
-    local function safeTween(object, properties, duration, style, direction)
-        if object and object.Parent then
-            return tween(object, properties, duration, style, direction)
+    SliderButton.MouseEnter:Connect(function()
+        tween(SliderButton, {Size = UDim2.new(0, 18, 0, 18)}, 0.2, Enum.EasingStyle.Back)
+        tween(SliderButton, {BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2)
+    end)
+    SliderButton.MouseLeave:Connect(function()
+        if not dragging then
+            tween(SliderButton, {Size = UDim2.new(0, 14, 0, 14)}, 0.2)
+            tween(SliderButton, {BackgroundColor3 = self.Theme.Primary}, 0.2)
         end
-        return nil
-    end
-    
-    if SliderButton then
-        SliderButton.MouseEnter:Connect(function()
-            safeTween(SliderButton, {Size = UDim2.new(0, 18, 0, 18)}, 0.2, Enum.EasingStyle.Back)
-            safeTween(SliderButton, {BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2)
-        end)
-        
-        SliderButton.MouseLeave:Connect(function()
-            if not dragging then
-                safeTween(SliderButton, {Size = UDim2.new(0, 14, 0, 14)}, 0.2)
-                safeTween(SliderButton, {BackgroundColor3 = self.Theme.Primary}, 0.2)
-            end
-        end)
-        
-        SliderButton.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = true
-                safeTween(SliderButton, {Size = UDim2.new(0, 18, 0, 18)}, 0.1)
-            end
-        end)
-    end
+    end)
     
     local function updateSlider(input)
-        if not SliderBg or not SliderBg.Parent then return end
-        
         local relativeX = math.clamp(input.Position.X - SliderBg.AbsolutePosition.X, 0, SliderBg.AbsoluteSize.X)
         local percentage = relativeX / SliderBg.AbsoluteSize.X
         value = math.floor(min + (max - min) * percentage)
         value = math.clamp(value, min, max)
         
-        safeTween(SliderFill, {Size = UDim2.new(percentage, 0, 1, 0)}, 0.1)
-        safeTween(SliderButton, {Position = UDim2.new(percentage, -7, 0.5, -7)}, 0.1)
+        tween(SliderFill, {Size = UDim2.new(percentage, 0, 1, 0)}, 0.1)
+        tween(SliderButton, {Position = UDim2.new(percentage, -7, 0.5, -7)}, 0.1)
+        Label.Text = "Value: " .. value
         
-        if Label and Label.Parent then
-            Label.Text = text .. ": " .. value
-        end
-        
-        if callback then 
-            pcall(callback, value)
-        end
+        if callback then callback(value) end
     end
     
-    if SliderButton then
-        SliderButton.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = true
-                safeTween(SliderButton, {Size = UDim2.new(0, 18, 0, 18)}, 0.1)
-            end
-        end)
-    end
+    SliderButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            tween(SliderButton, {Size = UDim2.new(0, 18, 0, 18)}, 0.1)
+        end
+    end)
     
-    local inputChangedConn
-    inputChangedConn = UserInputService.InputChanged:Connect(function(input)
+    UserInputService.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             updateSlider(input)
         end
     end)
     
-    local inputEndedConn
-    inputEndedConn = UserInputService.InputEnded:Connect(function(input)
+    UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
-            if SliderButton and SliderButton.Parent then
-                safeTween(SliderButton, {Size = UDim2.new(0, 14, 0, 14)}, 0.2)
-                safeTween(SliderButton, {BackgroundColor3 = self.Theme.Primary}, 0.2)
-            end
+            tween(SliderButton, {Size = UDim2.new(0, 14, 0, 14)}, 0.2)
+            tween(SliderButton, {BackgroundColor3 = self.Theme.Primary}, 0.2)
         end
     end)
     
-    if SliderBg then
-        SliderBg.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                updateSlider(input)
-            end
-        end)
-    end
-    
-    -- Store connections for cleanup
-    table.insert(self.Connections, inputChangedConn)
-    table.insert(self.Connections, inputEndedConn)
-    
-    return {
-        Container = Container, 
-        GetValue = function() return value end,
-        SetValue = function(newValue)
-            value = math.clamp(tonumber(newValue) or value, min, max)
-            local percentage = (value - min) / (max - min)
-            if percentage ~= percentage then percentage = 0 end
-            percentage = math.clamp(percentage, 0, 1)
-            
-            if SliderFill and SliderFill.Parent then
-                SliderFill.Size = UDim2.new(percentage, 0, 1, 0)
-            end
-            if SliderButton and SliderButton.Parent then
-                SliderButton.Position = UDim2.new(percentage, -7, 0.5, -7)
-            end
-            if Label and Label.Parent then
-                Label.Text = text .. ": " .. value
-            end
+    SliderBg.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            updateSlider(input)
         end
-    }
+    end)
+    
+    return {Container = Container, GetValue = function() return value end}
 end
 
 function PrestigeUI:AddDivider(parent, text)
@@ -1439,11 +1343,6 @@ function PrestigeUI:AddDivider(parent, text)
 end
 
 function PrestigeUI:AddSection(parent, title)
-    if not parent then 
-        warn("AddSection: Invalid parent")
-        return nil
-    end
-    
     local Section = Instance.new("Frame")
     Section.Name = (title or "Section") .. "Container"
     Section.BackgroundTransparency = 1
@@ -1484,6 +1383,15 @@ function PrestigeUI:AddSection(parent, title)
         Line.BorderSizePixel = 0
         Line.LayoutOrder = self:GetNextOrder(Section)
         Line.Parent = Section
+        
+        -- Register section elements for instant theme updates
+        local secId = "Section_" .. title .. "_" .. tostring(Section)
+        self:RegisterThemeElement(secId .. "_Title", TitleLabel, function(theme)
+            TitleLabel.TextColor3 = theme.TextSecondary
+        end)
+        self:RegisterThemeElement(secId .. "_Line", Line, function(theme)
+            Line.BackgroundColor3 = theme.Tertiary
+        end)
     end
     
     return Section
@@ -2042,7 +1950,7 @@ function PrestigeUI:ApplyTheme()
         return 
     end
     
-    -- Apply theme to all registered elements
+    -- Apply theme to all registered elements using their update callbacks
     for id, data in pairs(self.ThemeElements) do
         if data.Element and data.Element.Parent and data.Update then
             pcall(function()
