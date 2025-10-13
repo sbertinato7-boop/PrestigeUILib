@@ -2043,8 +2043,11 @@ function PrestigeUI:ShowDialog(options)
     local message = options.Message or ""
     local buttons = options.Buttons or {{"OK", function() end}}
 
+    -- Track if dialog is being destroyed to prevent re-opening
+    local isClosing = false
+
     -- Overlay that blocks all clicks under it
-    local Overlay = Instance.new("TextButton") -- Changed to TextButton
+    local Overlay = Instance.new("Frame")
     Overlay.Name = "DialogOverlay"
     Overlay.Size = UDim2.new(1, 0, 1, 0)
     Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -2052,10 +2055,17 @@ function PrestigeUI:ShowDialog(options)
     Overlay.BorderSizePixel = 0
     Overlay.ZIndex = 9999
     Overlay.Active = true
-    Overlay.AutoButtonColor = false
-    Overlay.Modal = true -- This is key - blocks all input behind it
-    Overlay.Text = ""
+    Overlay.Selectable = true
+    Overlay.ClipsDescendants = true
     Overlay.Parent = self.ScreenGui
+
+    -- Block all GUI input events on the overlay
+    Overlay.InputBegan:Connect(function(input)
+        input:GetPropertyChangedSignal("UserInputState"):Connect(function() end)
+    end)
+    
+    Overlay.InputEnded:Connect(function() end)
+    Overlay.InputChanged:Connect(function() end)
 
     local Dialog = Instance.new("Frame")
     Dialog.Name = "DialogBox"
@@ -2065,6 +2075,7 @@ function PrestigeUI:ShowDialog(options)
     Dialog.BorderSizePixel = 0
     Dialog.ZIndex = 10000
     Dialog.Active = true
+    Dialog.Selectable = true
     Dialog.Parent = Overlay
 
     local DialogCorner = Instance.new("UICorner")
@@ -2101,14 +2112,14 @@ function PrestigeUI:ShowDialog(options)
     for i, btnData in ipairs(buttons) do
         local btnText, btnCallback = btnData[1], btnData[2]
 
-        local Btn = Instance.new("TextButton") -- Changed to TextButton
+        local Btn = Instance.new("Frame")
         Btn.Size = UDim2.new(0, buttonWidth, 0, 35)
         Btn.Position = UDim2.new(0, 20 + (i - 1) * (buttonWidth + 10), 0, 150)
         Btn.BackgroundColor3 = i == 1 and self.Theme.Primary or self.Theme.Tertiary
         Btn.BorderSizePixel = 0
         Btn.ZIndex = 10001
-        Btn.AutoButtonColor = false
-        Btn.Text = ""
+        Btn.Active = true
+        Btn.Selectable = true
         Btn.Parent = Dialog
 
         local BtnCorner = Instance.new("UICorner")
@@ -2125,14 +2136,18 @@ function PrestigeUI:ShowDialog(options)
         BtnLabel.ZIndex = 10002
         BtnLabel.Parent = Btn
 
-        -- Use MouseButton1Click instead of InputBegan
-        Btn.MouseButton1Click:Connect(function()
-            if btnCallback then 
-                pcall(function() btnCallback() end)
+        Btn.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                if not isClosing then
+                    isClosing = true
+                    if btnCallback then 
+                        pcall(function() btnCallback() end)
+                    end
+                    -- Small delay before destroying
+                    task.wait(0.1)
+                    Overlay:Destroy()
+                end
             end
-            -- Add a small delay before destroying to prevent re-clicking
-            task.wait(0.1)
-            Overlay:Destroy()
         end)
 
         Btn.MouseEnter:Connect(function()
