@@ -2037,7 +2037,7 @@ function PrestigeUI:ShowDialog(options)
     Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     Overlay.BackgroundTransparency = 0.5
     Overlay.BorderSizePixel = 0
-    Overlay.ZIndex = 999
+    Overlay.ZIndex = 1003
     Overlay.Active = true
     Overlay.Parent = self.ScreenGui
     
