@@ -2037,34 +2037,40 @@ function PrestigeUI:ShowDialog(options)
         warn("ShowDialog: ScreenGui or Theme not initialized")
         return
     end
-    
+
     options = options or {}
     local title = options.Title or "Dialog"
     local message = options.Message or ""
     local buttons = options.Buttons or {{"OK", function() end}}
-    
-    local Overlay = Instance.new("Frame")
+
+    -- Overlay that blocks all clicks under it
+    local Overlay = Instance.new("TextButton") -- Changed to TextButton
+    Overlay.Name = "DialogOverlay"
     Overlay.Size = UDim2.new(1, 0, 1, 0)
     Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     Overlay.BackgroundTransparency = 0.5
     Overlay.BorderSizePixel = 0
-    Overlay.ZIndex = 999
+    Overlay.ZIndex = 9999
     Overlay.Active = true
+    Overlay.AutoButtonColor = false
+    Overlay.Modal = true -- This is key - blocks all input behind it
+    Overlay.Text = ""
     Overlay.Parent = self.ScreenGui
-    
+
     local Dialog = Instance.new("Frame")
+    Dialog.Name = "DialogBox"
     Dialog.Size = UDim2.new(0, 400, 0, 200)
     Dialog.Position = UDim2.new(0.5, -200, 0.5, -100)
     Dialog.BackgroundColor3 = self.Theme.Secondary
     Dialog.BorderSizePixel = 0
-    Dialog.ZIndex = 1000
+    Dialog.ZIndex = 10000
     Dialog.Active = true
     Dialog.Parent = Overlay
-    
+
     local DialogCorner = Instance.new("UICorner")
     DialogCorner.CornerRadius = UDim.new(0, 12)
     DialogCorner.Parent = Dialog
-    
+
     local Title = Instance.new("TextLabel")
     Title.Size = UDim2.new(1, -40, 0, 40)
     Title.Position = UDim2.new(0, 20, 0, 15)
@@ -2074,9 +2080,9 @@ function PrestigeUI:ShowDialog(options)
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 18
     Title.TextXAlignment = Enum.TextXAlignment.Left
-    Title.ZIndex = 1001
+    Title.ZIndex = 10001
     Title.Parent = Dialog
-    
+
     local Message = Instance.new("TextLabel")
     Message.Size = UDim2.new(1, -40, 0, 80)
     Message.Position = UDim2.new(0, 20, 0, 60)
@@ -2088,26 +2094,27 @@ function PrestigeUI:ShowDialog(options)
     Message.TextXAlignment = Enum.TextXAlignment.Left
     Message.TextYAlignment = Enum.TextYAlignment.Top
     Message.TextWrapped = true
-    Message.ZIndex = 1001
+    Message.ZIndex = 10001
     Message.Parent = Dialog
-    
+
     local buttonWidth = (360 / #buttons) - 10
     for i, btnData in ipairs(buttons) do
         local btnText, btnCallback = btnData[1], btnData[2]
-        
-        local Btn = Instance.new("Frame")
+
+        local Btn = Instance.new("TextButton") -- Changed to TextButton
         Btn.Size = UDim2.new(0, buttonWidth, 0, 35)
         Btn.Position = UDim2.new(0, 20 + (i - 1) * (buttonWidth + 10), 0, 150)
         Btn.BackgroundColor3 = i == 1 and self.Theme.Primary or self.Theme.Tertiary
         Btn.BorderSizePixel = 0
-        Btn.ZIndex = 1001
-        Btn.Active = true
+        Btn.ZIndex = 10001
+        Btn.AutoButtonColor = false
+        Btn.Text = ""
         Btn.Parent = Dialog
-        
+
         local BtnCorner = Instance.new("UICorner")
         BtnCorner.CornerRadius = UDim.new(0, 8)
         BtnCorner.Parent = Btn
-        
+
         local BtnLabel = Instance.new("TextLabel")
         BtnLabel.Size = UDim2.new(1, 0, 1, 0)
         BtnLabel.BackgroundTransparency = 1
@@ -2115,27 +2122,30 @@ function PrestigeUI:ShowDialog(options)
         BtnLabel.TextColor3 = self.Theme.Text
         BtnLabel.Font = Enum.Font.GothamBold
         BtnLabel.TextSize = 14
-        BtnLabel.ZIndex = 1002
+        BtnLabel.ZIndex = 10002
         BtnLabel.Parent = Btn
-        
-        Btn.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                if btnCallback then 
-                    pcall(function() btnCallback() end)
-                end
-                Overlay:Destroy()
+
+        -- Use MouseButton1Click instead of InputBegan
+        Btn.MouseButton1Click:Connect(function()
+            if btnCallback then 
+                pcall(function() btnCallback() end)
             end
+            -- Add a small delay before destroying to prevent re-clicking
+            task.wait(0.1)
+            Overlay:Destroy()
         end)
-        
+
         Btn.MouseEnter:Connect(function()
             tween(Btn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
         end)
+
         Btn.MouseLeave:Connect(function()
             local defaultColor = i == 1 and self.Theme.Primary or self.Theme.Tertiary
             tween(Btn, {BackgroundColor3 = defaultColor}, 0.2)
         end)
     end
-    
+
+    -- Smooth open animation
     Dialog.BackgroundTransparency = 1
     tween(Dialog, {BackgroundTransparency = 0}, 0.3)
     Dialog.Size = UDim2.new(0, 350, 0, 180)
