@@ -1071,12 +1071,13 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         OptionCorner.CornerRadius = UDim.new(0, 6)
         OptionCorner.Parent = OptionBtn
 
-        -- Register each dropdown option for instant theme updates - with hover state tracking
-        local optId = dropdownId .. "_Option_" .. index
+        -- Fixed: Track hover state for each option to prevent theme conflicts
         local optionHoverState = {isHovering = false}
         
+        -- Register each dropdown option for instant theme updates
+        local optId = dropdownId .. "_Option_" .. index
         self:RegisterThemeElement(optId .. "_Bg", OptionBtn, function(theme)
-            -- Only update if not currently being hovered
+            -- Always force update to theme color when not hovering
             if not optionHoverState.isHovering then
                 OptionBtn.BackgroundColor3 = theme.Tertiary
             end
@@ -1085,14 +1086,14 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
             OptionText.TextColor3 = theme.Text
         end)
 
-        -- Fixed: Store original background state for proper hover restoration
         OptionBtn.MouseEnter:Connect(function()
             optionHoverState.isHovering = true
             tween(OptionBtn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
         end)
         OptionBtn.MouseLeave:Connect(function()
             optionHoverState.isHovering = false
-            tween(OptionBtn, {BackgroundColor3 = self.Theme.Tertiary}, 0.2)
+            -- Force immediate color update to current theme when mouse leaves
+            OptionBtn.BackgroundColor3 = self.Theme.Tertiary
         end)
 
         OptionBtn.InputBegan:Connect(function(input)
