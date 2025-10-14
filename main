@@ -954,26 +954,26 @@ function PrestigeUI:AddToggle(parent, text, callback)
     Label.Parent = Container
     
     local ToggleBg = Instance.new("Frame")
-    ToggleBg.Size = UDim2.new(0, 50, 0, 25)
-    ToggleBg.Position = UDim2.new(1, -50, 0.5, -12.5)
+    ToggleBg.Size = UDim2.new(0, 70, 0, 35)
+    ToggleBg.Position = UDim2.new(1, -70, 0.5, -17.5)
     ToggleBg.BackgroundColor3 = self.Theme.Tertiary
     ToggleBg.BorderSizePixel = 0
     ToggleBg.Active = true
     ToggleBg.Parent = Container
     
     local ToggleBgCorner = Instance.new("UICorner")
-    ToggleBgCorner.CornerRadius = UDim.new(0, 12)
+    ToggleBgCorner.CornerRadius = UDim.new(0, 18)
     ToggleBgCorner.Parent = ToggleBg
     
     local ToggleButton = Instance.new("Frame")
-    ToggleButton.Size = UDim2.new(0, 21, 0, 21)
-    ToggleButton.Position = UDim2.new(0, 2, 0.5, -10.5)
+    ToggleButton.Size = UDim2.new(0, 31, 0, 31)
+    ToggleButton.Position = UDim2.new(0, 2, 0.5, -15.5)
     ToggleButton.BackgroundColor3 = self.Theme.Primary
     ToggleButton.BorderSizePixel = 0
     ToggleButton.Parent = ToggleBg
     
     local ToggleButtonCorner = Instance.new("UICorner")
-    ToggleButtonCorner.CornerRadius = UDim.new(0, 10)
+    ToggleButtonCorner.CornerRadius = UDim.new(0, 15)
     ToggleButtonCorner.Parent = ToggleButton
     
     local toggled = false
@@ -994,20 +994,20 @@ function PrestigeUI:AddToggle(parent, text, callback)
     end)
     
     ToggleBg.MouseEnter:Connect(function()
-        tween(ToggleButton, {Size = UDim2.new(0, 23, 0, 23)}, 0.2, Enum.EasingStyle.Back)
+        tween(ToggleButton, {Size = UDim2.new(0, 33, 0, 33)}, 0.2, Enum.EasingStyle.Back)
     end)
     ToggleBg.MouseLeave:Connect(function()
-        tween(ToggleButton, {Size = UDim2.new(0, 21, 0, 21)}, 0.2)
+        tween(ToggleButton, {Size = UDim2.new(0, 31, 0, 31)}, 0.2)
     end)
     
     ToggleBg.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             toggled = not toggled
             if toggled then
-                tween(ToggleButton, {Position = UDim2.new(0, 27, 0.5, -10.5)}, 0.3, Enum.EasingStyle.Back)
+                tween(ToggleButton, {Position = UDim2.new(0, 37, 0.5, -15.5)}, 0.3, Enum.EasingStyle.Back)
                 tween(ToggleBg, {BackgroundColor3 = self.Theme.Primary}, 0.3)
             else
-                tween(ToggleButton, {Position = UDim2.new(0, 2, 0.5, -10.5)}, 0.3, Enum.EasingStyle.Back)
+                tween(ToggleButton, {Position = UDim2.new(0, 2, 0.5, -15.5)}, 0.3, Enum.EasingStyle.Back)
                 tween(ToggleBg, {BackgroundColor3 = self.Theme.Tertiary}, 0.3)
             end
             if callback then callback(toggled) end
