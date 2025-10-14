@@ -5,6 +5,23 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 
+function PrestigeUI:GetScreenSize()
+    local screenSize = self.ScreenGui.AbsoluteSize
+    return screenSize.X, screenSize.Y
+end
+
+function PrestigeUI:IsMobile()
+    local _, screenY = self:GetScreenSize()
+    return screenY < 600 or UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+end
+
+function PrestigeUI:GetResponsiveScale()
+    local screenX, screenY = self:GetScreenSize()
+    local baseWidth = 1920
+    local baseHeight = 1080
+    return math.min(screenX / baseWidth, screenY / baseHeight, 1)
+end
+
 -- Default theme fallback
 PrestigeUI.Theme = {
     Primary = Color3.fromRGB(0, 180, 255),
@@ -179,11 +196,24 @@ function PrestigeUI:Create(title)
     ScreenGui.DisplayOrder = 999999
     ScreenGui.IgnoreGuiInset = true
     
+    local screenX, screenY = 1920, 1080
+    pcall(function()
+        screenX, screenY = ScreenGui.AbsoluteSize.X, ScreenGui.AbsoluteSize.Y
+    end)
+    
+    -- Detect mobile and adjust sizes
+    local isMobile = screenY < 600
+    local scale = math.min(screenX / 1920, screenY / 1080, 1)
+    
+    local mainWidth = isMobile and math.min(screenX - 20, 350) or 700
+    local mainHeight = isMobile and math.min(screenY - 60, 500) or 450
+    local sidebarWidth = isMobile and 0 or 180
+    
     -- Loading screen
     local LoadingFrame = Instance.new("Frame")
     LoadingFrame.Name = "LoadingFrame"
-    LoadingFrame.Size = UDim2.new(0, 400, 0, 200)
-    LoadingFrame.Position = UDim2.new(0.5, -200, 0.5, -100)
+    LoadingFrame.Size = UDim2.new(0, isMobile and 300 or 400, 0, 150)
+    LoadingFrame.Position = UDim2.new(0.5, isMobile and -150 or -200, 0.5, -75)
     LoadingFrame.BackgroundColor3 = self.Theme.Dark
     LoadingFrame.BorderSizePixel = 0
     LoadingFrame.Active = true
@@ -194,18 +224,18 @@ function PrestigeUI:Create(title)
     LoadingCorner.Parent = LoadingFrame
     
     local LoadingTitle = Instance.new("TextLabel")
-    LoadingTitle.Size = UDim2.new(1, 0, 0, 50)
-    LoadingTitle.Position = UDim2.new(0, 0, 0, 40)
+    LoadingTitle.Size = UDim2.new(1, 0, 0, 40)
+    LoadingTitle.Position = UDim2.new(0, 0, 0, 25)
     LoadingTitle.BackgroundTransparency = 1
     LoadingTitle.Text = string.upper(title)
     LoadingTitle.TextColor3 = self.Theme.Primary
     LoadingTitle.Font = Enum.Font.GothamBold
-    LoadingTitle.TextSize = 28
+    LoadingTitle.TextSize = isMobile and 16 or 28
     LoadingTitle.Parent = LoadingFrame
     
     local LoadingBarBg = Instance.new("Frame")
-    LoadingBarBg.Size = UDim2.new(0, 300, 0, 8)
-    LoadingBarBg.Position = UDim2.new(0.5, -150, 0, 120)
+    LoadingBarBg.Size = UDim2.new(0, isMobile and 220 or 300, 0, 6)
+    LoadingBarBg.Position = UDim2.new(0.5, isMobile and -110 or -150, 0, 80)
     LoadingBarBg.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
     LoadingBarBg.BorderSizePixel = 0
     LoadingBarBg.Parent = LoadingFrame
@@ -225,20 +255,20 @@ function PrestigeUI:Create(title)
     LoadingBarCorner.Parent = LoadingBar
     
     local LoadingText = Instance.new("TextLabel")
-    LoadingText.Size = UDim2.new(1, 0, 0, 30)
-    LoadingText.Position = UDim2.new(0, 0, 0, 145)
+    LoadingText.Size = UDim2.new(1, 0, 0, 20)
+    LoadingText.Position = UDim2.new(0, 0, 0, 105)
     LoadingText.BackgroundTransparency = 1
     LoadingText.Text = "Loading... 0%"
     LoadingText.TextColor3 = self.Theme.TextSecondary
     LoadingText.Font = Enum.Font.Gotham
-    LoadingText.TextSize = 14
+    LoadingText.TextSize = 12
     LoadingText.Parent = LoadingFrame
     
-    -- Main frame with Active = true to block clicks
+    -- Main frame
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 700, 0, 450)
-    MainFrame.Position = UDim2.new(0.5, -350, 0.5, -225)
+    MainFrame.Size = UDim2.new(0, mainWidth, 0, mainHeight)
+    MainFrame.Position = UDim2.new(0.5, -mainWidth/2, 0.5, -mainHeight/2)
     MainFrame.BackgroundColor3 = self.Theme.Dark
     MainFrame.BorderSizePixel = 0
     MainFrame.Visible = false
@@ -253,7 +283,7 @@ function PrestigeUI:Create(title)
     -- Top bar
     local TopBar = Instance.new("Frame")
     TopBar.Name = "TopBar"
-    TopBar.Size = UDim2.new(1, 0, 0, 45)
+    TopBar.Size = UDim2.new(1, 0, 0, isMobile and 35 or 45)
     TopBar.BackgroundColor3 = self.Theme.Secondary
     TopBar.BorderSizePixel = 0
     TopBar.Active = true
@@ -271,19 +301,20 @@ function PrestigeUI:Create(title)
     TopBarBottom.Parent = TopBar
     
     local TitleLabel = Instance.new("TextLabel")
-    TitleLabel.Size = UDim2.new(0, 200, 1, 0)
-    TitleLabel.Position = UDim2.new(0, 15, 0, 0)
+    TitleLabel.Size = UDim2.new(0, 150, 1, 0)
+    TitleLabel.Position = UDim2.new(0, 10, 0, 0)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Text = title
     TitleLabel.TextColor3 = self.Theme.Text
     TitleLabel.Font = Enum.Font.GothamBold
-    TitleLabel.TextSize = 16
+    TitleLabel.TextSize = isMobile and 12 or 16
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.TextScaled = true
     TitleLabel.Parent = TopBar
     
     local MinimizeBtn = Instance.new("Frame")
-    MinimizeBtn.Size = UDim2.new(0, 35, 0, 35)
-    MinimizeBtn.Position = UDim2.new(1, -80, 0.5, -17.5)
+    MinimizeBtn.Size = UDim2.new(0, isMobile and 30 or 35, 0, isMobile and 30 or 35)
+    MinimizeBtn.Position = UDim2.new(1, isMobile and -70 or -80, 0.5, isMobile and -15 or -17.5)
     MinimizeBtn.BackgroundColor3 = self.Theme.Primary
     MinimizeBtn.BorderSizePixel = 0
     MinimizeBtn.Active = true
@@ -295,7 +326,7 @@ function PrestigeUI:Create(title)
     MinimizeText.Text = "_"
     MinimizeText.TextColor3 = self.Theme.Text
     MinimizeText.Font = Enum.Font.GothamBold
-    MinimizeText.TextSize = 20
+    MinimizeText.TextSize = isMobile and 14 or 20
     MinimizeText.Parent = MinimizeBtn
             
     local MinimizeCorner = Instance.new("UICorner")
@@ -303,8 +334,8 @@ function PrestigeUI:Create(title)
     MinimizeCorner.Parent = MinimizeBtn
     
     local CloseBtn = Instance.new("Frame")
-    CloseBtn.Size = UDim2.new(0, 35, 0, 35)
-    CloseBtn.Position = UDim2.new(1, -40, 0.5, -17.5)
+    CloseBtn.Size = UDim2.new(0, isMobile and 30 or 35, 0, isMobile and 30 or 35)
+    CloseBtn.Position = UDim2.new(1, isMobile and -35 or -40, 0.5, isMobile and -15 or -17.5)
     CloseBtn.BackgroundColor3 = self.Theme.Primary
     CloseBtn.BorderSizePixel = 0
     CloseBtn.Active = true
@@ -316,25 +347,26 @@ function PrestigeUI:Create(title)
     CloseText.Text = "X"
     CloseText.TextColor3 = self.Theme.Text
     CloseText.Font = Enum.Font.GothamBold
-    CloseText.TextSize = 18
+    CloseText.TextSize = isMobile and 14 or 18
     CloseText.Parent = CloseBtn
     
     local CloseCorner = Instance.new("UICorner")
     CloseCorner.CornerRadius = UDim.new(0, 8)
     CloseCorner.Parent = CloseBtn
     
-    -- Sidebar with scrolling
+    -- Sidebar
     local Sidebar = Instance.new("ScrollingFrame")
     Sidebar.Name = "Sidebar"
-    Sidebar.Size = UDim2.new(0, 180, 0, 387)
-    Sidebar.Position = UDim2.new(0, 8, 0, 53)
+    Sidebar.Size = UDim2.new(0, sidebarWidth, 0, mainHeight - (isMobile and 35 or 45) - 8)
+    Sidebar.Position = UDim2.new(0, 8, 0, isMobile and 43 or 53)
     Sidebar.BackgroundColor3 = self.Theme.Secondary
     Sidebar.BorderSizePixel = 0
-    Sidebar.ScrollBarThickness = 6
+    Sidebar.ScrollBarThickness = 4
     Sidebar.ScrollBarImageColor3 = self.Theme.Primary
     Sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)
     Sidebar.AutomaticCanvasSize = Enum.AutomaticSize.Y
     Sidebar.Active = true
+    Sidebar.Visible = not isMobile
     Sidebar.Parent = MainFrame
     
     local SidebarCorner = Instance.new("UICorner")
@@ -343,21 +375,21 @@ function PrestigeUI:Create(title)
     
     local SidebarList = Instance.new("UIListLayout")
     SidebarList.SortOrder = Enum.SortOrder.LayoutOrder
-    SidebarList.Padding = UDim.new(0, 8)
+    SidebarList.Padding = UDim.new(0, 6)
     SidebarList.Parent = Sidebar
     
     local SidebarPadding = Instance.new("UIPadding")
-    SidebarPadding.PaddingTop = UDim.new(0, 12)
-    SidebarPadding.PaddingLeft = UDim.new(0, 10)
-    SidebarPadding.PaddingRight = UDim.new(0, 10)
-    SidebarPadding.PaddingBottom = UDim.new(0, 12)
+    SidebarPadding.PaddingTop = UDim.new(0, 10)
+    SidebarPadding.PaddingLeft = UDim.new(0, 8)
+    SidebarPadding.PaddingRight = UDim.new(0, 8)
+    SidebarPadding.PaddingBottom = UDim.new(0, 10)
     SidebarPadding.Parent = Sidebar
     
     -- Content area
     local ContentArea = Instance.new("Frame")
     ContentArea.Name = "ContentArea"
-    ContentArea.Size = UDim2.new(0, 496, 0, 387)
-    ContentArea.Position = UDim2.new(0, 196, 0, 53)
+    ContentArea.Size = UDim2.new(0, mainWidth - sidebarWidth - 16, 0, mainHeight - (isMobile and 35 or 45) - 8)
+    ContentArea.Position = UDim2.new(0, sidebarWidth + 8, 0, isMobile and 43 or 53)
     ContentArea.BackgroundColor3 = self.Theme.Secondary
     ContentArea.BorderSizePixel = 0
     ContentArea.Active = true
@@ -380,8 +412,8 @@ function PrestigeUI:Create(title)
     self.CloseBtnText = CloseText
     self.Sidebar = Sidebar
     self.ContentArea = ContentArea
+    self.IsMobileMode = isMobile
     
-    -- Register core UI elements for theme updates
     self:RegisterThemeElement("MainFrame", MainFrame, function(theme)
         MainFrame.BackgroundColor3 = theme.Dark
     end)
@@ -414,8 +446,7 @@ function PrestigeUI:Create(title)
         CloseText.TextColor3 = theme.Text
     end)
     
-    -- Button hover effects with debounce
-    local minimizeDebounce = false
+ local minimizeDebounce = false
     MinimizeBtn.MouseEnter:Connect(function()
         tween(MinimizeBtn, {BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2)
     end)
@@ -431,7 +462,6 @@ function PrestigeUI:Create(title)
         tween(CloseBtn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
     end)
     
-    -- Loading animation
     self.Connections.LoadingTask = task.spawn(function()
         for i = 0, 100 do
             task.wait(0.015)
@@ -447,11 +477,10 @@ function PrestigeUI:Create(title)
         tween(MainFrame, {BackgroundTransparency = 0}, 0.5, Enum.EasingStyle.Quad)
     end)
     
-    -- Dragging
     local dragging = false
     local dragInput, mousePos, framePos
     self.Connections.TopBarInputBegan = TopBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             mousePos = input.Position
             framePos = MainFrame.Position
@@ -463,7 +492,7 @@ function PrestigeUI:Create(title)
         end
     end)
     self.Connections.TopBarInputChanged = TopBar.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             dragInput = input
         end
     end)
@@ -474,27 +503,46 @@ function PrestigeUI:Create(title)
         end
     end)
     
-    -- Minimize functionality with debounce
     local minimized = false
     self.Connections.MinimizeClick = MinimizeBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 and not minimizeDebounce then
+        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and not minimizeDebounce then
             minimizeDebounce = true
             minimized = not minimized
             if minimized then
-                tween(MainFrame, {Size = UDim2.new(0, 700, 0, 45)}, 0.4, Enum.EasingStyle.Quad)
+                tween(MainFrame, {Size = UDim2.new(0, mainWidth, 0, isMobile and 35 or 45)}, 0.4, Enum.EasingStyle.Quad)
                 MinimizeText.Text = "□"
                 Sidebar.Visible = false
                 ContentArea.Visible = false
             else
-                tween(MainFrame, {Size = UDim2.new(0, 700, 0, 450)}, 0.4, Enum.EasingStyle.Quad)
+                tween(MainFrame, {Size = UDim2.new(0, mainWidth, 0, mainHeight)}, 0.4, Enum.EasingStyle.Quad)
                 MinimizeText.Text = "_"
-                Sidebar.Visible = true
+                Sidebar.Visible = not isMobile
                 ContentArea.Visible = true
             end
             task.wait(0.5)
             minimizeDebounce = false
         end
     end)
+
+    self.Connections.KeybindToggle = UserInputService.InputBegan:Connect(function(input)
+        if input.KeyCode == self.ToggleKeybind then
+            if MainFrame.Visible then
+                self:MinimizeToCorner()
+            else
+                self:RestoreFromCorner()
+            end
+        end
+    end)
+
+    self.Connections.CloseClick = CloseBtn.InputBegan:Connect(function(input)
+        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and not closeDebounce then
+            closeDebounce = true
+            self:Close()
+        end
+    end)
+
+    return self
+end
 
     -- Keybind toggle
     self.Connections.KeybindToggle = UserInputService.InputBegan:Connect(function(input)
@@ -686,7 +734,7 @@ end
 function PrestigeUI:AddButton(parent, text, callback)
     local Container = Instance.new("Frame")
     Container.Name = text .. "Container"
-    Container.Size = UDim2.new(1, 0, 0, 40)
+    Container.Size = UDim2.new(1, 0, 0, self.IsMobileMode and 35 or 40)
     Container.BackgroundTransparency = 1
     Container.ClipsDescendants = false
     Container.LayoutOrder = self:GetNextOrder(parent)
@@ -710,10 +758,9 @@ function PrestigeUI:AddButton(parent, text, callback)
     BtnText.Text = text
     BtnText.TextColor3 = self.Theme.Text
     BtnText.Font = Enum.Font.GothamBold
-    BtnText.TextSize = 14
+    BtnText.TextSize = self.IsMobileMode and 12 or 14
     BtnText.Parent = Btn
 
-    -- Register button elements for instant theme updates
     local btnId = "Button_" .. text .. "_" .. tostring(Btn)
     self:RegisterThemeElement(btnId .. "_Bg", Btn, function(theme)
         Btn.BackgroundColor3 = theme.Primary
@@ -726,15 +773,19 @@ function PrestigeUI:AddButton(parent, text, callback)
     
     Btn.MouseEnter:Connect(function()
         tween(Btn, {BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2)
-        tween(Btn, {Size = UDim2.new(1, 5, 1, 0)}, 0.2, Enum.EasingStyle.Back)
+        if not self.IsMobileMode then
+            tween(Btn, {Size = UDim2.new(1, 5, 1, 0)}, 0.2, Enum.EasingStyle.Back)
+        end
     end)
     Btn.MouseLeave:Connect(function()
         tween(Btn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
-        tween(Btn, {Size = UDim2.new(1, 0, 1, 0)}, 0.2)
+        if not self.IsMobileMode then
+            tween(Btn, {Size = UDim2.new(1, 0, 1, 0)}, 0.2)
+        end
     end)
     
     Btn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 and not buttonDebounce then
+        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and not buttonDebounce then
             buttonDebounce = true
             tween(Btn, {Size = UDim2.new(1, -5, 0.9, 0)}, 0.1)
             task.wait(0.1)
@@ -745,8 +796,8 @@ function PrestigeUI:AddButton(parent, text, callback)
     end)
     
     Btn.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            tween(Btn, {Size = UDim2.new(1, 5, 1, 0)}, 0.2, Enum.EasingStyle.Back)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            tween(Btn, {Size = UDim2.new(1, self.IsMobileMode and 0 or 5, 1, 0)}, 0.2, Enum.EasingStyle.Back)
         end
     end)
     
@@ -754,7 +805,7 @@ function PrestigeUI:AddButton(parent, text, callback)
 end
 
 function PrestigeUI:AddLabel(parent, text, textSize)
-    textSize = textSize or 16
+    textSize = textSize or (self.IsMobileMode and 12 or 16)
     local Label = Instance.new("TextLabel")
     Label.Name = "Label"
     Label.Size = UDim2.new(1, 0, 0, textSize + 8)
@@ -767,7 +818,6 @@ function PrestigeUI:AddLabel(parent, text, textSize)
     Label.LayoutOrder = self:GetNextOrder(parent)
     Label.Parent = parent
     
-    -- Register label for instant theme updates
     local labelId = "Label_" .. tostring(Label)
     self:RegisterThemeElement(labelId, Label, function(theme)
         Label.TextColor3 = theme.Text
@@ -836,7 +886,7 @@ end
 function PrestigeUI:AddTextBox(parent, placeholder, callback)
     local Container = Instance.new("Frame")
     Container.Name = "TextBoxContainer"
-    Container.Size = UDim2.new(1, 0, 0, 40)
+    Container.Size = UDim2.new(1, 0, 0, self.IsMobileMode and 35 or 40)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
     Container.LayoutOrder = self:GetNextOrder(parent)
@@ -855,7 +905,7 @@ function PrestigeUI:AddTextBox(parent, placeholder, callback)
     TextBox.TextColor3 = self.Theme.Text
     TextBox.PlaceholderColor3 = self.Theme.TextSecondary
     TextBox.Font = Enum.Font.Gotham
-    TextBox.TextSize = 14
+    TextBox.TextSize = self.IsMobileMode and 12 or 14
     TextBox.Parent = Container
     
     local Padding = Instance.new("UIPadding")
@@ -863,7 +913,6 @@ function PrestigeUI:AddTextBox(parent, placeholder, callback)
     Padding.PaddingRight = UDim.new(0, 10)
     Padding.Parent = TextBox
     
-    -- Register textbox elements for instant theme updates
     local boxId = "TextBox_" .. tostring(Container)
     self:RegisterThemeElement(boxId .. "_Bg", Container, function(theme)
         Container.BackgroundColor3 = theme.Tertiary
@@ -889,7 +938,7 @@ end
 function PrestigeUI:AddToggle(parent, text, callback)
     local Container = Instance.new("Frame")
     Container.Name = "ToggleContainer"
-    Container.Size = UDim2.new(1, 0, 0, 40)
+    Container.Size = UDim2.new(1, 0, 0, self.IsMobileMode and 35 or 40)
     Container.BackgroundTransparency = 1
     Container.LayoutOrder = self:GetNextOrder(parent)
     Container.Parent = parent
@@ -900,36 +949,38 @@ function PrestigeUI:AddToggle(parent, text, callback)
     Label.Text = text
     Label.TextColor3 = self.Theme.Text
     Label.Font = Enum.Font.GothamBold
-    Label.TextSize = 14
+    Label.TextSize = self.IsMobileMode and 12 or 14
     Label.TextXAlignment = Enum.TextXAlignment.Left
     Label.Parent = Container
     
+    local toggleSize = self.IsMobileMode and 20 or 25
+    local toggleHeight = self.IsMobileMode and 12 or 15
+    
     local ToggleBg = Instance.new("Frame")
-    ToggleBg.Size = UDim2.new(0, 50, 0, 25)
-    ToggleBg.Position = UDim2.new(1, -50, 0.5, -12.5)
+    ToggleBg.Size = UDim2.new(0, toggleSize * 2, 0, toggleHeight)
+    ToggleBg.Position = UDim2.new(1, -toggleSize * 2 - 5, 0.5, -toggleHeight/2)
     ToggleBg.BackgroundColor3 = self.Theme.Tertiary
     ToggleBg.BorderSizePixel = 0
     ToggleBg.Active = true
     ToggleBg.Parent = Container
     
     local ToggleBgCorner = Instance.new("UICorner")
-    ToggleBgCorner.CornerRadius = UDim.new(0, 12)
+    ToggleBgCorner.CornerRadius = UDim.new(0, toggleHeight/2)
     ToggleBgCorner.Parent = ToggleBg
     
     local ToggleButton = Instance.new("Frame")
-    ToggleButton.Size = UDim2.new(0, 21, 0, 21)
-    ToggleButton.Position = UDim2.new(0, 2, 0.5, -10.5)
+    ToggleButton.Size = UDim2.new(0, toggleHeight - 2, 0, toggleHeight - 2)
+    ToggleButton.Position = UDim2.new(0, 2, 0.5, -(toggleHeight - 2)/2)
     ToggleButton.BackgroundColor3 = self.Theme.Primary
     ToggleButton.BorderSizePixel = 0
     ToggleButton.Parent = ToggleBg
     
     local ToggleButtonCorner = Instance.new("UICorner")
-    ToggleButtonCorner.CornerRadius = UDim.new(0, 10)
+    ToggleButtonCorner.CornerRadius = UDim.new(0, toggleHeight/2 - 1)
     ToggleButtonCorner.Parent = ToggleButton
     
     local toggled = false
     
-    -- Register toggle elements for instant theme updates
     local toggleId = "Toggle_" .. text .. "_" .. tostring(Container)
     self:RegisterThemeElement(toggleId .. "_Label", Label, function(theme)
         Label.TextColor3 = theme.Text
@@ -946,20 +997,24 @@ function PrestigeUI:AddToggle(parent, text, callback)
     end)
     
     ToggleBg.MouseEnter:Connect(function()
-        tween(ToggleButton, {Size = UDim2.new(0, 23, 0, 23)}, 0.2, Enum.EasingStyle.Back)
+        if not self.IsMobileMode then
+            tween(ToggleButton, {Size = UDim2.new(0, toggleHeight, 0, toggleHeight)}, 0.2, Enum.EasingStyle.Back)
+        end
     end)
     ToggleBg.MouseLeave:Connect(function()
-        tween(ToggleButton, {Size = UDim2.new(0, 21, 0, 21)}, 0.2)
+        if not self.IsMobileMode then
+            tween(ToggleButton, {Size = UDim2.new(0, toggleHeight - 2, 0, toggleHeight - 2)}, 0.2)
+        end
     end)
     
     ToggleBg.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             toggled = not toggled
             if toggled then
-                tween(ToggleButton, {Position = UDim2.new(0, 27, 0.5, -10.5)}, 0.3, Enum.EasingStyle.Back)
+                tween(ToggleButton, {Position = UDim2.new(0, toggleSize + 1, 0.5, -(toggleHeight - 2)/2)}, 0.3, Enum.EasingStyle.Back)
                 tween(ToggleBg, {BackgroundColor3 = self.Theme.Primary}, 0.3)
             else
-                tween(ToggleButton, {Position = UDim2.new(0, 2, 0.5, -10.5)}, 0.3, Enum.EasingStyle.Back)
+                tween(ToggleButton, {Position = UDim2.new(0, 2, 0.5, -(toggleHeight - 2)/2)}, 0.3, Enum.EasingStyle.Back)
                 tween(ToggleBg, {BackgroundColor3 = self.Theme.Tertiary}, 0.3)
             end
             if callback then callback(toggled) end
@@ -972,7 +1027,7 @@ end
 function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     local Container = Instance.new("Frame")
     Container.Name = "DropdownContainer"
-    Container.Size = UDim2.new(1, 0, 0, 40)
+    Container.Size = UDim2.new(1, 0, 0, self.IsMobileMode and 35 or 40)
     Container.BackgroundColor3 = self.Theme.Tertiary
     Container.BorderSizePixel = 0
     Container.ClipsDescendants = false
@@ -984,7 +1039,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     Corner.Parent = Container
 
     local DropdownBtn = Instance.new("Frame")
-    DropdownBtn.Size = UDim2.new(1, 0, 0, 40)
+    DropdownBtn.Size = UDim2.new(1, 0, 0, self.IsMobileMode and 35 or 40)
     DropdownBtn.BackgroundTransparency = 1
     DropdownBtn.BorderSizePixel = 0
     DropdownBtn.Active = true
@@ -996,7 +1051,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     DropdownText.Text = placeholder or "Select..."
     DropdownText.TextColor3 = self.Theme.TextSecondary
     DropdownText.Font = Enum.Font.Gotham
-    DropdownText.TextSize = 14
+    DropdownText.TextSize = self.IsMobileMode and 12 or 14
     DropdownText.TextXAlignment = Enum.TextXAlignment.Left
     DropdownText.Parent = DropdownBtn
 
@@ -1006,21 +1061,21 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     Padding.Parent = DropdownBtn
 
     local Arrow = Instance.new("TextLabel")
-    Arrow.Size = UDim2.new(0, 20, 0, 40)
+    Arrow.Size = UDim2.new(0, 20, 0, self.IsMobileMode and 35 or 40)
     Arrow.Position = UDim2.new(1, -30, 0, 0)
     Arrow.BackgroundTransparency = 1
     Arrow.Text = "▼"
     Arrow.TextColor3 = self.Theme.TextSecondary
     Arrow.Font = Enum.Font.Gotham
-    Arrow.TextSize = 12
+    Arrow.TextSize = self.IsMobileMode and 10 or 12
     Arrow.Parent = DropdownBtn
 
     local DropdownList = Instance.new("ScrollingFrame")
     DropdownList.Size = UDim2.new(1, 0, 0, 0)
-    DropdownList.Position = UDim2.new(0, 0, 0, 45)
+    DropdownList.Position = UDim2.new(0, 0, 0, self.IsMobileMode and 40 or 45)
     DropdownList.BackgroundColor3 = self.Theme.Secondary
     DropdownList.BorderSizePixel = 0
-    DropdownList.ScrollBarThickness = 6
+    DropdownList.ScrollBarThickness = 4
     DropdownList.ScrollBarImageColor3 = self.Theme.Primary
     DropdownList.Visible = false
     DropdownList.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -1036,19 +1091,19 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
 
     local ListLayout = Instance.new("UIListLayout")
     ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    ListLayout.Padding = UDim.new(0, 5)
+    ListLayout.Padding = UDim.new(0, 4)
     ListLayout.Parent = DropdownList
 
     local ListPadding = Instance.new("UIPadding")
-    ListPadding.PaddingTop = UDim.new(0, 5)
-    ListPadding.PaddingBottom = UDim.new(0, 5)
-    ListPadding.PaddingLeft = UDim.new(0, 5)
-    ListPadding.PaddingRight = UDim.new(0, 5)
+    ListPadding.PaddingTop = UDim.new(0, 4)
+    ListPadding.PaddingBottom = UDim.new(0, 4)
+    ListPadding.PaddingLeft = UDim.new(0, 4)
+    ListPadding.PaddingRight = UDim.new(0, 4)
     ListPadding.Parent = DropdownList
 
     local isOpen = false
     local isAnimating = false
-    local maxHeight = 150
+    local maxHeight = self.IsMobileMode and 120 or 150
     local dropdownId = tostring(Container)
     
     self:RegisterThemeElement(dropdownId .. "_Bg", Container, function(theme)
@@ -1072,7 +1127,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     for index, option in ipairs(options) do
         local OptionBtn = Instance.new("Frame")
         OptionBtn.Name = option
-        OptionBtn.Size = UDim2.new(1, 0, 0, 30)
+        OptionBtn.Size = UDim2.new(1, 0, 0, self.IsMobileMode and 28 or 30)
         OptionBtn.BackgroundColor3 = self.Theme.Tertiary
         OptionBtn.BorderSizePixel = 0
         OptionBtn.LayoutOrder = index
@@ -1085,7 +1140,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         OptionText.Text = option
         OptionText.TextColor3 = self.Theme.Text
         OptionText.Font = Enum.Font.Gotham
-        OptionText.TextSize = 13
+        OptionText.TextSize = self.IsMobileMode and 11 or 13
         OptionText.Parent = OptionBtn
 
         local OptionCorner = Instance.new("UICorner")
@@ -1112,7 +1167,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         end)
 
         OptionBtn.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 and not isAnimating then
+            if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and not isAnimating then
                 isAnimating = true
                 DropdownText.Text = option
                 DropdownText.TextColor3 = self.Theme.Text
@@ -1122,7 +1177,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
                 Arrow.Text = "▼"
                 Arrow.Rotation = 0
                 tween(DropdownList, {Size = UDim2.new(1, 0, 0, 0)}, 0.3, Enum.EasingStyle.Quad)
-                tween(Container, {Size = UDim2.new(1, 0, 0, 40)}, 0.3, Enum.EasingStyle.Quad)
+                tween(Container, {Size = UDim2.new(1, 0, 0, self.IsMobileMode and 35 or 40)}, 0.3, Enum.EasingStyle.Quad)
                 
                 task.wait(0.3)
                 DropdownList.Visible = false
@@ -1143,7 +1198,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     end)
 
     DropdownBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 and not isAnimating then
+        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and not isAnimating then
             isAnimating = true
             isOpen = not isOpen
             
@@ -1153,7 +1208,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
                 local contentHeight = ListLayout.AbsoluteContentSize.Y + ListPadding.PaddingTop.Offset + ListPadding.PaddingBottom.Offset
                 local dropdownHeight = math.min(contentHeight, maxHeight)
                 
-                local totalHeight = 40 + dropdownHeight + 10
+                local totalHeight = (self.IsMobileMode and 35 or 40) + dropdownHeight + 10
                 tween(Container, {Size = UDim2.new(1, 0, 0, totalHeight)}, 0.3, Enum.EasingStyle.Back)
                 tween(DropdownList, {Size = UDim2.new(1, 0, 0, dropdownHeight)}, 0.3, Enum.EasingStyle.Back)
                 tween(Container, {BackgroundColor3 = Color3.fromRGB(35, 35, 40)}, 0.2)
@@ -1167,7 +1222,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
                 Arrow.Rotation = 0
                 tween(DropdownList, {Size = UDim2.new(1, 0, 0, 0)}, 0.3, Enum.EasingStyle.Quad)
                 tween(Container, {BackgroundColor3 = self.Theme.Tertiary}, 0.2)
-                tween(Container, {Size = UDim2.new(1, 0, 0, 40)}, 0.3, Enum.EasingStyle.Quad)
+                tween(Container, {Size = UDim2.new(1, 0, 0, self.IsMobileMode and 35 or 40)}, 0.3, Enum.EasingStyle.Quad)
                 
                 task.wait(0.3)
                 DropdownList.Visible = false
@@ -1183,7 +1238,7 @@ end
 function PrestigeUI:AddSlider(parent, min, max, default, callback)
     local Container = Instance.new("Frame")
     Container.Name = "SliderContainer"
-    Container.Size = UDim2.new(1, 0, 0, 40)
+    Container.Size = UDim2.new(1, 0, 0, self.IsMobileMode and 50 or 40)
     Container.BackgroundTransparency = 1
     Container.LayoutOrder = self:GetNextOrder(parent)
     Container.Parent = parent
@@ -1194,13 +1249,13 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
     Label.Text = "Value: " .. (default or min)
     Label.TextColor3 = self.Theme.Text
     Label.Font = Enum.Font.GothamBold
-    Label.TextSize = 12
+    Label.TextSize = self.IsMobileMode and 10 or 12
     Label.TextXAlignment = Enum.TextXAlignment.Left
     Label.Parent = Container
     
     local SliderBg = Instance.new("Frame")
     SliderBg.Size = UDim2.new(1, 0, 0, 6)
-    SliderBg.Position = UDim2.new(0, 0, 0, 20)
+    SliderBg.Position = UDim2.new(0, 0, 0, self.IsMobileMode and 25 or 20)
     SliderBg.BackgroundColor3 = self.Theme.Tertiary
     SliderBg.BorderSizePixel = 0
     SliderBg.Active = true
@@ -1220,16 +1275,17 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
     SliderFillCorner.CornerRadius = UDim.new(0, 3)
     SliderFillCorner.Parent = SliderFill
     
+    local sliderSize = self.IsMobileMode and 16 or 14
     local SliderButton = Instance.new("Frame")
-    SliderButton.Size = UDim2.new(0, 14, 0, 14)
-    SliderButton.Position = UDim2.new(0, 0, 0.5, -7)
+    SliderButton.Size = UDim2.new(0, sliderSize, 0, sliderSize)
+    SliderButton.Position = UDim2.new(0, 0, 0.5, -sliderSize/2)
     SliderButton.BackgroundColor3 = self.Theme.Primary
     SliderButton.BorderSizePixel = 0
     SliderButton.Active = true
     SliderButton.Parent = SliderBg
     
     local ButtonCorner = Instance.new("UICorner")
-    ButtonCorner.CornerRadius = UDim.new(0, 7)
+    ButtonCorner.CornerRadius = UDim.new(0, sliderSize/2)
     ButtonCorner.Parent = SliderButton
     
     local dragging = false
@@ -1237,7 +1293,7 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
     
     local percentage = (value - min) / (max - min)
     SliderFill.Size = UDim2.new(percentage, 0, 1, 0)
-    SliderButton.Position = UDim2.new(percentage, -7, 0.5, -7)
+    SliderButton.Position = UDim2.new(percentage, -sliderSize/2, 0.5, -sliderSize/2)
     
     local sliderId = "Slider_" .. tostring(Container)
     self:RegisterThemeElement(sliderId .. "_Label", Label, function(theme)
@@ -1254,12 +1310,12 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
     end)
     
     SliderButton.MouseEnter:Connect(function()
-        tween(SliderButton, {Size = UDim2.new(0, 18, 0, 18)}, 0.2, Enum.EasingStyle.Back)
+        tween(SliderButton, {Size = UDim2.new(0, sliderSize + 4, 0, sliderSize + 4)}, 0.2, Enum.EasingStyle.Back)
         tween(SliderButton, {BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2)
     end)
     SliderButton.MouseLeave:Connect(function()
         if not dragging then
-            tween(SliderButton, {Size = UDim2.new(0, 14, 0, 14)}, 0.2)
+            tween(SliderButton, {Size = UDim2.new(0, sliderSize, 0, sliderSize)}, 0.2)
             tween(SliderButton, {BackgroundColor3 = self.Theme.Primary}, 0.2)
         end
     end)
@@ -1271,35 +1327,35 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
         value = math.clamp(value, min, max)
         
         tween(SliderFill, {Size = UDim2.new(percentage, 0, 1, 0)}, 0.1)
-        tween(SliderButton, {Position = UDim2.new(percentage, -7, 0.5, -7)}, 0.1)
+        tween(SliderButton, {Position = UDim2.new(percentage, -sliderSize/2, 0.5, -sliderSize/2)}, 0.1)
         Label.Text = "Value: " .. value
         
         if callback then callback(value) end
     end
     
     SliderButton.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
-            tween(SliderButton, {Size = UDim2.new(0, 18, 0, 18)}, 0.1)
+            tween(SliderButton, {Size = UDim2.new(0, sliderSize + 4, 0, sliderSize + 4)}, 0.1)
         end
     end)
     
     UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             updateSlider(input)
         end
     end)
     
     UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = false
-            tween(SliderButton, {Size = UDim2.new(0, 14, 0, 14)}, 0.2)
+            tween(SliderButton, {Size = UDim2.new(0, sliderSize, 0, sliderSize)}, 0.2)
             tween(SliderButton, {BackgroundColor3 = self.Theme.Primary}, 0.2)
         end
     end)
     
     SliderBg.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             updateSlider(input)
         end
     end)
@@ -2249,9 +2305,10 @@ function PrestigeUI:MinimizeToCorner()
         return
     end
     
+    local iconSize = self.IsMobileMode and 50 or 60
     local Icon = Instance.new("Frame")
-    Icon.Size = UDim2.new(0, 60, 0, 60)
-    Icon.Position = UDim2.new(1, -80, 1, -80)
+    Icon.Size = UDim2.new(0, iconSize, 0, iconSize)
+    Icon.Position = UDim2.new(1, -iconSize - 20, 1, -iconSize - 20)
     Icon.BackgroundColor3 = self.Theme.Primary
     Icon.BorderSizePixel = 0
     Icon.Active = true
@@ -2267,14 +2324,14 @@ function PrestigeUI:MinimizeToCorner()
     IconText.Text = "P"
     IconText.TextColor3 = self.Theme.Text
     IconText.Font = Enum.Font.GothamBold
-    IconText.TextSize = 28
+    IconText.TextSize = self.IsMobileMode and 20 or 28
     IconText.Parent = Icon
     
     local dragging = false
     local dragInput, mousePos, framePos
     
     Icon.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             mousePos = input.Position
             framePos = Icon.Position
@@ -2287,7 +2344,7 @@ function PrestigeUI:MinimizeToCorner()
     end)
     
     Icon.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
             dragInput = input
         end
     end)
@@ -2300,16 +2357,19 @@ function PrestigeUI:MinimizeToCorner()
     end)
     
     Icon.MouseEnter:Connect(function()
-        tween(Icon, {Size = UDim2.new(0, 70, 0, 70), BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2, Enum.EasingStyle.Quad)
+        tween(Icon, {Size = UDim2.new(0, iconSize + 10, 0, iconSize + 10), BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2, Enum.EasingStyle.Quad)
     end)
     
     Icon.MouseLeave:Connect(function()
-        tween(Icon, {Size = UDim2.new(0, 60, 0, 60), BackgroundColor3 = self.Theme.Primary}, 0.2)
+        tween(Icon, {Size = UDim2.new(0, iconSize, 0, iconSize), BackgroundColor3 = self.Theme.Primary}, 0.2)
     end)
     
     Icon.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            self:RestoreFromCorner()
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if not dragging or tick() - (self._lastIconClick or 0) < 0.3 then
+                self:RestoreFromCorner()
+            end
+            self._lastIconClick = tick()
         end
     end)
     
