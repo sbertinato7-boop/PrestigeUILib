@@ -547,27 +547,6 @@ function PrestigeUI:Create(title)
     return self
 end
 
-    -- Keybind toggle
-    self.Connections.KeybindToggle = UserInputService.InputBegan:Connect(function(input)
-        if input.KeyCode == self.ToggleKeybind then
-            if MainFrame.Visible then
-                self:MinimizeToCorner()
-            else
-                self:RestoreFromCorner()
-            end
-        end
-    end)
-
-    self.Connections.CloseClick = CloseBtn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 and not closeDebounce then
-            closeDebounce = true
-            self:Close()
-        end
-    end)
-
-    return self
-end
-
 function PrestigeUI:Close()
     if self.Closing then return end
     self.Closing = true
