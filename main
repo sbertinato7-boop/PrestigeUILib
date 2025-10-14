@@ -5,23 +5,6 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 
-function PrestigeUI:GetScreenSize()
-    local screenSize = self.ScreenGui.AbsoluteSize
-    return screenSize.X, screenSize.Y
-end
-
-function PrestigeUI:IsMobile()
-    local _, screenY = self:GetScreenSize()
-    return screenY < 600 or UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-end
-
-function PrestigeUI:GetResponsiveScale()
-    local screenX, screenY = self:GetScreenSize()
-    local baseWidth = 1920
-    local baseHeight = 1080
-    return math.min(screenX / baseWidth, screenY / baseHeight, 1)
-end
-
 -- Default theme fallback
 PrestigeUI.Theme = {
     Primary = Color3.fromRGB(0, 180, 255),
@@ -172,6 +155,23 @@ local function tween(object, properties, duration, style, direction)
     local tw = TweenService:Create(object, tweenInfo, properties)
     tw:Play()
     return tw
+end
+
+function PrestigeUI:GetScreenSize()
+    local screenSize = self.ScreenGui.AbsoluteSize
+    return screenSize.X, screenSize.Y
+end
+
+function PrestigeUI:IsMobile()
+    local _, screenY = self:GetScreenSize()
+    return screenY < 600 or (UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled)
+end
+
+function PrestigeUI:GetResponsiveScale()
+    local screenX, screenY = self:GetScreenSize()
+    local baseWidth = 1920
+    local baseHeight = 1080
+    return math.min(screenX / baseWidth, screenY / baseHeight, 1)
 end
 
 function PrestigeUI:Create(title)
@@ -735,6 +735,8 @@ function PrestigeUI:AddTab(tabName)
 end
 
 function PrestigeUI:AddButton(parent, text, callback)
+    if not parent or not self.Theme then return Container end
+    
     local Container = Instance.new("Frame")
     Container.Name = text .. "Container"
     Container.Size = UDim2.new(1, 0, 0, self.IsMobileMode and 35 or 40)
@@ -766,40 +768,52 @@ function PrestigeUI:AddButton(parent, text, callback)
 
     local btnId = "Button_" .. text .. "_" .. tostring(Btn)
     self:RegisterThemeElement(btnId .. "_Bg", Btn, function(theme)
-        Btn.BackgroundColor3 = theme.Primary
+        if Btn and Btn.Parent then
+            Btn.BackgroundColor3 = theme.Primary
+        end
     end)
     self:RegisterThemeElement(btnId .. "_Text", BtnText, function(theme)
-        BtnText.TextColor3 = theme.Text
+        if BtnText and BtnText.Parent then
+            BtnText.TextColor3 = theme.Text
+        end
     end)
 
     local buttonDebounce = false
     
     Btn.MouseEnter:Connect(function()
-        tween(Btn, {BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2)
-        if not self.IsMobileMode then
-            tween(Btn, {Size = UDim2.new(1, 5, 1, 0)}, 0.2, Enum.EasingStyle.Back)
+        if Btn and Btn.Parent then
+            tween(Btn, {BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2)
+            if not self.IsMobileMode then
+                tween(Btn, {Size = UDim2.new(1, 5, 1, 0)}, 0.2, Enum.EasingStyle.Back)
+            end
         end
     end)
     Btn.MouseLeave:Connect(function()
-        tween(Btn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
-        if not self.IsMobileMode then
-            tween(Btn, {Size = UDim2.new(1, 0, 1, 0)}, 0.2)
+        if Btn and Btn.Parent then
+            tween(Btn, {BackgroundColor3 = self.Theme.Primary}, 0.2)
+            if not self.IsMobileMode then
+                tween(Btn, {Size = UDim2.new(1, 0, 1, 0)}, 0.2)
+            end
         end
     end)
     
     Btn.InputBegan:Connect(function(input)
         if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and not buttonDebounce then
             buttonDebounce = true
-            tween(Btn, {Size = UDim2.new(1, -5, 0.9, 0)}, 0.1)
+            if Btn and Btn.Parent then
+                tween(Btn, {Size = UDim2.new(1, -5, 0.9, 0)}, 0.1)
+            end
             task.wait(0.1)
-            if callback then callback() end
+            if callback then 
+                pcall(function() callback() end)
+            end
             task.wait(0.3)
             buttonDebounce = false
         end
     end)
     
     Btn.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and Btn and Btn.Parent then
             tween(Btn, {Size = UDim2.new(1, self.IsMobileMode and 0 or 5, 1, 0)}, 0.2, Enum.EasingStyle.Back)
         end
     end)
@@ -808,6 +822,8 @@ function PrestigeUI:AddButton(parent, text, callback)
 end
 
 function PrestigeUI:AddLabel(parent, text, textSize)
+    if not parent or not self.Theme then return nil end
+    
     textSize = textSize or (self.IsMobileMode and 12 or 16)
     local Label = Instance.new("TextLabel")
     Label.Name = "Label"
@@ -823,7 +839,9 @@ function PrestigeUI:AddLabel(parent, text, textSize)
     
     local labelId = "Label_" .. tostring(Label)
     self:RegisterThemeElement(labelId, Label, function(theme)
-        Label.TextColor3 = theme.Text
+        if Label and Label.Parent then
+            Label.TextColor3 = theme.Text
+        end
     end)
     
     return Label
@@ -939,6 +957,8 @@ function PrestigeUI:AddTextBox(parent, placeholder, callback)
 end
 
 function PrestigeUI:AddToggle(parent, text, callback)
+    if not parent or not self.Theme then return nil end
+    
     local Container = Instance.new("Frame")
     Container.Name = "ToggleContainer"
     Container.Size = UDim2.new(1, 0, 0, self.IsMobileMode and 35 or 40)
@@ -986,32 +1006,38 @@ function PrestigeUI:AddToggle(parent, text, callback)
     
     local toggleId = "Toggle_" .. text .. "_" .. tostring(Container)
     self:RegisterThemeElement(toggleId .. "_Label", Label, function(theme)
-        Label.TextColor3 = theme.Text
+        if Label and Label.Parent then
+            Label.TextColor3 = theme.Text
+        end
     end)
     self:RegisterThemeElement(toggleId .. "_Bg", ToggleBg, function(theme)
-        if toggled then
-            ToggleBg.BackgroundColor3 = theme.Primary
-        else
-            ToggleBg.BackgroundColor3 = theme.Tertiary
+        if ToggleBg and ToggleBg.Parent then
+            if toggled then
+                ToggleBg.BackgroundColor3 = theme.Primary
+            else
+                ToggleBg.BackgroundColor3 = theme.Tertiary
+            end
         end
     end)
     self:RegisterThemeElement(toggleId .. "_Btn", ToggleButton, function(theme)
-        ToggleButton.BackgroundColor3 = theme.Primary
+        if ToggleButton and ToggleButton.Parent then
+            ToggleButton.BackgroundColor3 = theme.Primary
+        end
     end)
     
     ToggleBg.MouseEnter:Connect(function()
-        if not self.IsMobileMode then
+        if not self.IsMobileMode and ToggleButton and ToggleButton.Parent then
             tween(ToggleButton, {Size = UDim2.new(0, toggleHeight, 0, toggleHeight)}, 0.2, Enum.EasingStyle.Back)
         end
     end)
     ToggleBg.MouseLeave:Connect(function()
-        if not self.IsMobileMode then
+        if not self.IsMobileMode and ToggleButton and ToggleButton.Parent then
             tween(ToggleButton, {Size = UDim2.new(0, toggleHeight - 2, 0, toggleHeight - 2)}, 0.2)
         end
     end)
     
     ToggleBg.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and ToggleButton and ToggleButton.Parent then
             toggled = not toggled
             if toggled then
                 tween(ToggleButton, {Position = UDim2.new(0, toggleSize + 1, 0.5, -(toggleHeight - 2)/2)}, 0.3, Enum.EasingStyle.Back)
@@ -1020,7 +1046,9 @@ function PrestigeUI:AddToggle(parent, text, callback)
                 tween(ToggleButton, {Position = UDim2.new(0, 2, 0.5, -(toggleHeight - 2)/2)}, 0.3, Enum.EasingStyle.Back)
                 tween(ToggleBg, {BackgroundColor3 = self.Theme.Tertiary}, 0.3)
             end
-            if callback then callback(toggled) end
+            if callback then 
+                pcall(function() callback(toggled) end)
+            end
         end
     end)
     
