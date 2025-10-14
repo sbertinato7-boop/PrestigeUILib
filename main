@@ -936,11 +936,9 @@ function PrestigeUI:AddTextBox(parent, placeholder, callback)
 end
 
 function PrestigeUI:AddToggle(parent, text, callback)
-    if not parent or not self.Theme then return nil end
-    
     local Container = Instance.new("Frame")
     Container.Name = "ToggleContainer"
-    Container.Size = UDim2.new(1, 0, 0, self.IsMobileMode and 35 or 40)
+    Container.Size = UDim2.new(1, 0, 0, 40)
     Container.BackgroundTransparency = 1
     Container.LayoutOrder = self:GetNextOrder(parent)
     Container.Parent = parent
@@ -951,83 +949,68 @@ function PrestigeUI:AddToggle(parent, text, callback)
     Label.Text = text
     Label.TextColor3 = self.Theme.Text
     Label.Font = Enum.Font.GothamBold
-    Label.TextSize = self.IsMobileMode and 12 or 14
+    Label.TextSize = 14
     Label.TextXAlignment = Enum.TextXAlignment.Left
     Label.Parent = Container
     
-    local toggleSize = self.IsMobileMode and 20 or 25
-    local toggleHeight = self.IsMobileMode and 12 or 15
-    
     local ToggleBg = Instance.new("Frame")
-    ToggleBg.Size = UDim2.new(0, toggleSize * 2, 0, toggleHeight)
-    ToggleBg.Position = UDim2.new(1, -toggleSize * 2 - 5, 0.5, -toggleHeight/2)
+    ToggleBg.Size = UDim2.new(0, 50, 0, 25)
+    ToggleBg.Position = UDim2.new(1, -50, 0.5, -12.5)
     ToggleBg.BackgroundColor3 = self.Theme.Tertiary
     ToggleBg.BorderSizePixel = 0
     ToggleBg.Active = true
     ToggleBg.Parent = Container
     
     local ToggleBgCorner = Instance.new("UICorner")
-    ToggleBgCorner.CornerRadius = UDim.new(0, toggleHeight/2)
+    ToggleBgCorner.CornerRadius = UDim.new(0, 12)
     ToggleBgCorner.Parent = ToggleBg
     
     local ToggleButton = Instance.new("Frame")
-    ToggleButton.Size = UDim2.new(0, toggleHeight - 2, 0, toggleHeight - 2)
-    ToggleButton.Position = UDim2.new(0, 2, 0.5, -(toggleHeight - 2)/2)
+    ToggleButton.Size = UDim2.new(0, 21, 0, 21)
+    ToggleButton.Position = UDim2.new(0, 2, 0.5, -10.5)
     ToggleButton.BackgroundColor3 = self.Theme.Primary
     ToggleButton.BorderSizePixel = 0
     ToggleButton.Parent = ToggleBg
     
     local ToggleButtonCorner = Instance.new("UICorner")
-    ToggleButtonCorner.CornerRadius = UDim.new(0, toggleHeight/2 - 1)
+    ToggleButtonCorner.CornerRadius = UDim.new(0, 10)
     ToggleButtonCorner.Parent = ToggleButton
     
     local toggled = false
     
     local toggleId = "Toggle_" .. text .. "_" .. tostring(Container)
     self:RegisterThemeElement(toggleId .. "_Label", Label, function(theme)
-        if Label and Label.Parent then
-            Label.TextColor3 = theme.Text
-        end
+        Label.TextColor3 = theme.Text
     end)
     self:RegisterThemeElement(toggleId .. "_Bg", ToggleBg, function(theme)
-        if ToggleBg and ToggleBg.Parent then
-            if toggled then
-                ToggleBg.BackgroundColor3 = theme.Primary
-            else
-                ToggleBg.BackgroundColor3 = theme.Tertiary
-            end
+        if toggled then
+            ToggleBg.BackgroundColor3 = theme.Primary
+        else
+            ToggleBg.BackgroundColor3 = theme.Tertiary
         end
     end)
     self:RegisterThemeElement(toggleId .. "_Btn", ToggleButton, function(theme)
-        if ToggleButton and ToggleButton.Parent then
-            ToggleButton.BackgroundColor3 = theme.Primary
-        end
+        ToggleButton.BackgroundColor3 = theme.Primary
     end)
     
     ToggleBg.MouseEnter:Connect(function()
-        if not self.IsMobileMode and ToggleButton and ToggleButton.Parent then
-            tween(ToggleButton, {Size = UDim2.new(0, toggleHeight, 0, toggleHeight)}, 0.2, Enum.EasingStyle.Back)
-        end
+        tween(ToggleButton, {Size = UDim2.new(0, 23, 0, 23)}, 0.2, Enum.EasingStyle.Back)
     end)
     ToggleBg.MouseLeave:Connect(function()
-        if not self.IsMobileMode and ToggleButton and ToggleButton.Parent then
-            tween(ToggleButton, {Size = UDim2.new(0, toggleHeight - 2, 0, toggleHeight - 2)}, 0.2)
-        end
+        tween(ToggleButton, {Size = UDim2.new(0, 21, 0, 21)}, 0.2)
     end)
     
     ToggleBg.InputBegan:Connect(function(input)
-        if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and ToggleButton and ToggleButton.Parent then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
             toggled = not toggled
             if toggled then
-                tween(ToggleButton, {Position = UDim2.new(0, toggleSize + 1, 0.5, -(toggleHeight - 2)/2)}, 0.3, Enum.EasingStyle.Back)
+                tween(ToggleButton, {Position = UDim2.new(0, 27, 0.5, -10.5)}, 0.3, Enum.EasingStyle.Back)
                 tween(ToggleBg, {BackgroundColor3 = self.Theme.Primary}, 0.3)
             else
-                tween(ToggleButton, {Position = UDim2.new(0, 2, 0.5, -(toggleHeight - 2)/2)}, 0.3, Enum.EasingStyle.Back)
+                tween(ToggleButton, {Position = UDim2.new(0, 2, 0.5, -10.5)}, 0.3, Enum.EasingStyle.Back)
                 tween(ToggleBg, {BackgroundColor3 = self.Theme.Tertiary}, 0.3)
             end
-            if callback then 
-                pcall(function() callback(toggled) end)
-            end
+            if callback then callback(toggled) end
         end
     end)
     
