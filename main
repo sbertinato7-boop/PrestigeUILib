@@ -234,25 +234,17 @@ function PrestigeUI:Create(title)
     LoadingText.TextSize = 14
     LoadingText.Parent = LoadingFrame
     
-    -- NEW CODE (Responsive):
+    -- Main frame with Active = true to block clicks
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
-    
-    -- Auto-detect screen size
-    local viewport = workspace.CurrentCamera.ViewportSize
-    local isMobile = viewport.X < 800
-    
-    if isMobile then
-        -- Mobile: Use 95% width, 85% height
-        MainFrame.Size = UDim2.new(0.95, 0, 0.85, 0)
-        MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-        MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    else
-        -- Desktop: Fixed 700x450
-        MainFrame.Size = UDim2.new(0, 700, 0, 450)
-        MainFrame.Position = UDim2.new(0.5, -350, 0.5, -225)
-        MainFrame.AnchorPoint = Vector2.new(0, 0)
-    end
+    MainFrame.Size = UDim2.new(0, 700, 0, 450)
+    MainFrame.Position = UDim2.new(0.5, -350, 0.5, -225)
+    MainFrame.BackgroundColor3 = self.Theme.Dark
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Visible = false
+    MainFrame.ClipsDescendants = true
+    MainFrame.Active = true
+    MainFrame.Parent = ScreenGui
     
     local MainCorner = Instance.new("UICorner")
     MainCorner.CornerRadius = UDim.new(0, 15)
