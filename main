@@ -175,6 +175,9 @@ local function tween(object, properties, duration, style, direction)
 end
 
 function PrestigeUI:Create(title)
+    if not self.Theme then
+            self.Theme = table.clone(ThemePresets.Dark)
+        end
     local self = setmetatable({}, PrestigeUI)
     self.Theme = table.clone(ThemePresets.Dark)
     self.Connections = {}
@@ -412,7 +415,7 @@ function PrestigeUI:Create(title)
     self.CloseBtnText = CloseText
     self.Sidebar = Sidebar
     self.ContentArea = ContentArea
-    self.IsMobileMode = isMobile
+    self.IsMobileMode = isMobile or false
     
     self:RegisterThemeElement("MainFrame", MainFrame, function(theme)
         MainFrame.BackgroundColor3 = theme.Dark
