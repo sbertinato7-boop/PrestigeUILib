@@ -942,7 +942,7 @@ function PrestigeUI:AddToggle(parent, text, callback)
     Container.BackgroundTransparency = 1
     Container.LayoutOrder = self:GetNextOrder(parent)
     Container.Parent = parent
-    
+
     local Label = Instance.new("TextLabel")
     Label.Size = UDim2.new(1, -70, 1, 0)
     Label.BackgroundTransparency = 1
@@ -952,7 +952,7 @@ function PrestigeUI:AddToggle(parent, text, callback)
     Label.TextSize = 14
     Label.TextXAlignment = Enum.TextXAlignment.Left
     Label.Parent = Container
-    
+
     local ToggleBg = Instance.new("Frame")
     ToggleBg.Size = UDim2.new(0, 70, 0, 35)
     ToggleBg.Position = UDim2.new(1, -70, 0.5, -17.5)
@@ -960,24 +960,24 @@ function PrestigeUI:AddToggle(parent, text, callback)
     ToggleBg.BorderSizePixel = 0
     ToggleBg.Active = true
     ToggleBg.Parent = Container
-    
+
     local ToggleBgCorner = Instance.new("UICorner")
     ToggleBgCorner.CornerRadius = UDim.new(0, 18)
     ToggleBgCorner.Parent = ToggleBg
-    
+
     local ToggleButton = Instance.new("Frame")
     ToggleButton.Size = UDim2.new(0, 31, 0, 31)
     ToggleButton.Position = UDim2.new(0, 2, 0.5, -15.5)
     ToggleButton.BackgroundColor3 = self.Theme.Primary
     ToggleButton.BorderSizePixel = 0
     ToggleButton.Parent = ToggleBg
-    
+
     local ToggleButtonCorner = Instance.new("UICorner")
     ToggleButtonCorner.CornerRadius = UDim.new(0, 15)
     ToggleButtonCorner.Parent = ToggleButton
-    
+
     local toggled = false
-    
+
     local toggleId = "Toggle_" .. text .. "_" .. tostring(Container)
     self:RegisterThemeElement(toggleId .. "_Label", Label, function(theme)
         Label.TextColor3 = theme.Text
@@ -992,28 +992,35 @@ function PrestigeUI:AddToggle(parent, text, callback)
     self:RegisterThemeElement(toggleId .. "_Btn", ToggleButton, function(theme)
         ToggleButton.BackgroundColor3 = theme.Primary
     end)
-    
+
     ToggleBg.MouseEnter:Connect(function()
         tween(ToggleButton, {Size = UDim2.new(0, 33, 0, 33)}, 0.2, Enum.EasingStyle.Back)
     end)
     ToggleBg.MouseLeave:Connect(function()
         tween(ToggleButton, {Size = UDim2.new(0, 31, 0, 31)}, 0.2)
     end)
-    
+
+    -- Helper to toggle the switch
+    local function toggle()
+        toggled = not toggled
+        if toggled then
+            tween(ToggleButton, {Position = UDim2.new(0, 37, 0.5, -15.5)}, 0.3, Enum.EasingStyle.Back)
+            tween(ToggleBg, {BackgroundColor3 = self.Theme.Primary}, 0.3)
+        else
+            tween(ToggleButton, {Position = UDim2.new(0, 2, 0.5, -15.5)}, 0.3, Enum.EasingStyle.Back)
+            tween(ToggleBg, {BackgroundColor3 = self.Theme.Tertiary}, 0.3)
+        end
+        if callback then callback(toggled) end
+    end
+
+    -- ✅ Supports both PC and Mobile
     ToggleBg.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            toggled = not toggled
-            if toggled then
-                tween(ToggleButton, {Position = UDim2.new(0, 37, 0.5, -15.5)}, 0.3, Enum.EasingStyle.Back)
-                tween(ToggleBg, {BackgroundColor3 = self.Theme.Primary}, 0.3)
-            else
-                tween(ToggleButton, {Position = UDim2.new(0, 2, 0.5, -15.5)}, 0.3, Enum.EasingStyle.Back)
-                tween(ToggleBg, {BackgroundColor3 = self.Theme.Tertiary}, 0.3)
-            end
-            if callback then callback(toggled) end
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            toggle()
         end
     end)
-    
+
     return {Container = Container, Toggle = ToggleButton, GetState = function() return toggled end}
 end
 
