@@ -15,25 +15,26 @@
 
 ## Introduction
 
-**Prestige UI** is a modern, feature-rich UI library for Roblox that provides a sleek and customizable interface system. It includes:
+Prestige UI is a modern, feature-rich UI library for Roblox that provides a sleek and customizable interface system.
 
-- 🎨 **15 Pre-built Themes** (Dark, Ocean, Sunset, Forest, Midnight, Purple, Cyberpunk, Neon, Minimal, Dracula, Nord, Monokai, Gruvbox, Tokyo, Rose)
+### Features
+- 🎨 **14 Pre-built Themes** (Dark, Ocean, Sunset, Forest, Midnight, Purple, Cyberpunk, Neon, Dracula, Nord, Monokai, Gruvbox, Tokyo, Rose)
 - 🧩 **Comprehensive Component Library** (Buttons, Toggles, Sliders, Dropdowns, Text Boxes, etc.)
 - 🔔 **Built-in Notification System**
 - 🎭 **Smooth Animations** using TweenService
 - 🔍 **Search Functionality**
 - 🎯 **Draggable Windows**
 - ⌨️ **Keybind Support**
-- 📱 **Minimizable Interface**
+- 📱 **Mobile Support** with automatic responsive scaling
+- 🪟 **Minimizable Interface** with corner icon
 
 ---
 
 ## Installation
 
-### Method 1: Direct Copy
+### Method 1: Direct Load
 ```lua
--- Copy the entire PrestigeUI library code into your script
-local PrestigeUI = loadstring(game:HttpGet("(https://rawcdn.githack.com/sbertinato7-boop/PrestigeUILib/50fe3ab7da13675ef863dd0e9b18f42a64e8c105/main)"))()
+local PrestigeUI = loadstring(game:HttpGet("YOUR_URL_HERE"))()
 ```
 
 ### Method 2: Local Module
@@ -47,10 +48,9 @@ local PrestigeUI = require(game.ReplicatedStorage.PrestigeUI)
 ## Getting Started
 
 ### Basic Setup
-
 ```lua
 -- Load the library
-local PrestigeUI = loadstring(game:HttpGet("(https://rawcdn.githack.com/sbertinato7-boop/PrestigeUILib/50fe3ab7da13675ef863dd0e9b18f42a64e8c105/main)"))()
+local PrestigeUI = loadstring(game:HttpGet("YOUR_URL_HERE"))()
 
 -- Create a new UI window
 local Window = PrestigeUI:Create("Prestige Hub")
@@ -65,9 +65,8 @@ end)
 ```
 
 ### Complete Example
-
 ```lua
-local PrestigeUI = loadstring(game:HttpGet("(https://rawcdn.githack.com/sbertinato7-boop/PrestigeUILib/50fe3ab7da13675ef863dd0e9b18f42a64e8c105/main)"))()
+local PrestigeUI = loadstring(game:HttpGet("YOUR_URL_HERE"))()
 
 -- Create window
 local Window = PrestigeUI:Create("Prestige Hub")
@@ -81,6 +80,7 @@ local SettingsTab = Window:AddTab("Settings")
 
 -- Add components
 Window:AddLabel(HomeTab, "Welcome to Prestige UI!", 18)
+
 Window:AddButton(HomeTab, "Test Button", function()
     Window:Notify({
         Title = "Success",
@@ -100,8 +100,8 @@ end)
 
 ## Core Functions
 
-### PrestigeUI:Create(title)
-Creates a new UI window.
+### `PrestigeUI:Create(title)`
+Creates a new UI window with loading animation.
 
 **Parameters:**
 - `title` (string, optional): Window title (default: "Prestige Hub")
@@ -110,42 +110,61 @@ Creates a new UI window.
 
 **Example:**
 ```lua
-local Window = PrestigeUI:Create("Prestige Hub")
+local Window = PrestigeUI:Create("My Hub")
 ```
+
+**Features:**
+- Automatic mobile detection and responsive sizing
+- Loading bar animation (0-100%)
+- Draggable top bar
+- Minimize and close buttons
+- Smooth fade-in animation
 
 ---
 
-### Window:AddTab(tabName)
+### `Window:AddTab(tabName)`
 Creates a new tab in the sidebar.
 
 **Parameters:**
 - `tabName` (string): Name of the tab
 
-**Returns:** Content frame for the tab
+**Returns:** Content frame (ScrollingFrame) for the tab
 
 **Example:**
 ```lua
 local MainTab = Window:AddTab("Main")
 local SettingsTab = Window:AddTab("Settings")
+local AboutTab = Window:AddTab("About")
 ```
+
+**Features:**
+- Automatic tab switching
+- Hover effects
+- First tab is automatically active
+- Mobile and PC touch/click support
 
 ---
 
-### Window:Close()
-Closes and destroys the UI window with a smooth animation.
+### `Window:Close()`
+Closes and destroys the UI window with smooth animation.
 
 **Example:**
 ```lua
 Window:Close()
 ```
 
+**Features:**
+- Smooth fade-out animation
+- Disconnects all events
+- Cleans up all UI elements
+- Clears global reference
+
 ---
 
 ## UI Components
 
 ### 1. Button
-
-Creates a clickable button with hover effects.
+Creates a clickable button with hover and press effects.
 
 **Syntax:**
 ```lua
@@ -156,6 +175,8 @@ Window:AddButton(parent, text, callback)
 - `parent` (Frame): Parent container (usually a tab)
 - `text` (string): Button text
 - `callback` (function): Function to execute on click
+
+**Returns:** Container frame
 
 **Example:**
 ```lua
@@ -169,10 +190,16 @@ Window:AddButton(MainTab, "Execute Script", function()
 end)
 ```
 
+**Features:**
+- Hover color change
+- Scale animation on hover (PC only)
+- Press animation
+- Touch and mouse support
+- Automatic theme updates
+
 ---
 
 ### 2. Label
-
 Creates a text label for displaying information.
 
 **Syntax:**
@@ -183,19 +210,20 @@ Window:AddLabel(parent, text, textSize)
 **Parameters:**
 - `parent` (Frame): Parent container
 - `text` (string): Label text
-- `textSize` (number, optional): Font size (default: 16)
+- `textSize` (number, optional): Font size (default: 16 on PC, 12 on mobile)
+
+**Returns:** TextLabel object
 
 **Example:**
 ```lua
 Window:AddLabel(MainTab, "Welcome to Prestige UI!", 20)
-Window:AddLabel(MainTab, "Version 1.0", 14)
+Window:AddLabel(MainTab, "Version 2.0", 14)
 ```
 
 ---
 
 ### 3. Paragraph
-
-Creates a formatted text block with a title and content.
+Creates a formatted text block with title and content.
 
 **Syntax:**
 ```lua
@@ -204,8 +232,10 @@ Window:AddParagraph(parent, title, content)
 
 **Parameters:**
 - `parent` (Frame): Parent container
-- `title` (string): Paragraph title
-- `content` (string): Paragraph content
+- `title` (string): Paragraph title (displays in Primary color)
+- `content` (string): Paragraph content (displays in TextSecondary color)
+
+**Returns:** Container frame
 
 **Example:**
 ```lua
@@ -216,8 +246,7 @@ Window:AddParagraph(MainTab, "About",
 ---
 
 ### 4. Toggle
-
-Creates a toggle switch with on/off states.
+Creates an animated toggle switch with on/off states.
 
 **Syntax:**
 ```lua
@@ -247,10 +276,15 @@ end)
 local isEnabled = MyToggle.GetState()
 ```
 
+**Features:**
+- Smooth slide animation
+- Color transition
+- Scale effect on hover
+- Touch and mouse support
+
 ---
 
 ### 5. Slider
-
 Creates a draggable slider for numeric input.
 
 **Syntax:**
@@ -278,10 +312,17 @@ end)
 local currentSpeed = SpeedSlider.GetValue()
 ```
 
+**Features:**
+- Real-time value updates
+- Visual fill indicator
+- Draggable button
+- Hover effects
+- Click-to-set functionality
+- Mobile and PC support
+
 ---
 
 ### 6. TextBox
-
 Creates an input field for text entry.
 
 **Syntax:**
@@ -308,11 +349,16 @@ local NameBox = Window:AddTextBox(MainTab, "Enter your name...", function(text)
 end)
 ```
 
+**Features:**
+- Focus animations
+- Mobile tap-to-focus support
+- Enter key submission
+- Placeholder text
+
 ---
 
 ### 7. Dropdown
-
-Creates a dropdown menu with multiple options.
+Creates an animated dropdown menu with multiple options.
 
 **Syntax:**
 ```lua
@@ -325,6 +371,8 @@ Window:AddDropdown(parent, placeholder, options, callback)
 - `options` (table): Array of option strings
 - `callback` (function): Function called with selected option
 
+**Returns:** Table with `Container` and `Dropdown` frame
+
 **Example:**
 ```lua
 Window:AddDropdown(MainTab, "Select Weapon", 
@@ -335,11 +383,17 @@ Window:AddDropdown(MainTab, "Select Weapon",
 )
 ```
 
+**Features:**
+- Smooth expand/collapse animation
+- Scrollable option list
+- Automatic size adjustment
+- Touch and mouse support
+- Animation debouncing
+
 ---
 
 ### 8. Keybind
-
-Creates a keybind selector.
+Creates a keybind selector that waits for key press.
 
 **Syntax:**
 ```lua
@@ -364,11 +418,15 @@ end)
 local currentKey = Keybind.GetKey()
 ```
 
+**Features:**
+- "..." indicator while listening
+- Color change during selection
+- Stores connection in Window.Connections
+
 ---
 
 ### 9. Color Picker
-
-Creates a color selection tool with RGB sliders.
+Creates a modal color selection tool with RGB sliders and live preview.
 
 **Syntax:**
 ```lua
@@ -397,11 +455,17 @@ local ColorPicker = Window:AddColorPicker(MainTab, "ESP Color",
 local currentColor = ColorPicker.GetColor()
 ```
 
+**Features:**
+- RGB sliders (0-255)
+- Live color preview
+- Apply and Cancel buttons
+- Modal overlay blocks other input
+- Hover scale effect
+
 ---
 
 ### 10. Divider
-
-Creates a visual separator with optional text.
+Creates a visual separator with optional text label.
 
 **Syntax:**
 ```lua
@@ -412,6 +476,8 @@ Window:AddDivider(parent, text)
 - `parent` (Frame): Parent container
 - `text` (string, optional): Divider text
 
+**Returns:** Container frame
+
 **Example:**
 ```lua
 Window:AddDivider(MainTab, "Combat Features")
@@ -420,9 +486,36 @@ Window:AddDivider(MainTab) -- Just a line
 
 ---
 
-### 11. Search Bar
+### 11. Section
+Creates a collapsible section container with title and organized layout.
 
-Creates a search bar for filtering tab content.
+**Syntax:**
+```lua
+Window:AddSection(parent, title)
+```
+
+**Parameters:**
+- `parent` (Frame): Parent container
+- `title` (string, optional): Section title
+
+**Returns:** Section frame (use as parent for other elements)
+
+**Example:**
+```lua
+local PlayerSection = Window:AddSection(MainTab, "Player Options")
+Window:AddButton(PlayerSection, "Reset", function() end)
+Window:AddSlider(PlayerSection, 16, 100, 16, function(val) end)
+```
+
+**Features:**
+- Automatic sizing
+- Internal padding
+- Organized layout with UIListLayout
+
+---
+
+### 12. Search Bar
+Creates a search bar that filters tab content in real-time.
 
 **Syntax:**
 ```lua
@@ -430,43 +523,46 @@ Window:AddSearchBar(parent)
 ```
 
 **Parameters:**
-- `parent` (Frame): Parent container (usually a tab)
+- `parent` (Frame): Parent container (usually a tab or Sidebar)
 
-**Returns:** SearchBox object
+**Returns:** SearchBox (TextBox object)
 
 **Example:**
 ```lua
 local SearchBar = Window:AddSearchBar(MainTab)
--- Automatically filters content as you type
+-- Automatically filters tabs and content as you type
 ```
+
+**Features:**
+- Real-time filtering
+- Searches tab names and all text content
+- Shows/hides matching tabs
+- Icon indicator
+- Focus animations
 
 ---
 
 ## Theming System
 
 ### Available Themes
-
-Prestige UI includes 15 pre-built themes:
+Prestige UI includes **14 pre-built themes**:
 
 1. **Dark** - Modern dark theme (default)
-2. **Ocean** - Blue ocean-inspired theme
+2. **Ocean** - Blue ocean-inspired
 3. **Sunset** - Warm sunset colors
 4. **Forest** - Green nature theme
-5. **Midnight** - Deep purple theme
-6. **Purple** - Elegant purple theme
-7. **Cyberpunk** - Neon cyberpunk style
-8. **Neon** - Bright neon green
-9. **Minimal** - Clean minimal design
-10. **Dracula** - Popular Dracula theme
-11. **Nord** - Nordic color palette
-12. **Monokai** - Classic Monokai theme
-13. **Gruvbox** - Retro Gruvbox colors
-14. **Tokyo** - Tokyo Night theme
-15. **Rose** - Rose Pine theme
+5. **Midnight** - Deep purple
+6. **Purple** - Elegant purple
+7. **Cyberpunk** - Neon magenta/cyan
+8. **Neon** - Bright green
+9. **Dracula** - Popular Dracula palette
+10. **Nord** - Nordic colors
+11. **Monokai** - Classic Monokai
+12. **Gruvbox** - Retro Gruvbox
+13. **Tokyo** - Tokyo Night
+14. **Rose** - Rose Pine
 
 ### Setting a Theme
-
-**Syntax:**
 ```lua
 Window:SetTheme(themeName)
 ```
@@ -481,25 +577,20 @@ Window:SetTheme("Dracula")
 ---
 
 ### Creating Custom Themes
-
-**Syntax:**
 ```lua
 Window:CreateCustomTheme(themeTable)
 ```
-
-**Parameters:**
-- `themeTable` (table): Table with color definitions
 
 **Theme Structure:**
 ```lua
 {
     Primary = Color3.fromRGB(r, g, b),      -- Main accent color
     Secondary = Color3.fromRGB(r, g, b),    -- Secondary background
-    Tertiary = Color3.fromRGB(r, g, b),     -- Tertiary elements
-    Text = Color3.fromRGB(r, g, b),         -- Primary text color
-    TextSecondary = Color3.fromRGB(r, g, b),-- Secondary text color
-    Dark = Color3.fromRGB(r, g, b),         -- Darkest background
-    Accent = Color3.fromRGB(r, g, b)        -- Accent highlights
+    Tertiary = Color3.fromRGB(r, g, b),     -- Element backgrounds
+    Text = Color3.fromRGB(r, g, b),         -- Primary text
+    TextSecondary = Color3.fromRGB(r, g, b),-- Secondary text
+    Dark = Color3.fromRGB(r, g, b),         -- Main background
+    Accent = Color3.fromRGB(r, g, b)        -- Highlight color
 }
 ```
 
@@ -521,8 +612,7 @@ Window:CreateCustomTheme({
 ## Advanced Features
 
 ### Notifications
-
-Display temporary notification messages.
+Display temporary notification messages with icons.
 
 **Syntax:**
 ```lua
@@ -548,7 +638,7 @@ Window:Notify({
 -- Success notification
 Window:Notify({
     Title = "Success",
-    Message = "Operation completed successfully!",
+    Message = "Operation completed!",
     Duration = 5,
     Type = "Success"
 })
@@ -570,10 +660,16 @@ Window:Notify({
 })
 ```
 
+**Features:**
+- Color-coded accent bars
+- Slide-in/slide-out animations
+- Auto-dismiss with timer
+- Manual close button
+- Stack multiple notifications
+
 ---
 
 ### Dialog Boxes
-
 Display modal dialog boxes with custom buttons.
 
 **Syntax:**
@@ -603,10 +699,15 @@ Window:ShowDialog({
 })
 ```
 
+**Features:**
+- Modal overlay blocks all input
+- Cooldown system prevents spam
+- Smooth animations
+- Multiple button support
+
 ---
 
 ### Tooltips
-
 Add hover tooltips to any element.
 
 **Syntax:**
@@ -624,11 +725,15 @@ local MyButton = Window:AddButton(MainTab, "Hover Me", function() end)
 Window:AddTooltip(MyButton, "This button does something cool!")
 ```
 
+**Features:**
+- Follows mouse cursor
+- Fade in/out animations
+- High ZIndex for visibility
+
 ---
 
 ### Minimize to Corner
-
-Minimize the UI to a small draggable icon.
+Minimize the UI to a small draggable icon in the corner.
 
 **Syntax:**
 ```lua
@@ -644,15 +749,19 @@ Window:MinimizeToCorner()
 -- Restore
 Window:RestoreFromCorner()
 
--- Toggle keybind (default: RightShift)
--- Press RightShift to toggle between minimized and restored
+-- Default keybind: RightShift toggles UI
 ```
+
+**Features:**
+- Draggable minimized icon
+- Fade animations
+- Double-click to restore
+- Automatically creates/destroys icon
 
 ---
 
 ### Custom Toggle Keybind
-
-Change the default toggle keybind.
+Change the default toggle keybind (RightShift).
 
 **Example:**
 ```lua
@@ -667,23 +776,18 @@ Window.ToggleKeybind = Enum.KeyCode.Insert
 ## Examples
 
 ### Example 1: Simple Script Hub
-
 ```lua
-local PrestigeUI = loadstring(game:HttpGet("(https://rawcdn.githack.com/sbertinato7-boop/PrestigeUILib/50fe3ab7da13675ef863dd0e9b18f42a64e8c105/main)"))()
+local PrestigeUI = loadstring(game:HttpGet("YOUR_URL"))()
 local Window = PrestigeUI:Create("Simple Hub")
 
--- Main Tab
 local MainTab = Window:AddTab("Main")
 
 Window:AddLabel(MainTab, "Welcome!", 18)
+
 Window:AddButton(MainTab, "Infinite Jump", function()
     local Player = game.Players.LocalPlayer
-    local InfiniteJump = true
-    
     game:GetService("UserInputService").JumpRequest:Connect(function()
-        if InfiniteJump then
-            Player.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
-        end
+        Player.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
     end)
     
     Window:Notify({
@@ -706,43 +810,32 @@ end)
 ---
 
 ### Example 2: Advanced Configuration
-
 ```lua
-local PrestigeUI = loadstring(game:HttpGet("(https://rawcdn.githack.com/sbertinato7-boop/PrestigeUILib/50fe3ab7da13675ef863dd0e9b18f42a64e8c105/main)"))()
+local PrestigeUI = loadstring(game:HttpGet("YOUR_URL"))()
 local Window = PrestigeUI:Create("Advanced Hub")
 
--- Set theme
 Window:SetTheme("Cyberpunk")
 
--- Settings Tab
 local SettingsTab = Window:AddTab("Settings")
 
--- Add search bar
 Window:AddSearchBar(SettingsTab)
 
--- Divider
 Window:AddDivider(SettingsTab, "Player Settings")
 
--- Speed slider
 Window:AddSlider(SettingsTab, 16, 200, 16, function(value)
     game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = value
 end)
 
--- Jump power slider
 Window:AddSlider(SettingsTab, 50, 200, 50, function(value)
     game.Players.LocalPlayer.Character.Humanoid.JumpPower = value
 end)
 
--- Divider
 Window:AddDivider(SettingsTab, "Visual Settings")
 
--- ESP toggle
 Window:AddToggle(SettingsTab, "Enable ESP", function(state)
-    -- ESP code here
     print("ESP:", state)
 end)
 
--- ESP color picker
 Window:AddColorPicker(SettingsTab, "ESP Color", 
     Color3.fromRGB(255, 0, 255), 
     function(color)
@@ -750,10 +843,8 @@ Window:AddColorPicker(SettingsTab, "ESP Color",
     end
 )
 
--- Divider
 Window:AddDivider(SettingsTab, "Keybinds")
 
--- Toggle keybind
 Window:AddKeybind(SettingsTab, "Toggle UI", Enum.KeyCode.RightShift, function(key)
     Window.ToggleKeybind = key
 end)
@@ -761,206 +852,47 @@ end)
 
 ---
 
-### Example 3: Demo Hub
-
-```lua
--- Load the library
-local PrestigeUI = loadstring(game:HttpGet("https://rawcdn.githack.com/sbertinato7-boop/PrestigeUILib/50fe3ab7da13675ef863dd0e9b18f42a64e8c105/main"))()
-
--- Create main window
-local Window = PrestigeUI:Create("Demo Hub")
-
--- Add search bar to sidebar
-Window:AddSearchBar(Window.Sidebar)
-
-local Home = Window:AddTab("Home")
-
-Window:AddLabel(Home, "Welcome to Demo Hub", 18)
-Window:AddParagraph(Home, "Quick Start", "Explore the tabs to test all UI features. Press RightShift to toggle.")
-
-Window:AddDivider(Home, "Quick Actions")
-
-Window:AddButton(Home, "Test Notification", function()
-    Window:Notify({
-        Title = "Success!",
-        Message = "Button is working perfectly.",
-        Duration = 3,
-        Type = "Success"
-    })
-end)
-
-Window:AddToggle(Home, "Enable Feature", function(state)
-    print("Feature:", state and "ON" or "OFF")
-end)
-
-Window:AddSlider(Home, 0, 100, 50, function(value)
-    print("Value:", value)
-end)
-
-local Elements = Window:AddTab("Elements")
-
-Window:AddLabel(Elements, "UI Components", 16)
-Window:AddDivider(Elements)
-
--- TextBox
-Window:AddTextBox(Elements, "Enter text here...", function(text)
-    Window:Notify({
-        Title = "Text Entered",
-        Message = "You typed: " .. text,
-        Duration = 2,
-        Type = "Info"
-    })
-end)
-
--- Dropdown
-Window:AddDropdown(Elements, "Select option", {"Red", "Green", "Blue", "Yellow"}, function(choice)
-    print("Selected:", choice)
-end)
-
--- Multiple toggles
-Window:AddDivider(Elements, "Settings")
-Window:AddToggle(Elements, "Auto Save", function(state) end)
-Window:AddToggle(Elements, "Notifications", function(state) end)
-Window:AddToggle(Elements, "Sound Effects", function(state) end)
-
-local Themes = Window:AddTab("Themes")
-
-Window:AddLabel(Themes, "Theme Selection", 16)
-Window:AddDivider(Themes)
-
--- Theme dropdown
-local themes = {"Dark", "Ocean", "Sunset", "Forest", "Midnight", "Purple", "Cyberpunk", "Neon", "Dracula", "Tokyo"}
-Window:AddDropdown(Themes, "Choose Theme", themes, function(theme)
-    Window:SetTheme(theme)
-    Window:Notify({
-        Title = "Theme Changed",
-        Message = "Applied " .. theme .. " theme",
-        Duration = 2,
-        Type = "Success"
-    })
-end)
-
-Window:AddDivider(Themes, "Custom Colors")
-
--- Color pickers
-Window:AddColorPicker(Themes, "Primary Color", Color3.fromRGB(0, 180, 255), function(color)
-    Window.Theme.Primary = color
-    Window:ApplyTheme()
-end)
-
-Window:AddColorPicker(Themes, "Accent Color", Color3.fromRGB(255, 100, 100), function(color)
-    Window.Theme.Accent = color
-    Window:ApplyTheme()
-end)
-
-local Settings = Window:AddTab("Settings")
-
-Window:AddLabel(Settings, "Keybinds", 16)
-Window:AddDivider(Settings)
-
-Window:AddKeybind(Settings, "Toggle UI", Enum.KeyCode.RightShift, function(key)
-    Window:SetKeybind(key)
-end)
-
-Window:AddKeybind(Settings, "Quick Action", Enum.KeyCode.F, function(key)
-    print("Keybind set to:", key.Name)
-end)
-
-Window:AddDivider(Settings, "Notifications")
-
-Window:AddButton(Settings, "Info Message", function()
-    Window:Notify({Title = "Info", Message = "This is an info notification", Duration = 3, Type = "Info"})
-end)
-
-Window:AddButton(Settings, "Warning Message", function()
-    Window:Notify({Title = "Warning", Message = "This is a warning", Duration = 3, Type = "Warning"})
-end)
-
-Window:AddButton(Settings, "Error Message", function()
-    Window:Notify({Title = "Error", Message = "This is an error", Duration = 3, Type = "Error"})
-end)
-
-local About = Window:AddTab("About")
-
-Window:AddLabel(About, "Prestige UI Library", 18)
-Window:AddParagraph(About, "Version", "v2.0 - Complete Rewrite")
-Window:AddParagraph(About, "Features", "Modern UI with 15+ themes, animations, and more")
-
-Window:AddDivider(About)
-
-Window:AddButton(About, "Show Dialog", function()
-    Window:ShowDialog({
-        Title = "Example Dialog",
-        Message = "This is a modal dialog box with multiple buttons.",
-        Buttons = {
-            {"Confirm", function()
-                Window:Notify({Title = "Confirmed", Message = "You clicked confirm", Duration = 2, Type = "Success"})
-            end},
-            {"Cancel", function()
-                print("Cancelled")
-            end}
-        }
-    })
-end)
-
-Window:AddDivider(About)
-
-Window:AddButton(About, "Close UI", function()
-    Window:Close()
-end)
-
-Window:Notify({
-    Title = "Welcome!",
-    Message = "Demo Hub loaded successfully",
-    Duration = 4,
-    Type = "Success"
-})
-
-print("Demo Hub loaded! Press RightShift to toggle")
-```
-
----
-
 ## API Reference
 
 ### Window Methods
-
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `Create(title)` | Create new window | Window object |
-| `AddTab(name)` | Add new tab | Content frame |
-| `AddButton(parent, text, callback)` | Add button | Container |
-| `AddLabel(parent, text, size)` | Add label | Label object |
-| `AddParagraph(parent, title, content)` | Add paragraph | Container |
-| `AddToggle(parent, text, callback)` | Add toggle | Toggle object |
-| `AddSlider(parent, min, max, default, callback)` | Add slider | Slider object |
-| `AddTextBox(parent, placeholder, callback)` | Add text box | TextBox object |
-| `AddDropdown(parent, placeholder, options, callback)` | Add dropdown | Container |
-| `AddKeybind(parent, text, default, callback)` | Add keybind | Keybind object |
-| `AddColorPicker(parent, text, default, callback)` | Add color picker | ColorPicker object |
-| `AddDivider(parent, text)` | Add divider | Container |
-| `AddSearchBar(parent)` | Add search bar | SearchBox object |
+| `AddTab(name)` | Add new tab | ScrollingFrame |
+| `AddButton(parent, text, callback)` | Add button | Container Frame |
+| `AddLabel(parent, text, size)` | Add label | TextLabel |
+| `AddParagraph(parent, title, content)` | Add paragraph | Container Frame |
+| `AddToggle(parent, text, callback)` | Add toggle | Table {Container, Toggle, GetState()} |
+| `AddSlider(parent, min, max, default, callback)` | Add slider | Table {Container, GetValue()} |
+| `AddTextBox(parent, placeholder, callback)` | Add text box | TextBox |
+| `AddDropdown(parent, placeholder, options, callback)` | Add dropdown | Table {Container, Dropdown} |
+| `AddKeybind(parent, text, default, callback)` | Add keybind | Table {Container, GetKey()} |
+| `AddColorPicker(parent, text, default, callback)` | Add color picker | Table {Container, GetColor()} |
+| `AddDivider(parent, text)` | Add divider | Container Frame |
+| `AddSection(parent, title)` | Add section | Section Frame |
+| `AddSearchBar(parent)` | Add search bar | TextBox |
 | `Notify(options)` | Show notification | None |
 | `ShowDialog(options)` | Show dialog | None |
 | `AddTooltip(element, text)` | Add tooltip | None |
 | `SetTheme(name)` | Set theme | None |
 | `CreateCustomTheme(table)` | Create custom theme | None |
+| `ApplyTheme()` | Apply current theme | None |
 | `MinimizeToCorner()` | Minimize UI | None |
 | `RestoreFromCorner()` | Restore UI | None |
 | `Close()` | Close UI | None |
 
----
-
 ### Window Properties
-
 | Property | Type | Description |
 |----------|------|-------------|
 | `Theme` | Table | Current theme colors |
-| `ToggleKeybind` | Enum.KeyCode | Keybind to toggle UI |
+| `ToggleKeybind` | Enum.KeyCode | Keybind to toggle UI (default: RightShift) |
 | `Tabs` | Table | Array of tab objects |
 | `ActiveTab` | String | Name of active tab |
 | `MainFrame` | Frame | Main UI frame |
 | `ScreenGui` | ScreenGui | Root ScreenGui object |
+| `IsMobileMode` | Boolean | Whether mobile mode is active |
+| `Connections` | Table | All event connections |
+| `ThemeElements` | Table | All registered theme elements |
 
 ---
 
@@ -968,17 +900,19 @@ print("Demo Hub loaded! Press RightShift to toggle")
 
 ### 1. Organization
 - Group related features in the same tab
-- Use dividers to separate sections
+- Use dividers and sections to separate features
 - Add search bars to tabs with many elements
+- Use consistent naming conventions
 
 ### 2. User Experience
 - Provide clear labels and descriptions
 - Use appropriate notification types
 - Add tooltips for complex features
-- Choose readable themes
+- Test on both mobile and PC
 
 ### 3. Performance
 - Don't create too many UI elements at once
+- Use sections to organize large tabs
 - Clean up connections when closing
 - Use callbacks efficiently
 
@@ -986,11 +920,13 @@ print("Demo Hub loaded! Press RightShift to toggle")
 - Test your UI with different themes
 - Use custom themes for branding
 - Ensure text is readable on all backgrounds
+- Use AddSection for better organization
 
 ### 5. Error Handling
 - Wrap callbacks in pcall for safety
 - Validate user input from text boxes
 - Provide feedback for actions
+- Check for nil values
 
 ---
 
@@ -999,15 +935,14 @@ print("Demo Hub loaded! Press RightShift to toggle")
 ### UI Not Showing
 ```lua
 -- Make sure the script is running in a LocalScript
--- Check if the ScreenGui is parented correctly
 print(Window.ScreenGui.Parent) -- Should be PlayerGui
 ```
 
 ### Theme Not Applying
 ```lua
 -- Ensure theme name is correct (case-sensitive)
-Window:SetTheme("Dark") -- Correct
-Window:SetTheme("dark") -- Wrong
+Window:SetTheme("Dark") -- ✅ Correct
+Window:SetTheme("dark") -- ❌ Wrong
 ```
 
 ### Callbacks Not Working
@@ -1021,12 +956,10 @@ end)
 Window:AddButton(MainTab, "Test", print("This doesn't work"))
 ```
 
-### Elements Not Visible
-```lua
--- Check if parent is correct
-local Tab = Window:AddTab("Main")
-Window:AddButton(Tab, "Button", function() end) -- Correct parent
-```
+### Mobile Issues
+- TextBox not focusing? Added automatic touch-to-focus
+- Dropdown not opening? Uses touch and mouse support
+- Tabs not switching? Tab buttons support both input types
 
 ---
 
@@ -1036,32 +969,21 @@ Window:AddButton(Tab, "Button", function() end) -- Correct parent
 - Modern UI library for Roblox
 - Smooth animations and transitions
 - Extensive customization options
-- Regular updates and improvements
+- Mobile and PC support
 
 ---
 
 ## Version History
 
-**v1.0** - Initial Release
-- Core UI framework
-- 15 pre-built themes
-- All basic components
-- Notification system
-- Search functionality
-- Minimize/restore features
+**v2.0 - Current Release**
+- Complete theme system rewrite
+- Mobile support and responsive design
+- Section components
+- Improved animations
+- Dialog cooldown system
+- Better touch support
+- Enhanced notification system
 
 ---
 
-## Support
-
-For issues, suggestions, or contributions:
-- Test thoroughly before reporting bugs
-- Provide clear reproduction steps
-- Include error messages if any
-- Suggest improvements with examples
-
----
-
-**End of Documentation**
-
-*Last Updated: Oct 11 2025*
+*Last Updated: October 2025*
