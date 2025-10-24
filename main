@@ -891,6 +891,7 @@ function PrestigeUI:AddTextBox(parent, placeholder, callback)
     Container.LayoutOrder = self:GetNextOrder(parent)
     Container.Active = false
     Container.Selectable = false
+    Container.ClipsDescendants = true
     Container.Parent = parent
     
     local Corner = Instance.new("UICorner")
@@ -898,8 +899,8 @@ function PrestigeUI:AddTextBox(parent, placeholder, callback)
     Corner.Parent = Container
     
     local TextBox = Instance.new("TextBox")
-    TextBox.Size = UDim2.new(1, -20, 1, 0)
-    TextBox.Position = UDim2.new(0, 10, 0, 0)
+    TextBox.Size = UDim2.new(1, -20, 1, -4)
+    TextBox.Position = UDim2.new(0, 10, 0, 2)
     TextBox.BackgroundTransparency = 1
     TextBox.BorderSizePixel = 0
     TextBox.Text = ""
@@ -907,11 +908,12 @@ function PrestigeUI:AddTextBox(parent, placeholder, callback)
     TextBox.TextColor3 = self.Theme.Text
     TextBox.PlaceholderColor3 = self.Theme.TextSecondary
     TextBox.Font = Enum.Font.Gotham
-    TextBox.TextSize = self.IsMobileMode and 11 or 13
+    TextBox.TextSize = self.IsMobileMode and 10 or 12
     TextBox.ClearTextOnFocus = false
     TextBox.TextXAlignment = Enum.TextXAlignment.Left
     TextBox.TextWrapped = false
     TextBox.TextScaled = false
+    TextBox.TextTruncate = Enum.TextTruncate.AtEnd
     TextBox.ClipsDescendants = true
     TextBox.Parent = Container
     
