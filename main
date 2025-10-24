@@ -1113,7 +1113,20 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
 
     local isOpen = false
     local isAnimating = false
-    local maxHeight = self.IsMobileMode and 120 or 150
+    
+    -- ✅ FIX: Calculate actual needed height based on number of options
+    local itemHeight = self.IsMobileMode and 28 or 30
+    local spacing = 4
+    local padding = 8 -- top + bottom padding
+    local maxDisplayItems = self.IsMobileMode and 4 or 5
+    local maxHeight = (itemHeight * maxDisplayItems) + (spacing * (maxDisplayItems - 1)) + padding
+    
+    -- Calculate actual content height
+    local actualContentHeight = (#options * itemHeight) + ((#options - 1) * spacing) + padding
+    
+    -- Use the smaller of the two (prevents gap at bottom)
+    local targetHeight = math.min(actualContentHeight, maxHeight)
+    
     local dropdownId = tostring(Container)
     
     -- Theme registration
@@ -1135,15 +1148,16 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
         DropdownList.ScrollBarImageColor3 = theme.Primary
     end)
 
-    -- ✅ Main dropdown tap/click
+    -- ✅ Main dropdown tap/click with FIXED height
     DropdownBtn.InputBegan:Connect(function(input)
         if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch)
         and not isAnimating then
             isAnimating = true
             isOpen = not isOpen
             DropdownList.Visible = true
-            tween(DropdownList, {Size = UDim2.new(1, 0, 0, isOpen and maxHeight or 0)}, 0.3)
-            tween(Container, {Size = UDim2.new(1, 0, 0, isOpen and (self.IsMobileMode and 35 or 40) + maxHeight or (self.IsMobileMode and 35 or 40))}, 0.3)
+            -- Use calculated targetHeight instead of fixed maxHeight
+            tween(DropdownList, {Size = UDim2.new(1, 0, 0, isOpen and targetHeight or 0)}, 0.3)
+            tween(Container, {Size = UDim2.new(1, 0, 0, isOpen and (self.IsMobileMode and 35 or 40) + targetHeight or (self.IsMobileMode and 35 or 40))}, 0.3)
             Arrow.Text = isOpen and "▲" or "▼"
             task.wait(0.3)
             if not isOpen then DropdownList.Visible = false end
@@ -1155,7 +1169,7 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     for index, option in ipairs(options) do
         local OptionBtn = Instance.new("Frame")
         OptionBtn.Name = option
-        OptionBtn.Size = UDim2.new(1, 0, 0, self.IsMobileMode and 28 or 30)
+        OptionBtn.Size = UDim2.new(1, 0, 0, itemHeight)
         OptionBtn.BackgroundColor3 = self.Theme.Tertiary
         OptionBtn.BorderSizePixel = 0
         OptionBtn.LayoutOrder = index
