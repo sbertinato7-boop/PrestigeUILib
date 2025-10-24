@@ -1428,6 +1428,135 @@ function PrestigeUI:AddSlider(parent, text, min, max, default, callback, options
     }
 end
 
+function PrestigeUI:AddProgressBar(parent, text, min, max, current, options)
+    options = options or {}
+    local showPercentage = options.ShowPercentage ~= false
+    local showValue = options.ShowValue ~= false
+    local color = options.Color or self.Theme.Primary
+    local height = options.Height or (self.IsMobileMode and 25 or 30)
+    
+    local Container = Instance.new("Frame")
+    Container.Name = "ProgressBarContainer"
+    Container.Size = UDim2.new(1, 0, 0, self.IsMobileMode and 45 or 50)
+    Container.BackgroundTransparency = 1
+    Container.LayoutOrder = self:GetNextOrder(parent)
+    Container.Parent = parent
+    
+    -- Top row: Label (left) and Value display (right)
+    local TopRow = Instance.new("Frame")
+    TopRow.Size = UDim2.new(1, 0, 0, 15)
+    TopRow.BackgroundTransparency = 1
+    TopRow.Parent = Container
+    
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(0.6, 0, 1, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = text or "Progress"
+    Label.TextColor3 = self.Theme.Text
+    Label.Font = Enum.Font.GothamBold
+    Label.TextSize = self.IsMobileMode and 11 or 13
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Parent = TopRow
+    
+    local ValueDisplay = Instance.new("TextLabel")
+    ValueDisplay.Size = UDim2.new(0.4, 0, 1, 0)
+    ValueDisplay.Position = UDim2.new(0.6, 0, 0, 0)
+    ValueDisplay.BackgroundTransparency = 1
+    ValueDisplay.Text = "0%"
+    ValueDisplay.TextColor3 = self.Theme.Primary
+    ValueDisplay.Font = Enum.Font.GothamBold
+    ValueDisplay.TextSize = self.IsMobileMode and 11 or 13
+    ValueDisplay.TextXAlignment = Enum.TextXAlignment.Right
+    ValueDisplay.Parent = TopRow
+    
+    -- Progress bar background
+    local BarBg = Instance.new("Frame")
+    BarBg.Size = UDim2.new(1, 0, 0, height)
+    BarBg.Position = UDim2.new(0, 0, 0, 20)
+    BarBg.BackgroundColor3 = self.Theme.Tertiary
+    BarBg.BorderSizePixel = 0
+    BarBg.Parent = Container
+    
+    local BgCorner = Instance.new("UICorner")
+    BgCorner.CornerRadius = UDim.new(0, 6)
+    BgCorner.Parent = BarBg
+    
+    -- Progress fill
+    local BarFill = Instance.new("Frame")
+    BarFill.Size = UDim2.new(0, 0, 1, 0)
+    BarFill.BackgroundColor3 = color
+    BarFill.BorderSizePixel = 0
+    BarFill.Parent = BarBg
+    
+    local FillCorner = Instance.new("UICorner")
+    FillCorner.CornerRadius = UDim.new(0, 6)
+    FillCorner.Parent = BarFill
+    
+    -- Gradient effect (optional polish)
+    local Gradient = Instance.new("UIGradient")
+    Gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200))
+    })
+    Gradient.Rotation = 90
+    Gradient.Parent = BarFill
+    
+    -- Register for theme updates
+    local barId = "ProgressBar_" .. text .. "_" .. tostring(Container)
+    self:RegisterThemeElement(barId .. "_Label", Label, function(theme)
+        Label.TextColor3 = theme.Text
+    end)
+    self:RegisterThemeElement(barId .. "_Value", ValueDisplay, function(theme)
+        ValueDisplay.TextColor3 = theme.Primary
+    end)
+    self:RegisterThemeElement(barId .. "_Bg", BarBg, function(theme)
+        BarBg.BackgroundColor3 = theme.Tertiary
+    end)
+    
+    -- Update function
+    local function updateProgress(value, maxValue)
+        maxValue = maxValue or max
+        local percentage = math.clamp((value / maxValue) * 100, 0, 100)
+        local size = percentage / 100
+        
+        tween(BarFill, {Size = UDim2.new(size, 0, 1, 0)}, 0.3, Enum.EasingStyle.Quad)
+        
+        if showPercentage and showValue then
+            ValueDisplay.Text = string.format("%.1f%% (%s/%s)", percentage, formatNumber(value), formatNumber(maxValue))
+        elseif showPercentage then
+            ValueDisplay.Text = string.format("%.1f%%", percentage)
+        elseif showValue then
+            ValueDisplay.Text = string.format("%s/%s", formatNumber(value), formatNumber(maxValue))
+        end
+        
+        -- Color change based on progress
+        if percentage >= 100 then
+            BarFill.BackgroundColor3 = Color3.fromRGB(46, 213, 115) -- Green
+        elseif percentage >= 75 then
+            BarFill.BackgroundColor3 = color
+        elseif percentage >= 50 then
+            BarFill.BackgroundColor3 = Color3.fromRGB(255, 195, 18) -- Yellow
+        else
+            BarFill.BackgroundColor3 = Color3.fromRGB(255, 107, 107) -- Red
+        end
+    end
+    
+    -- Set initial value
+    updateProgress(current or 0, max)
+    
+    return {
+        Container = Container,
+        SetProgress = updateProgress,
+        SetColor = function(newColor)
+            color = newColor
+            BarFill.BackgroundColor3 = newColor
+        end,
+        SetMax = function(newMax)
+            max = newMax
+        end
+    }
+end
+
 function PrestigeUI:AddDivider(parent, text)
     local Container = Instance.new("Frame")
     Container.Name = "Divider"
