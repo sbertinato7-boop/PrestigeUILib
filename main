@@ -1212,36 +1212,61 @@ function PrestigeUI:AddDropdown(parent, placeholder, options, callback)
     return {Container = Container, Dropdown = DropdownBtn}
 end
 
-function PrestigeUI:AddSlider(parent, min, max, default, callback)
+function PrestigeUI:AddSlider(parent, text, min, max, default, callback, options)
+    options = options or {}
+    local suffix = options.Suffix or ""  -- e.g., "s", "%", "x", "mph"
+    local prefix = options.Prefix or ""  -- e.g., "$", "#"
+    local decimals = options.Decimals or 0
+    local showMinMax = options.ShowMinMax ~= false  -- Show min/max by default
+    
     local Container = Instance.new("Frame")
     Container.Name = "SliderContainer"
-    Container.Size = UDim2.new(1, 0, 0, self.IsMobileMode and 50 or 40)
+    Container.Size = UDim2.new(1, 0, 0, self.IsMobileMode and 60 or 55)
     Container.BackgroundTransparency = 1
     Container.LayoutOrder = self:GetNextOrder(parent)
     Container.Parent = parent
     
+    -- Top row: Label (left) and Value display (right)
+    local TopRow = Instance.new("Frame")
+    TopRow.Size = UDim2.new(1, 0, 0, 20)
+    TopRow.BackgroundTransparency = 1
+    TopRow.Parent = Container
+    
     local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(1, 0, 0, 15)
+    Label.Size = UDim2.new(0.6, 0, 1, 0)
     Label.BackgroundTransparency = 1
-    Label.Text = "Value: " .. (default or min)
+    Label.Text = text or "Slider"
     Label.TextColor3 = self.Theme.Text
     Label.Font = Enum.Font.GothamBold
-    Label.TextSize = self.IsMobileMode and 10 or 12
+    Label.TextSize = self.IsMobileMode and 12 or 14
     Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.Parent = Container
+    Label.Parent = TopRow
     
+    local ValueDisplay = Instance.new("TextLabel")
+    ValueDisplay.Size = UDim2.new(0.4, 0, 1, 0)
+    ValueDisplay.Position = UDim2.new(0.6, 0, 0, 0)
+    ValueDisplay.BackgroundTransparency = 1
+    ValueDisplay.Text = prefix .. string.format("%." .. decimals .. "f", default or min) .. suffix
+    ValueDisplay.TextColor3 = self.Theme.Primary
+    ValueDisplay.Font = Enum.Font.GothamBold
+    ValueDisplay.TextSize = self.IsMobileMode and 12 or 14
+    ValueDisplay.TextXAlignment = Enum.TextXAlignment.Right
+    ValueDisplay.Parent = TopRow
+    
+    -- Slider track background
     local SliderBg = Instance.new("Frame")
-    SliderBg.Size = UDim2.new(1, 0, 0, 6)
-    SliderBg.Position = UDim2.new(0, 0, 0, self.IsMobileMode and 25 or 20)
+    SliderBg.Size = UDim2.new(1, 0, 0, 8)
+    SliderBg.Position = UDim2.new(0, 0, 0, self.IsMobileMode and 28 or 25)
     SliderBg.BackgroundColor3 = self.Theme.Tertiary
     SliderBg.BorderSizePixel = 0
     SliderBg.Active = true
     SliderBg.Parent = Container
     
     local SliderBgCorner = Instance.new("UICorner")
-    SliderBgCorner.CornerRadius = UDim.new(0, 3)
+    SliderBgCorner.CornerRadius = UDim.new(0, 4)
     SliderBgCorner.Parent = SliderBg
     
+    -- Slider fill (progress)
     local SliderFill = Instance.new("Frame")
     SliderFill.Size = UDim2.new(0, 0, 1, 0)
     SliderFill.BackgroundColor3 = self.Theme.Primary
@@ -1249,32 +1274,72 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
     SliderFill.Parent = SliderBg
     
     local SliderFillCorner = Instance.new("UICorner")
-    SliderFillCorner.CornerRadius = UDim.new(0, 3)
+    SliderFillCorner.CornerRadius = UDim.new(0, 4)
     SliderFillCorner.Parent = SliderFill
     
-    local sliderSize = self.IsMobileMode and 16 or 14
+    -- Slider button (thumb)
+    local sliderSize = self.IsMobileMode and 18 or 16
     local SliderButton = Instance.new("Frame")
     SliderButton.Size = UDim2.new(0, sliderSize, 0, sliderSize)
     SliderButton.Position = UDim2.new(0, 0, 0.5, -sliderSize/2)
     SliderButton.BackgroundColor3 = self.Theme.Primary
     SliderButton.BorderSizePixel = 0
     SliderButton.Active = true
+    SliderButton.ZIndex = 2
     SliderButton.Parent = SliderBg
     
     local ButtonCorner = Instance.new("UICorner")
-    ButtonCorner.CornerRadius = UDim.new(0, sliderSize/2)
+    ButtonCorner.CornerRadius = UDim.new(1, 0)
     ButtonCorner.Parent = SliderButton
+    
+    -- Min/Max labels (optional)
+    if showMinMax then
+        local MinLabel = Instance.new("TextLabel")
+        MinLabel.Size = UDim2.new(0, 40, 0, 15)
+        MinLabel.Position = UDim2.new(0, 0, 0, self.IsMobileMode and 40 or 38)
+        MinLabel.BackgroundTransparency = 1
+        MinLabel.Text = prefix .. string.format("%." .. decimals .. "f", min) .. suffix
+        MinLabel.TextColor3 = self.Theme.TextSecondary
+        MinLabel.Font = Enum.Font.Gotham
+        MinLabel.TextSize = 10
+        MinLabel.TextXAlignment = Enum.TextXAlignment.Left
+        MinLabel.Parent = Container
+        
+        local MaxLabel = Instance.new("TextLabel")
+        MaxLabel.Size = UDim2.new(0, 40, 0, 15)
+        MaxLabel.Position = UDim2.new(1, -40, 0, self.IsMobileMode and 40 or 38)
+        MaxLabel.BackgroundTransparency = 1
+        MaxLabel.Text = prefix .. string.format("%." .. decimals .. "f", max) .. suffix
+        MaxLabel.TextColor3 = self.Theme.TextSecondary
+        MaxLabel.Font = Enum.Font.Gotham
+        MaxLabel.TextSize = 10
+        MaxLabel.TextXAlignment = Enum.TextXAlignment.Right
+        MaxLabel.Parent = Container
+        
+        -- Register for theme updates
+        local sliderId = "Slider_" .. text .. "_" .. tostring(Container)
+        self:RegisterThemeElement(sliderId .. "_MinLabel", MinLabel, function(theme)
+            MinLabel.TextColor3 = theme.TextSecondary
+        end)
+        self:RegisterThemeElement(sliderId .. "_MaxLabel", MaxLabel, function(theme)
+            MaxLabel.TextColor3 = theme.TextSecondary
+        end)
+    end
     
     local dragging = false
     local value = default or min
     
+    -- Set initial position
     local percentage = (value - min) / (max - min)
     SliderFill.Size = UDim2.new(percentage, 0, 1, 0)
     SliderButton.Position = UDim2.new(percentage, -sliderSize/2, 0.5, -sliderSize/2)
     
-    local sliderId = "Slider_" .. tostring(Container)
+    local sliderId = "Slider_" .. text .. "_" .. tostring(Container)
     self:RegisterThemeElement(sliderId .. "_Label", Label, function(theme)
         Label.TextColor3 = theme.Text
+    end)
+    self:RegisterThemeElement(sliderId .. "_Value", ValueDisplay, function(theme)
+        ValueDisplay.TextColor3 = theme.Primary
     end)
     self:RegisterThemeElement(sliderId .. "_Bg", SliderBg, function(theme)
         SliderBg.BackgroundColor3 = theme.Tertiary
@@ -1286,6 +1351,7 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
         SliderButton.BackgroundColor3 = theme.Primary
     end)
     
+    -- Hover effects
     SliderButton.MouseEnter:Connect(function()
         tween(SliderButton, {Size = UDim2.new(0, sliderSize + 4, 0, sliderSize + 4)}, 0.2, Enum.EasingStyle.Back)
         tween(SliderButton, {BackgroundColor3 = Color3.fromRGB(10, 200, 255)}, 0.2)
@@ -1300,12 +1366,22 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
     local function updateSlider(input)
         local relativeX = math.clamp(input.Position.X - SliderBg.AbsolutePosition.X, 0, SliderBg.AbsoluteSize.X)
         local percentage = relativeX / SliderBg.AbsoluteSize.X
-        value = math.floor(min + (max - min) * percentage)
+        
+        -- Calculate value with proper decimal precision
+        if decimals == 0 then
+            value = math.floor(min + (max - min) * percentage)
+        else
+            value = min + (max - min) * percentage
+            -- Round to specified decimal places
+            local mult = 10 ^ decimals
+            value = math.floor(value * mult + 0.5) / mult
+        end
         value = math.clamp(value, min, max)
         
+        -- Update visuals
         tween(SliderFill, {Size = UDim2.new(percentage, 0, 1, 0)}, 0.1)
         tween(SliderButton, {Position = UDim2.new(percentage, -sliderSize/2, 0.5, -sliderSize/2)}, 0.1)
-        Label.Text = "Value: " .. value
+        ValueDisplay.Text = prefix .. string.format("%." .. decimals .. "f", value) .. suffix
         
         if callback then callback(value) end
     end
@@ -1316,6 +1392,8 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
             tween(SliderButton, {Size = UDim2.new(0, sliderSize + 4, 0, sliderSize + 4)}, 0.1)
         end
     end)
+    
+    local UserInputService = game:GetService("UserInputService")
     
     UserInputService.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
@@ -1337,7 +1415,17 @@ function PrestigeUI:AddSlider(parent, min, max, default, callback)
         end
     end)
     
-    return {Container = Container, GetValue = function() return value end}
+    return {
+        Container = Container, 
+        GetValue = function() return value end,
+        SetValue = function(newValue)
+            value = math.clamp(newValue, min, max)
+            local percentage = (value - min) / (max - min)
+            SliderFill.Size = UDim2.new(percentage, 0, 1, 0)
+            SliderButton.Position = UDim2.new(percentage, -sliderSize/2, 0.5, -sliderSize/2)
+            ValueDisplay.Text = prefix .. string.format("%." .. decimals .. "f", value) .. suffix
+        end
+    }
 end
 
 function PrestigeUI:AddDivider(parent, text)
