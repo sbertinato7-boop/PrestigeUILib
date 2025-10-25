@@ -233,24 +233,6 @@ function PrestigeUI:Create(title)
     LoadingStroke.Transparency = 0.7
     LoadingStroke.Parent = LoadingFrame
     
-    -- Top accent bar
-    local AccentBar = Instance.new("Frame")
-    AccentBar.Size = UDim2.new(1, 0, 0, 3)
-    AccentBar.BackgroundColor3 = self.Theme.Primary
-    AccentBar.BorderSizePixel = 0
-    AccentBar.Parent = LoadingFrame
-    
-    local AccentCorner = Instance.new("UICorner")
-    AccentCorner.CornerRadius = UDim.new(0, 16)
-    AccentCorner.Parent = AccentBar
-    
-    local AccentCover = Instance.new("Frame")
-    AccentCover.Size = UDim2.new(1, 0, 1, 0)
-    AccentCover.Position = UDim2.new(0, 0, 1, -1)
-    AccentCover.BackgroundColor3 = self.Theme.Primary
-    AccentCover.BorderSizePixel = 0
-    AccentCover.Parent = AccentBar
-    
     -- Icon container
     local IconContainer = Instance.new("Frame")
     IconContainer.Size = UDim2.new(0, isMobile and 70 or 85, 0, isMobile and 70 or 85)
